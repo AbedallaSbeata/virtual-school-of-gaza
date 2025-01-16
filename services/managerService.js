@@ -226,7 +226,7 @@ exports.getClassesForSpecificLevel = asyncHandler(async (req, res, next) => {
     .json({ results: classes.length, paginationResult, data: classes });
 });
 
-exports.getTeachersFromSpecificSubject = asyncHandler(async (req, res) => {
+exports.getTeachersFromSpecificSubject = asyncHandler(async (req, res,next) => {
   const subjectID = await Subject.findById(req.params.subjectID);
   if (!subjectID) {
     return next(new ApiError("هذه المادة غير موجودة"));
