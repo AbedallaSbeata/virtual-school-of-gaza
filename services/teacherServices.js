@@ -14,16 +14,42 @@ const { v4: uuidv4 } = require('uuid');
 
 
 exports.addNewRecordedLecture = asyncHandler(async (req, res, next) => {
-    await RecordedLecture.create({
-        class_id: req.body.class_id,
-        description: req.body.description,
-        subject_id: req.body.subject_id,
-        title: req.body.title,
-        uploaded_by: req.user.identity_number,
-        video_url: req.body.video_url
-    })
-    res.status(201).send({message: 'تم انشاء محاضرة جديدة'})
-});
+    const { class_id, subject_id, title, description, video_url } = req.body;
+  
+    const recordedLecture = await RecordedLecture.create({
+      class_id,
+      subject_id,
+      title,
+      description,
+      video_url,
+      uploaded_by: req.user.identity_number, // المعلم الذي قام بإنشاء المحاضرة
+      enrolled_students: [], // قائمة فارغة للطلاب الذين سينضمون لاحقًا
+    });
+  
+    res.status(201).json({ message: 'تم انشاء محاضرة جديدة', data: recordedLecture });
+  });
+
+  // teacherServices.js
+exports.enrollStudentToRecordedLecture = asyncHandler(async (req, res, next) => {
+    const { lectureId } = req.params;
+    const { studentId } = req.body;
+  
+    const recordedLecture = await RecordedLecture.findById(lectureId);
+    if (!recordedLecture) {
+      return next(new ApiError('المحاضرة غير موجودة', 404));
+    }
+  
+    // التحقق من أن الطالب ليس مسجلًا بالفعل في المحاضرة
+    if (recordedLecture.enrolled_students.includes(studentId)) {
+      return next(new ApiError('الطالب مسجل بالفعل في هذه المحاضرة', 400));
+    }
+  
+    // إضافة الطالب إلى قائمة الطلاب المسجلين
+    recordedLecture.enrolled_students.push(studentId);
+    await recordedLecture.save();
+  
+    res.status(200).json({ message: 'تم تسجيل الطالب في المحاضرة بنجاح', data: recordedLecture });
+  });
 
 exports.addNewAnnouncement = asyncHandler(async (req, res, next) => {
     await Announcement.create(
