@@ -7,8 +7,7 @@ const User = require('../models/userModel')
 const Announcement = require('../models/announcementModel')
 const Material = require('../models/materialModel');
 const Activity = require('../models/activityModel')
-const Submission = require('../models/submissionModel')
-const { uploadSingleFile } = require('../middlewares/uploadFileMiddleware');
+
 
 exports.addNewRecordedLecture = asyncHandler(async (req, res, next) => {
     const { class_id, subject_id, title, description, video_url } = req.body;

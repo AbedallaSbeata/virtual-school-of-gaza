@@ -9,6 +9,8 @@ const PORT = process.env.PORT || 8000;
 const authRoute = require("./routes/authRoute");
 const managerRoute = require("./routes/managerRoute");
 const teacherRoute = require('./routes/teacherRoute')
+const studentRoute = require('./routes/studentRoute')
+
 const cors = require("cors");
 const path = require('path')
 
@@ -24,6 +26,7 @@ server.use(cors());
 server.use("/auth", authRoute);
 server.use("/manager", managerRoute);
 server.use("/teacher", teacherRoute);
+server.use("/student", teacherRoute);
 
 server.all("*", (req, res, next) => {
   next(new ApiError(`can't find this route: ${req.originalUrl}`, 400));
