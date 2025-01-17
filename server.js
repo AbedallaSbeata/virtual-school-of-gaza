@@ -16,9 +16,8 @@ const path = require('path')
 dbConnection();
 
 server.use(express.json());
-// server.use(express.static(path.join(__dirname, 'uploads/materials')));
-// server.use('/uploads/materials', express.static(path.join(__dirname, 'uploads/materials')));
-server.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
+server.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 server.use(cors());
 

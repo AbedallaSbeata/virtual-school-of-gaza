@@ -8,12 +8,16 @@ const {
   getMyClasses,
   getMyData,
   addMaterial,
-  enrollStudentToRecordedLecture, // إضافة الدالة الجديدة
+  enrollStudentToRecordedLecture,
+  createActivity,
+  getSubmissionsForActivity
 } = require("../services/teacherServices");
 const {
   addNewRecordedLectureValidator,
   addNewAnnouncementValidator,
-  addMaterialValidator
+  addMaterialValidator,
+  createActivityValidator,
+  enrollStudentToRecordedLectureValidator
 } = require("../utils/validators/teacherValidator");
 
 router.use(authService.protect);
@@ -24,8 +28,9 @@ router.route('/addNewAnnouncement').post(addNewAnnouncementValidator, addNewAnno
 router.route('/addMaterial').post(uploadSingleFile, addMaterialValidator, addMaterial);
 router.route('/getMyClasses').get(getMyClasses);
 router.route('/getMyData').get(getMyData);
+router.route('/enrollStudentToRecordedLecture/:lectureId').post(enrollStudentToRecordedLectureValidator,enrollStudentToRecordedLecture);
+router.route('/getSubmissionsForActivity/:activityId').get(getSubmissionsForActivity);
+router.route('/createActivity').post(uploadSingleFile, createActivityValidator, createActivity);
 
-// إضافة مسار جديد للانضمام إلى المحاضرة
-router.route('/enrollStudentToRecordedLecture/:lectureId').post(enrollStudentToRecordedLecture);
 
 module.exports = router;

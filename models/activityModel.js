@@ -1,3 +1,4 @@
+// activityModel.js
 const mongoose = require("mongoose");
 
 const activitySchema = new mongoose.Schema({
@@ -16,14 +17,18 @@ const activitySchema = new mongoose.Schema({
     enum: ['Exam', 'Assignment', 'Quiz']
   },
   full_grade: Number,
-  file_url: String,
+  file_url: String, // الملف الذي يرفعه المعلم (إن وجد)
   available_at: Date,
   deadline: Date,
   posted_by: {
     type: String,
     ref: 'Teacher'
-  }
-}, {timestamps: true});
+  },
+  submissions: [{
+    type: mongoose.Schema.ObjectId,
+    ref: 'Submission'
+  }]
+}, { timestamps: true });
 
 const activityModel = mongoose.model("Activity", activitySchema);
 module.exports = activityModel;

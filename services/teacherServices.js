@@ -6,12 +6,9 @@ const Class = require('../models/classModel')
 const User = require('../models/userModel')
 const Announcement = require('../models/announcementModel')
 const Material = require('../models/materialModel');
-const multer = require("multer");
-const path = require('path')
+const Activity = require('../models/activityModel')
+const Submission = require('../models/submissionModel')
 const { uploadSingleFile } = require('../middlewares/uploadFileMiddleware');
-const sharp = require('sharp');
-const { v4: uuidv4 } = require('uuid');
-
 
 exports.addNewRecordedLecture = asyncHandler(async (req, res, next) => {
     const { class_id, subject_id, title, description, video_url } = req.body;
@@ -29,7 +26,6 @@ exports.addNewRecordedLecture = asyncHandler(async (req, res, next) => {
     res.status(201).json({ message: 'تم انشاء محاضرة جديدة', data: recordedLecture });
   });
 
-  // teacherServices.js
 exports.enrollStudentToRecordedLecture = asyncHandler(async (req, res, next) => {
     const { lectureId } = req.params;
     const { studentId } = req.body;
@@ -93,3 +89,41 @@ exports.addMaterial = asyncHandler(async (req,res,next) => {
     });
     res.status(201).send({message: 'تم رفع ملف جديد'})
 });
+
+
+exports.createActivity = asyncHandler(async (req, res, next) => {
+  const { title, description, class_id, subject_id, typeActivity, full_grade, available_at, deadline } = req.body;
+
+  let file_url = null;
+  if (req.file) {
+    file_url = `${req.protocol}://${req.get('host')}/uploads/activities/${req.file.filename}`;
+  }
+
+  const activity = await Activity.create({
+    title,
+    description,
+    class_id,
+    subject_id,
+    typeActivity,
+    full_grade,
+    file_url, // الملف الذي يرفعه المعلم (إن وجد)
+    available_at,
+    deadline,
+    posted_by: req.user.identity_number,
+    submissions: [] // قائمة فارغة للتسليمات
+  });
+
+  res.status(201).json({ message: 'تم إنشاء النشاط بنجاح', data: activity });
+});
+
+exports.getSubmissionsForActivity = asyncHandler(async (req, res, next) => {
+  const { activityId } = req.params;
+
+  const activity = await Activity.findById(activityId).populate('submissions');
+  if (!activity) {
+    return next(new ApiError('النشاط غير موجود', 404));
+  }
+
+  res.status(200).json({ data: activity.submissions });
+});
+

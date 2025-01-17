@@ -33,3 +33,16 @@ exports.enrollStudentToRecordedLectureValidator = [
   check("studentId").notEmpty().withMessage("Student ID Required"),
   validatorMiddleware,
 ];
+
+
+exports.createActivityValidator = [
+  check("title").notEmpty().withMessage("عنوان النشاط مطلوب"),
+  check("description").notEmpty().withMessage("وصف النشاط مطلوب"),
+  check("class_id").notEmpty().withMessage("معرف الفصل مطلوب"),
+  check("subject_id").notEmpty().withMessage("معرف المادة مطلوب"),
+  check("typeActivity").notEmpty().withMessage("نوع النشاط مطلوب"),
+  check("full_grade").notEmpty().withMessage("الدرجة الكاملة مطلوبة"),
+  check("available_at").optional().isDate().withMessage("تاريخ البدء يجب أن يكون صالحًا"),
+  check("deadline").optional().isDate().withMessage("تاريخ الانتهاء يجب أن يكون صالحًا"),
+  validatorMiddleware,
+];

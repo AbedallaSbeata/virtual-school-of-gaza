@@ -1,3 +1,4 @@
+// submissionModel.js
 const mongoose = require("mongoose");
 
 const submissionSchema = new mongoose.Schema({
@@ -9,10 +10,10 @@ const submissionSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: 'Activity',
   },
-  file_url: String,
+  file_url: String, // الملف الذي يرفعه الطالب
   grade: Number,
   feedback: String,
-}, {timestamps: true});
+}, { timestamps: true });
 
 const submissionModel = mongoose.model("Submission", submissionSchema);
 module.exports = submissionModel;
