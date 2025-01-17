@@ -6,14 +6,14 @@ const {
   submitActivity
 } = require("../services/studentServices");
 const {
-  submitActivityValidator
+  // submitActivityValidator
 } = require("../utils/validators/studentValidator");
 
 router.use(authService.protect);
 router.use(authService.allowedTo("student"));
 
 // تسليم النشاط
-router.route('/submitActivity/:activityId').post(uploadSingleFile, submitActivityValidator, submitActivity);
+router.route('/submitActivity/:activityId').post(uploadSingleFile, submitActivity);
 
 
 module.exports = router;
