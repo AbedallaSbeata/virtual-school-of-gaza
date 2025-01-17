@@ -42,7 +42,7 @@ exports.createActivityValidator = [
   check("subject_id").notEmpty().withMessage("معرف المادة مطلوب"),
   check("typeActivity").notEmpty().withMessage("نوع النشاط مطلوب"),
   check("full_grade").notEmpty().withMessage("الدرجة الكاملة مطلوبة"),
-  check("available_at").optional().isDate().withMessage("تاريخ البدء يجب أن يكون صالحًا"),
-  check("deadline").optional().isDate().withMessage("تاريخ الانتهاء يجب أن يكون صالحًا"),
+  check("available_at").notEmpty().withMessage("تاريخ البدء مطلوب"),
+  check("deadline").notEmpty().withMessage("تاريخ الانتهاء مطلوب"),
   validatorMiddleware,
 ];
