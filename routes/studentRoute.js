@@ -1,12 +1,12 @@
 const express = require("express");
 const authService = require("../services/authService");
 const router = express.Router();
-const uploadSingleFile = require('../middlewares/uploadFileMiddleware')
+const {uploadSingleFile} = require('../middlewares/uploadFileMiddleware')
 const {
-  submitActivity,
+  submitActivity
 } = require("../services/studentServices");
 const {
-  submitActivityValidator,
+  submitActivityValidator
 } = require("../utils/validators/studentValidator");
 
 router.use(authService.protect);

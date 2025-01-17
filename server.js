@@ -26,7 +26,7 @@ server.use(cors());
 server.use("/auth", authRoute);
 server.use("/manager", managerRoute);
 server.use("/teacher", teacherRoute);
-server.use("/student", teacherRoute);
+server.use("/student", studentRoute);
 
 server.all("*", (req, res, next) => {
   next(new ApiError(`can't find this route: ${req.originalUrl}`, 400));
