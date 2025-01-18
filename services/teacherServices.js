@@ -154,7 +154,7 @@ exports.addSubmissionGradeAndFeedback = asyncHandler(async (req, res, next) => {
   await submission.save();
 
   res.status(200).json({
-    message: 'تم تحديث الدرجة والفيد باك بنجاح',
+    message: 'تم اضافة الدرجة والفيد باك بنجاح',
     data: submission,
   });
 });
