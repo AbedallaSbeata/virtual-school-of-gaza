@@ -1,5 +1,5 @@
 // teacherValidator.js
-const validatorMiddleware = require('../../middlewares/validatorMiddleware');
+const validatorMiddleware = require("../../middlewares/validatorMiddleware");
 const { check } = require("express-validator");
 
 exports.addNewRecordedLectureValidator = [
@@ -34,7 +34,6 @@ exports.enrollStudentToRecordedLectureValidator = [
   validatorMiddleware,
 ];
 
-
 exports.createActivityValidator = [
   check("title").notEmpty().withMessage("عنوان النشاط مطلوب"),
   check("description").notEmpty().withMessage("وصف النشاط مطلوب"),
@@ -51,12 +50,12 @@ exports.addSubmissionGradeAndFeedbackValidator = [
   check("grade")
     .isNumeric()
     .withMessage("يجب أن تكون الدرجة رقمية")
-    .isFloat({ min: 0, max: 100 })
-    .withMessage("يجب أن تكون الدرجة بين 0 و 100").notEmpty().withMessage('يجب ان تضع درجة لهذا التسليم'),
+    .notEmpty()
+    .withMessage("يجب ان تضع درجة لهذا التسليم"),
   check("feedback")
     .isString()
     .withMessage("يجب أن يكون الفيد باك نصيًا")
-    .isLength({ max: 500 })
-    .withMessage("يجب ألا يتجاوز الفيد باك 500 حرف").notEmpty().withMessage('يجب ان تضع فيدباك لهذا التسليم'),
+    .notEmpty()
+    .withMessage("يجب ان تضع فيدباك لهذا التسليم"),
   validatorMiddleware,
 ];
