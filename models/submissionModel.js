@@ -13,6 +13,10 @@ const submissionSchema = new mongoose.Schema({
   file_url: String, // الملف الذي يرفعه الطالب
   grade: Number,
   feedback: String,
+  gradedBy: {
+    type: String,
+    ref: 'Teacher'
+  }
 }, { timestamps: true });
 
 const submissionModel = mongoose.model("Submission", submissionSchema);
