@@ -19,7 +19,7 @@ exports.submitActivity = asyncHandler(async (req, res, next) => {
   const file_url = `${req.protocol}://${req.get('host')}/uploads/submissions/${req.file.filename}`;
 
   const submission = await Submission.create({
-    user_identity_number: req.user.identity_number,
+    user_identity_number: req.user.identity_number, // رقم هوية الطالب
     activity_id: activityId,
     file_url, // الملف الذي يرفعه الطالب
   });

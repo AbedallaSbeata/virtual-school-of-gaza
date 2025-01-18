@@ -118,11 +118,42 @@ exports.createActivity = asyncHandler(async (req, res, next) => {
 exports.getSubmissionsForActivity = asyncHandler(async (req, res, next) => {
   const { activityId } = req.params;
 
-  const activity = await Activity.findById(activityId).populate('submissions');
+  // البحث عن النشاط مع تضمين التسليمات المرتبطة به
+  const activity = await Activity.findById(activityId).populate({
+    path: 'submissions',
+    select: 'user_identity_number file_url grade feedback', // تحديد الحقول المطلوبة
+  });
+
   if (!activity) {
     return next(new ApiError('النشاط غير موجود', 404));
   }
 
-  res.status(200).json({ data: activity.submissions });
+  // إرسال البيانات المطلوبة
+  res.status(200).json({
+    message: 'تم استرجاع التسليمات بنجاح',
+    data: activity.submissions,
+  });
 });
 
+exports.updateSubmissionGradeAndFeedback = asyncHandler(async (req, res, next) => {
+  const { submissionId } = req.params;
+  const { grade, feedback } = req.body;
+
+  // البحث عن التسليم المطلوب
+  const submission = await Submission.findById(submissionId);
+
+  if (!submission) {
+    return next(new ApiError('التسليم غير موجود', 404));
+  }
+
+  // تحديث الدرجة والفيد باك
+  submission.grade = grade;
+  submission.feedback = feedback;
+
+  await submission.save();
+
+  res.status(200).json({
+    message: 'تم تحديث الدرجة والفيد باك بنجاح',
+    data: submission,
+  });
+});

@@ -1,8 +1,12 @@
 const express = require("express");
 const authService = require("../services/authService");
 const router = express.Router();
-const { uploadActivityFile } = require("../middlewares/uploadActivityMiddleware");
-const { uploadMaterialFile } = require("../middlewares/uploadMaterialMiddleware");
+const {
+  uploadActivityFile,
+} = require("../middlewares/uploadActivityMiddleware");
+const {
+  uploadMaterialFile,
+} = require("../middlewares/uploadMaterialMiddleware");
 const {
   addNewRecordedLecture,
   addNewAnnouncement,
@@ -12,6 +16,7 @@ const {
   enrollStudentToRecordedLecture,
   createActivity,
   getSubmissionsForActivity,
+  updateSubmissionGradeAndFeedback,
 } = require("../services/teacherServices");
 const {
   addNewRecordedLectureValidator,
@@ -19,6 +24,7 @@ const {
   addMaterialValidator,
   createActivityValidator,
   enrollStudentToRecordedLectureValidator,
+  updateSubmissionGradeAndFeedbackValidator,
 } = require("../utils/validators/teacherValidator");
 
 router.use(authService.protect);
@@ -47,5 +53,9 @@ router
 router
   .route("/createActivity")
   .post(uploadActivityFile, createActivityValidator, createActivity);
+
+router
+  .route("/updateSubmissionGradeAndFeedback/:submissionId")
+  .put(updateSubmissionGradeAndFeedbackValidator, updateSubmissionGradeAndFeedback);
 
 module.exports = router;

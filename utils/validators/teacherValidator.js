@@ -46,3 +46,19 @@ exports.createActivityValidator = [
   check("deadline").notEmpty().withMessage("تاريخ الانتهاء مطلوب"),
   validatorMiddleware,
 ];
+
+exports.updateSubmissionGradeAndFeedbackValidator = [
+  check("grade")
+    .optional()
+    .isNumeric()
+    .withMessage("يجب أن تكون الدرجة رقمية")
+    .isFloat({ min: 0, max: 100 })
+    .withMessage("يجب أن تكون الدرجة بين 0 و 100"),
+  check("feedback")
+    .optional()
+    .isString()
+    .withMessage("يجب أن يكون الفيد باك نصيًا")
+    .isLength({ max: 500 })
+    .withMessage("يجب ألا يتجاوز الفيد باك 500 حرف"),
+  validatorMiddleware,
+];
