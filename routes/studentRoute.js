@@ -1,7 +1,7 @@
 const express = require("express");
 const authService = require("../services/authService");
 const router = express.Router();
-const { uploadActivityFile } = require("../middlewares/uploadActivityMiddleware");
+const { uploadSubmissionFile } = require("../middlewares/uploadSubmissionMiddleware");
 const { submitActivity } = require("../services/studentServices");
 const {
   // submitActivityValidator
@@ -13,6 +13,6 @@ router.use(authService.allowedTo("student"));
 // تسليم النشاط
 router
   .route("/submitActivity/:activityId")
-  .post(uploadActivityFile, submitActivity);
+  .post(uploadSubmissionFile, submitActivity);
 
 module.exports = router;

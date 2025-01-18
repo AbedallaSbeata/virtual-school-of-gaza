@@ -16,7 +16,7 @@ exports.submitActivity = asyncHandler(async (req, res, next) => {
     return next(new ApiError('النشاط غير موجود', 404));
   }
 
-  const file_url = `${req.protocol}://${req.get('host')}/uploads/activities/${req.file.filename}`;
+  const file_url = `${req.protocol}://${req.get('host')}/uploads/submissions/${req.file.filename}`;
 
   const submission = await Submission.create({
     user_identity_number: req.user.identity_number,
