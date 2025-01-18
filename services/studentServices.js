@@ -2,7 +2,8 @@ const asyncHandler = require("express-async-handler");
 const ApiError = require("../utils/apiError");
 const Submission = require('../models/submissionModel');
 const Activity = require('../models/activityModel');
-
+const Student = require('../models/studentModel')
+const Class = require('../models/classModel')
 
 exports.submitActivity = asyncHandler(async (req, res, next) => {
   if (!req.file) {
@@ -28,4 +29,15 @@ exports.submitActivity = asyncHandler(async (req, res, next) => {
   await activity.save();
 
   res.status(201).json({ message: 'تم تسليم النشاط بنجاح', data: submission });
+});
+
+exports.getMyEnrolledClass = asyncHandler(async (req, res, next) => {
+  const student = await Student.find({user_identity_number: req.user.identity_number})
+  const enrolledClass = await Class.find({_id: student[0].class_id})
+  res.status(200).json({data: enrolledClass})
+});
+
+exports.getMyData = asyncHandler(async (req, res, next) => {
+  const myData = await User.findById(req.user._id)
+  res.status(200).json({data: myData})
 });
