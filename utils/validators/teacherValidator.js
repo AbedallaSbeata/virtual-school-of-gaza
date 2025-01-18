@@ -47,7 +47,7 @@ exports.createActivityValidator = [
   validatorMiddleware,
 ];
 
-exports.updateSubmissionGradeAndFeedbackValidator = [
+exports.addSubmissionGradeAndFeedbackValidator = [
   check("grade")
     .optional()
     .isNumeric()
