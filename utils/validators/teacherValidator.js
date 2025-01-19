@@ -60,7 +60,7 @@ exports.addSubmissionGradeAndFeedbackValidator = [
   validatorMiddleware,
 ];
 
-exports.createQuizValidator = [
+exports.createExamValidator = [
   check("title").notEmpty().withMessage("عنوان الكويز مطلوب"),
   check("description").notEmpty().withMessage("وصف الكويز مطلوب"),
   check("class_id").notEmpty().withMessage("معرف الفصل مطلوب"),

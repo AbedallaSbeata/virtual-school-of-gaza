@@ -14,7 +14,6 @@ const activitySchema = new mongoose.Schema({
   },
   typeActivity: {
     type: String,
-    enum: ['Exam', 'Assignment', 'Quiz']
   },
   full_grade: Number,
   file_url: String, // الملف الذي يرفعه المعلم (إن وجد)
