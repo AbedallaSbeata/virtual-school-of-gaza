@@ -8,6 +8,7 @@ const dbConnection = require("./config/database");
 const PORT = process.env.PORT || 8000;
 const authRoute = require("./routes/authRoute");
 const managerRoute = require("./routes/managerRoute");
+const managerAssistantRoute = require('./routes/managerAssistantRoute')
 const teacherRoute = require('./routes/teacherRoute')
 const studentRoute = require('./routes/studentRoute')
 
@@ -25,6 +26,7 @@ server.use(cors());
 
 server.use("/auth", authRoute);
 server.use("/manager", managerRoute);
+server.use("/managerAssistant", managerAssistantRoute);
 server.use("/teacher", teacherRoute);
 server.use("/student", studentRoute);
 

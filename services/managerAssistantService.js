@@ -2,6 +2,8 @@ const Schedule = require("../models/scheduleModel");
 const Class = require("../models/classModel");
 const Teacher = require("../models/teacherModel");
 const Subject = require("../models/subjectModel");
+const asyncHandler = require("express-async-handler");
+const ApiError = require("../utils/apiError");
 
 exports.generateSchedules = asyncHandler(async (req, res, next) => {
   const { class_ids, teacher_ids, subject_ids, available_times } = req.body;
