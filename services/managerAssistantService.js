@@ -22,3 +22,37 @@ exports.createSchedule = asyncHandler(async (req, res, next) => {
     data: newSchedule,
   });
 });
+
+
+exports.getClassSchedule = asyncHandler(async (req, res, next) => {
+  const { classId } = req.params;
+
+  // البحث عن الجدول الدراسي لهذا الصف
+  const classSchedule = await Schedule.findOne({ class_id: classId });
+
+  if (!classSchedule) {
+    return next(new ApiError('لم يتم العثور على جدول لهذا الصف', 404));
+  }
+
+  res.status(200).json({
+    message: 'تم استرجاع الجدول الدراسي بنجاح',
+    data: classSchedule,
+  });
+});
+
+
+exports.getTeacherSchedule = asyncHandler(async (req, res, next) => {
+  const { teacherId } = req.params;
+
+  // البحث عن الجدول الدراسي لهذا المعلم
+  const teacherSchedule = await Schedule.findOne({ teacher_id: teacherId });
+
+  if (!teacherSchedule) {
+    return next(new ApiError('لم يتم العثور على جدول لهذا المعلم', 404));
+  }
+
+  res.status(200).json({
+    message: 'تم استرجاع الجدول الدراسي بنجاح',
+    data: teacherSchedule,
+  });
+});
