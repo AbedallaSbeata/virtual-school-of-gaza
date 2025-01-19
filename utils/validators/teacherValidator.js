@@ -93,12 +93,12 @@ exports.createExamValidator = [
   check("available_at")
     .notEmpty()
     .withMessage("تاريخ البدء مطلوب")
-    .isDate()
-    .withMessage("يجب أن يكون التاريخ صحيحًا"),
+    .isISO8601() // استخدام isISO8601 للتحقق من تنسيق التاريخ
+    .withMessage("يجب أن يكون التاريخ بتنسيق صحيح (مثال: 2023-10-10T00:00:00.000Z)"),
   check("deadline")
     .notEmpty()
     .withMessage("تاريخ الانتهاء مطلوب")
-    .isDate()
-    .withMessage("يجب أن يكون التاريخ صحيحًا"),
+    .isISO8601() // استخدام isISO8601 للتحقق من تنسيق التاريخ
+    .withMessage("يجب أن يكون التاريخ بتنسيق صحيح (مثال: 2023-10-20T23:59:59.000Z)"),
   validatorMiddleware,
 ];
