@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
   birth_date: Date,
   role: {
     type: String,
-    enum: ["admin", "manager", "manager Assistant", "teacher", "student"],
+    enum: ["admin", "manager", "manager assistant", "teacher", "student"],
     default: "student",
   },
   gender: {
