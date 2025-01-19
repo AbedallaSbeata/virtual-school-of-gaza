@@ -1,5 +1,6 @@
 const Schedule = require("../models/scheduleModel");
 const asyncHandler = require('express-async-handler')
+const ApiError = require('../utils/apiError')
 
 exports.createSchedule = asyncHandler(async (req, res, next) => {
   const { class_id, schedule } = req.body;
