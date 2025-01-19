@@ -4,6 +4,7 @@ const Submission = require('../models/submissionModel');
 const Activity = require('../models/activityModel');
 const Student = require('../models/studentModel')
 const Class = require('../models/classModel')
+const User = require('../models/userModel')
 
 exports.submitActivity = asyncHandler(async (req, res, next) => {
   if (!req.file) {
