@@ -8,6 +8,7 @@ const Announcement = require('../models/announcementModel')
 const Material = require('../models/materialModel');
 const Activity = require('../models/activityModel')
 const Submission = require('../models/submissionModel')
+const Quiz = require('../models/quizModel')
 
 
 exports.addNewRecordedLecture = asyncHandler(async (req, res, next) => {
@@ -157,5 +158,31 @@ exports.addSubmissionGradeAndFeedback = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     message: 'تم اضافة الدرجة والفيد باك بنجاح',
     data: submission,
+  });
+});
+
+
+exports.createQuiz = asyncHandler(async (req, res, next) => {
+  const { title, description, class_id, subject_id, questions, available_at, deadline } = req.body;
+
+  // حساب الدرجة الكاملة للكويز
+  const full_grade = questions.reduce((total, question) => total + question.questionGrade, 0);
+
+  // إنشاء الكويز
+  const quiz = await Quiz.create({
+    title,
+    description,
+    class_id,
+    subject_id,
+    questions,
+    full_grade, // الدرجة الكاملة المحسوبة
+    available_at,
+    deadline,
+    posted_by: req.user.identity_number, // المعلم الذي قام بإنشاء الكويز
+  });
+
+  res.status(201).json({
+    message: 'تم إنشاء الكويز بنجاح',
+    data: quiz,
   });
 });
