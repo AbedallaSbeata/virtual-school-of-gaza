@@ -186,3 +186,32 @@ exports.createExam = asyncHandler(async (req, res, next) => {
     data: exam,
   });
 });
+
+exports.evaluateExam = asyncHandler(async (req, res, next) => {
+  const { examId } = req.params;
+  const { answers } = req.body; // إجابات الطالب
+
+  // البحث عن الكويز
+  const exam = await Exam.findById(examId);
+
+  if (!exam) {
+    return next(new ApiError('الكويز غير موجود', 404));
+  }
+
+  let totalGrade = 0;
+
+  // تقييم الإجابات
+  exam.questions.forEach((question, index) => {
+    if (answers[index] === question.correctAnswer) {
+      totalGrade += question.questionGrade;
+    }
+  });
+
+  res.status(200).json({
+    message: 'تم تقييم الاختبار بنجاح',
+    data: {
+      totalGrade,
+      fullGrade: exam.full_grade,
+    },
+  });
+});

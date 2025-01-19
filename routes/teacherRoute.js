@@ -17,7 +17,8 @@ const {
   createActivity,
   getSubmissionsForActivity,
   addSubmissionGradeAndFeedback,
-  createExam
+  createExam,
+  evaluateExam
 } = require("../services/teacherServices");
 const {
   addNewRecordedLectureValidator,
@@ -26,7 +27,8 @@ const {
   createActivityValidator,
   enrollStudentToRecordedLectureValidator,
   addSubmissionGradeAndFeedbackValidator,
-  createExamValidator
+  createExamValidator,
+
 } = require("../utils/validators/teacherValidator");
 
 router.use(authService.protect);
@@ -61,5 +63,6 @@ router
   .put(addSubmissionGradeAndFeedbackValidator, addSubmissionGradeAndFeedback);
 
 router.route("/createExam").post(createExamValidator, createExam);
+router.route("/evaluateExam/:examId").post(evaluateExam);
 
 module.exports = router;

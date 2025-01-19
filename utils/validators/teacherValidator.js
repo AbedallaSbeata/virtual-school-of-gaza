@@ -61,23 +61,30 @@ exports.addSubmissionGradeAndFeedbackValidator = [
 ];
 
 exports.createExamValidator = [
-  check("title").notEmpty().withMessage("عنوان الكويز مطلوب"),
-  check("description").notEmpty().withMessage("وصف الكويز مطلوب"),
-  check("class_id").notEmpty().withMessage("معرف الفصل مطلوب"),
-  check("subject_id").notEmpty().withMessage("معرف المادة مطلوب"),
-  check("questions").isArray({ min: 1 }).withMessage("يجب إضافة أسئلة للكويز"),
-  check("questions.*.questionText").notEmpty().withMessage("نص السؤال مطلوب"),
+  check("title")
+    .notEmpty()
+    .withMessage("عنوان الكويز مطلوب"),
+  check("description")
+    .notEmpty()
+    .withMessage("وصف الكويز مطلوب"),
+  check("class_id")
+    .notEmpty()
+    .withMessage("معرف الفصل مطلوب"),
+  check("subject_id")
+    .notEmpty()
+    .withMessage("معرف المادة مطلوب"),
+  check("questions")
+    .isArray({ min: 1 })
+    .withMessage("يجب إضافة أسئلة للكويز"),
+  check("questions.*.questionText")
+    .notEmpty()
+    .withMessage("نص السؤال مطلوب"),
   check("questions.*.options")
     .isArray({ min: 2 })
     .withMessage("يجب إضافة خيارات للسؤال"),
   check("questions.*.correctAnswer")
     .notEmpty()
     .withMessage("الإجابة الصحيحة مطلوبة"),
-  check("full_grade")
-    .notEmpty()
-    .withMessage("الدرجة الكاملة مطلوبة")
-    .isNumeric()
-    .withMessage("يجب أن تكون الدرجة رقمية"),
   check("questions.*.questionGrade")
     .notEmpty()
     .withMessage("درجة السؤال مطلوبة")
