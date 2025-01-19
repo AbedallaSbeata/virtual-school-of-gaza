@@ -45,10 +45,31 @@ exports.getClassSchedule = asyncHandler(async (req, res, next) => {
 exports.getTeacherSchedule = asyncHandler(async (req, res, next) => {
   const { teacherId } = req.params;
 
-  // البحث عن الجدول الدراسي لهذا المعلم
-  const teacherSchedule = await Schedule.findOne({ teacher_id: teacherId });
+  // البحث عن الجداول الدراسية التي تحتوي على هذا المعلم
+  const schedules = await Schedule.find({});
 
-  if (!teacherSchedule) {
+  if (!schedules || schedules.length === 0) {
+    return next(new ApiError('لم يتم العثور على جداول دراسية', 404));
+  }
+
+  // تصفية الجداول الدراسية للمعلم المحدد
+  const teacherSchedule = schedules
+    .map((schedule) => {
+      return {
+        class_id: schedule.class_id,
+        schedule: schedule.schedule
+          .map((day) => {
+            return {
+              day: day.day,
+              periods: day.periods.filter((period) => period.teacher_id === teacherId),
+            };
+          })
+          .filter((day) => day.periods.length > 0), // إزالة الأيام التي لا تحتوي على فترات للمعلم
+      };
+    })
+    .filter((schedule) => schedule.schedule.length > 0); // إزالة الجداول التي لا تحتوي على فترات للمعلم
+
+  if (teacherSchedule.length === 0) {
     return next(new ApiError('لم يتم العثور على جدول لهذا المعلم', 404));
   }
 
