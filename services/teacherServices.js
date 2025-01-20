@@ -258,3 +258,41 @@ exports.addStudentGrade = asyncHandler(async (req, res, next) => {
     data: newGrade,
   });
 });
+
+exports.getGradesForSubjectByTeacher = asyncHandler(async (req, res, next) => {
+  const { subjectId } = req.params;
+  const teacherId = req.user.identity_number; // رقم هوية المعلم
+
+  // البحث عن الدرجات لهذه المادة والتي رصدها هذا المعلم
+  const grades = await Grade.find({ subject_id: subjectId, teacher_id: teacherId });
+
+  if (!grades || grades.length === 0) {
+    return next(new ApiError('لم يتم العثور على درجات لهذه المادة', 404));
+  }
+
+  res.status(200).json({
+    message: 'تم استرجاع الدرجات بنجاح',
+    data: grades,
+  });
+});
+
+exports.updateStudentGrade = asyncHandler(async (req, res, next) => {
+  const { gradeId } = req.params;
+  const { grade } = req.body;
+
+  // البحث عن الدرجة
+  const studentGrade = await Grade.findById(gradeId);
+
+  if (!studentGrade) {
+    return next(new ApiError('الدرجة غير موجودة', 404));
+  }
+
+  // تحديث الدرجة
+  studentGrade.grade = grade;
+  await studentGrade.save();
+
+  res.status(200).json({
+    message: 'تم تحديث الدرجة بنجاح',
+    data: studentGrade,
+  });
+});

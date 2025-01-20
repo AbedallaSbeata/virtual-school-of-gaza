@@ -121,3 +121,15 @@ exports.addStudentGradeValidator = [
     .withMessage("يجب أن تكون الدرجة رقمية"),
   validatorMiddleware,
 ];
+
+
+exports.updateStudentGradeValidator = [
+  check("grade")
+    .notEmpty()
+    .withMessage("الدرجة مطلوبة")
+    .isNumeric()
+    .withMessage("يجب أن تكون الدرجة رقمية")
+    .isFloat({ min: 0, max: 100 })
+    .withMessage("يجب أن تكون الدرجة بين 0 و 100"),
+  validatorMiddleware,
+];
