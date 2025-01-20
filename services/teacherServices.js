@@ -10,8 +10,7 @@ const Activity = require('../models/activityModel')
 const Submission = require('../models/submissionModel')
 const Exam = require('../models/examModel')
 const Grade = require("../models/gradeModel");
-
-
+const Student = require('../models/studentModel')
 
 exports.addNewRecordedLecture = asyncHandler(async (req, res, next) => {
     const { class_id, subject_id, title, description, video_url } = req.body;
