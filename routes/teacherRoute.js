@@ -64,7 +64,7 @@ router
 
 router
   .route("/addSubmissionGradeAndFeedback/:submissionId")
-  .put(addSubmissionGradeAndFeedbackValidator, addSubmissionGradeAndFeedback);
+  .post(addSubmissionGradeAndFeedbackValidator, addSubmissionGradeAndFeedback);
 
 router.route("/createExam").post(createExamValidator, createExam);
 router.route("/evaluateExam/:examId").post(evaluateExam);
