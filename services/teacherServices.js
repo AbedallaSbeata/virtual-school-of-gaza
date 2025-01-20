@@ -11,6 +11,7 @@ const Submission = require('../models/submissionModel')
 const Exam = require('../models/examModel')
 const Grade = require("../models/gradeModel");
 const Student = require('../models/studentModel')
+const Subject = require('../models/subjectModel')
 
 exports.addNewRecordedLecture = asyncHandler(async (req, res, next) => {
     const { class_id, subject_id, title, description, video_url } = req.body;
