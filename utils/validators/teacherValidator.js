@@ -102,3 +102,22 @@ exports.createExamValidator = [
     .withMessage("يجب أن يكون التاريخ بتنسيق صحيح (مثال: 2023-10-20T23:59:59.000Z)"),
   validatorMiddleware,
 ];
+
+
+exports.addStudentGradeValidator = [
+  check("student_id")
+    .notEmpty()
+    .withMessage("رقم هوية الطالب مطلوب"),
+  check("subject_id")
+    .notEmpty()
+    .withMessage("معرف المادة مطلوب"),
+  check("class_id")
+    .notEmpty()
+    .withMessage("معرف الفصل مطلوب"),
+  check("grade")
+    .notEmpty()
+    .withMessage("الدرجة مطلوبة")
+    .isNumeric()
+    .withMessage("يجب أن تكون الدرجة رقمية"),
+  validatorMiddleware,
+];

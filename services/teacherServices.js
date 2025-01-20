@@ -9,6 +9,8 @@ const Material = require('../models/materialModel');
 const Activity = require('../models/activityModel')
 const Submission = require('../models/submissionModel')
 const Exam = require('../models/examModel')
+const Grade = require("../models/gradeModel");
+
 
 
 exports.addNewRecordedLecture = asyncHandler(async (req, res, next) => {
@@ -213,5 +215,46 @@ exports.evaluateExam = asyncHandler(async (req, res, next) => {
       totalGrade,
       fullGrade: exam.full_grade,
     },
+  });
+});
+
+
+exports.addStudentGrade = asyncHandler(async (req, res, next) => {
+  const { student_id, subject_id, class_id, grade } = req.body;
+  const teacher_id = req.user.identity_number; // رقم هوية المعلم
+
+  // التحقق من أن الطالب موجود
+  const student = await Student.findOne({ user_identity_number: student_id });
+
+  if (!student) {
+    return next(new ApiError('الطالب غير موجود', 404));
+  }
+
+  // التحقق من أن المادة موجودة
+  const subject = await Subject.findById(subject_id);
+
+  if (!subject) {
+    return next(new ApiError('المادة غير موجودة', 404));
+  }
+
+  // التحقق من أن الفصل موجود
+  const classRoom = await Class.findById(class_id);
+
+  if (!classRoom) {
+    return next(new ApiError('الفصل غير موجود', 404));
+  }
+
+  // إضافة الدرجة
+  const newGrade = await Grade.create({
+    student_id,
+    subject_id,
+    class_id,
+    grade,
+    teacher_id,
+  });
+
+  res.status(201).json({
+    message: 'تم إضافة الدرجة بنجاح',
+    data: newGrade,
   });
 });
