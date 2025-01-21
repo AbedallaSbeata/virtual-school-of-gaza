@@ -12,6 +12,7 @@ const Exam = require('../models/examModel')
 const Grade = require("../models/gradeModel");
 const Student = require('../models/studentModel')
 const Subject = require('../models/subjectModel')
+const StudentAnswer = require('../models/studentAnswerModel')
 
 exports.addNewRecordedLecture = asyncHandler(async (req, res, next) => {
     const { class_id, subject_id, title, description, video_url } = req.body;
@@ -272,7 +273,7 @@ exports.updateStudentGrade = asyncHandler(async (req, res, next) => {
 
 
 exports.getStudentAnswersExam = asyncHandler(async (req, res, next) => {
-  const {examId , studentId } = req.params;
+  const { examId, studentId } = req.params;
 
   // البحث عن إجابات الطالب لهذا الكويز
   const studentAnswer = await StudentAnswer.findOne({ exam_id: examId, student_id: studentId })
@@ -285,24 +286,13 @@ exports.getStudentAnswersExam = asyncHandler(async (req, res, next) => {
     return next(new ApiError('لم يتم العثور على إجابات لهذا الطالب', 404));
   }
 
-  // إضافة الإجابات الصحيحة من الكويز
+  // إضافة إجابات الطالب فقط
   const exam = studentAnswer.exam_id;
-  const questionsWithCorrectAnswers = exam.questions.map((question) => {
-    return {
-      _id: question._id,
-      questionText: question.questionText,
-      options: question.options,
-      correctAnswer: question.correctAnswer,
-      questionGrade: question.questionGrade,
-    };
-  });
-
   const studentAnswersWithDetails = studentAnswer.answers.map((answer) => {
-    const question = questionsWithCorrectAnswers.find((q) => q._id.toString() === answer.question_id.toString());
+    const question = exam.questions.find((q) => q._id.toString() === answer.question_id.toString());
     return {
       questionText: question.questionText,
       options: question.options,
-      correctAnswer: question.correctAnswer,
       studentAnswer: answer.answer,
       questionGrade: question.questionGrade,
     };
