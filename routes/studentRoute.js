@@ -2,9 +2,9 @@ const express = require("express");
 const authService = require("../services/authService");
 const router = express.Router();
 const { uploadSubmissionFile } = require("../middlewares/uploadSubmissionMiddleware");
-const { submitActivity, getMyData, getMyEnrolledClass } = require("../services/studentServices");
+const { submitActivity, getMyData, getMyEnrolledClass,getExamQuestions,getExamResult,submitExamAnswers} = require("../services/studentServices");
 const {
-  // submitActivityValidator
+  submitExamAnswersValidator
 } = require("../utils/validators/studentValidator");
 
 router.use(authService.protect);
@@ -17,5 +17,18 @@ router
 
 router.route('/getMyData').get(getMyData)
 router.route('/getMyEnrolledClass').get(getMyEnrolledClass)
+router
+  .route("/getExamQuestions/:examId")
+  .get(getExamQuestions);
+
+// تسجيل إجابات الطالب
+router
+  .route("/submitExamAnswers/:examId")
+  .post(submitExamAnswersValidator, submitExamAnswers);
+
+// استرجاع نتيجة الكويز
+router
+  .route("/getExamResult/:examId")
+  .get(getExamResult);
 
 module.exports = router;
