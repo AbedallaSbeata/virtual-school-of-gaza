@@ -48,16 +48,26 @@ exports.getMyData = asyncHandler(async (req, res, next) => {
 exports.getExamQuestions = asyncHandler(async (req, res, next) => {
   const { examId } = req.params;
 
-  // البحث عن الكويز
+  // البحث عن الاختبار
   const exam = await Exam.findById(examId).select('questions');
 
   if (!exam) {
     return next(new ApiError('الاختبار غير موجود', 404));
   }
 
+  const questionsWithoutAnswers = exam.questions.map((question) => {
+    return {
+      _id: question._id,
+      questionText: question.questionText,
+      options: question.options,
+      questionGrade: question.questionGrade,
+    };
+  });
+
+
   res.status(200).json({
     message: 'تم استرجاع أسئلة الاختبار بنجاح',
-    data: exam.questions,
+    data: questionsWithoutAnswers,
   });
 });
 
