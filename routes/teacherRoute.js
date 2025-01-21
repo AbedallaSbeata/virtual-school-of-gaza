@@ -18,7 +18,6 @@ const {
   getSubmissionsForActivity,
   addSubmissionGradeAndFeedback,
   createExam,
-  evaluateExam,
   addStudentGrade,
   updateStudentGrade,
   getGradesForSubjectByTeacher,
@@ -68,7 +67,6 @@ router
   .post(addSubmissionGradeAndFeedbackValidator, addSubmissionGradeAndFeedback);
 
 router.route("/createExam").post(createExamValidator, createExam);
-router.route("/evaluateExam/:examId").post(evaluateExam);
 router
   .route("/addStudentGrade")
   .post(addStudentGradeValidator, addStudentGrade);
