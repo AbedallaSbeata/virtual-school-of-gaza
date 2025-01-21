@@ -76,7 +76,7 @@ exports.submitExamAnswers = asyncHandler(async (req, res, next) => {
   const { answers } = req.body; // إجابات الطالب
   const studentId = req.user.identity_number; // رقم هوية الطالب
 
-  // البحث عن الكويز
+  // البحث عن الاختبار
   const exam = await Exam.findById(examId);
 
   if (!exam) {
@@ -108,21 +108,53 @@ exports.submitExamAnswers = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.getExamResult = asyncHandler(async (req, res, next) => {
-  const { examId } = req.params;
-  const studentId = req.user.identity_number; // رقم هوية الطالب
 
-  // البحث عن إجابات الطالب
-  const studentAnswer = await StudentAnswer.findOne({ exam_id: examId, student_id: studentId });
+
+
+exports.getStudentAnswersExam = asyncHandler(async (req, res, next) => {
+  const {examId , studentId } = req.params;
+
+  // البحث عن إجابات الطالب لهذا الكويز
+  const studentAnswer = await StudentAnswer.findOne({ exam_id: examId, student_id: studentId })
+    .populate({
+      path: 'exam_id',
+      select: 'questions', // تضمين الأسئلة من الكويز
+    });
 
   if (!studentAnswer) {
-    return next(new ApiError('لم يتم العثور على إجابات لهذا الاختبار', 404));
+    return next(new ApiError('لم يتم العثور على إجابات لهذا الطالب', 404));
   }
 
+  // إضافة الإجابات الصحيحة من الكويز
+  const exam = studentAnswer.exam_id;
+  const questionsWithCorrectAnswers = exam.questions.map((question) => {
+    return {
+      _id: question._id,
+      questionText: question.questionText,
+      options: question.options,
+      correctAnswer: question.correctAnswer,
+      questionGrade: question.questionGrade,
+    };
+  });
+
+  const studentAnswersWithDetails = studentAnswer.answers.map((answer) => {
+    const question = questionsWithCorrectAnswers.find((q) => q._id.toString() === answer.question_id.toString());
+    return {
+      questionText: question.questionText,
+      options: question.options,
+      correctAnswer: question.correctAnswer,
+      studentAnswer: answer.answer,
+      questionGrade: question.questionGrade,
+    };
+  });
+
   res.status(200).json({
-    message: 'تم استرجاع نتيجة الاختبار بنجاح',
+    message: 'تم استرجاع إجابات الطالب بنجاح',
     data: {
+      student_id: studentAnswer.student_id,
+      exam_id: studentAnswer.exam_id,
       total_grade: studentAnswer.total_grade,
+      answers: studentAnswersWithDetails,
     },
   });
 });
