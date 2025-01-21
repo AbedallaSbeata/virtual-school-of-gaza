@@ -21,7 +21,8 @@ const {
   evaluateExam,
   addStudentGrade,
   updateStudentGrade,
-  getGradesForSubjectByTeacher
+  getGradesForSubjectByTeacher,
+  getStudentAnswersExam
 } = require("../services/teacherServices");
 const {
   addNewRecordedLectureValidator,
@@ -79,5 +80,9 @@ router
   router
   .route("/updateStudentGrade/:gradeId")
   .put(updateStudentGradeValidator, updateStudentGrade);
+
+  router
+    .route("/getStudentAnswersExam/:examId/:studentId")
+    .get(getStudentAnswersExam);
 
 module.exports = router;
