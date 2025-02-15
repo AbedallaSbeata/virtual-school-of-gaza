@@ -164,5 +164,5 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   await user.save();
 
   const token = createToken(user._id);
-  res.status(200).json({ token });
+  res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح",token });
 });
