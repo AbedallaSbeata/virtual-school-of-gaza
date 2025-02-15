@@ -118,7 +118,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   }
   res
     .status(200)
-    .json({ message: "تم ارسال الرمز الى البريد الالكتروني بنجاح" });
+    .json({ message: "تم ارسال الرمز الى البريد الالكتروني بنجاح", identity_number: user.identity_number});
 });
 
 exports.verifyPassResetCode = asyncHandler(async (req, res, next) => {
