@@ -30,7 +30,7 @@ server.use("/managerAssistant", managerAssistantRoute);
 server.use("/teacher", teacherRoute);
 server.use("/student", studentRoute);
 
-server.all("*", (req, res, next) => {
+server.all("*", (req, res, next) => {d
   next(new ApiError(`can't find this route: ${req.originalUrl}`, 400));
 });
 

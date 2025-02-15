@@ -100,7 +100,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 
   await user.save();
 
-  const message = `Hi ${user.username},\n We received a request to reset the password on your School Account. \n The reset code: ${resetCode} \n Enter this code to complete the reset. \n Thanks for helping us keep your account secure.\n Virsual School Team`;
+  const message = `Hi ${user.first_name},\n We received a request to reset the password on your School Account. \n The reset code: ${resetCode} \n Enter this code to complete the reset. \n Thanks for helping us keep your account secure.\n Virsual School Team`;
   try {
     await sendEmail({
       email: user.email,

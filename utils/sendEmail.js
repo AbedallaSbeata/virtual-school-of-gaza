@@ -12,7 +12,7 @@ const sendEmail = async (options) => {
   });
 
   const mailOpts = {
-    from: "Virsual School Team",
+    from: "Virtual School Team",
     to: options.email,
     subject: options.subject,
     text: options.message,
