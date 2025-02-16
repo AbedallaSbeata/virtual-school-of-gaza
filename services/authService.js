@@ -166,9 +166,9 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 
   const token = createToken(user._id);
   req.user.token = token;
-  res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح",token });
+  res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token});
 });
 
 exports.refresh = asyncHandler(async (req, res, next) => {
-  res.status(200).json({token: req.user.token,identity_number: req.user.identity_number, role: req.user.role})
+  res.status(200).json({token: req.user.token, identity_number: req.user.identity_number, role: req.user.role})
 });

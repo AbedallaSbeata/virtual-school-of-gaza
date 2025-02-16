@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const authService = require("../services/authService");
+
 const {
   login,
   forgotPassword,
@@ -18,6 +20,9 @@ router.route("/login").post(loginValidator, login);
 router.post("/forgotPassword", forgotPasswordValidator, forgotPassword);
 router.post("/verifyResetCode", verifyResetCodeValidator, verifyPassResetCode);
 router.put("/resetPassword", resetPasswordValidator, resetPassword);
-router.post("/refresh", refresh);
+
+router.use(authService.protect);
+router.use(authService.allowedTo("admin", "manager", "teacher", "student", "manager assistant"));
+router.get("/refresh", refresh);
 
 module.exports = router;
