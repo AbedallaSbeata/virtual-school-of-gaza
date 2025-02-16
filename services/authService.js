@@ -22,7 +22,6 @@ exports.login = asyncHandler(async (req, res, next) => {
   console.log(userWithId._id);
   const token = createToken(userWithId._id);
   delete user._doc.password;
-  req.user.token = token;
   res.status(200).json({ data: user, token });
 });
 
