@@ -22,6 +22,8 @@ exports.login = asyncHandler(async (req, res, next) => {
   console.log(userWithId._id);
   const token = createToken(userWithId._id);
   delete user._doc.password;
+  user.token = token;
+  await user.save()
   res.status(200).json({ data: user, token });
 });
 
@@ -43,7 +45,6 @@ exports.protect = asyncHandler(async (req, res, next) => {
 
   // 3) Check if user exists
   const currentUser = await User.findById(decoded.userId);
-
   if (!currentUser) {
     return next(new ApiError("No user of this token", 401));
   }
