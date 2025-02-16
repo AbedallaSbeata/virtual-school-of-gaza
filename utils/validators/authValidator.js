@@ -37,3 +37,4 @@ exports.resetPasswordValidator = [
   check("passwordConfirm").notEmpty().withMessage("Confirm Password Required"),
   validatorMiddleware,
 ];
+
