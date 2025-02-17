@@ -23,7 +23,7 @@ dbConnection();
 server.use(express.json());
 server.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-server.use(verifyJWT)
+// server.use(verifyJWT)
 
 
 server.use(cors());
