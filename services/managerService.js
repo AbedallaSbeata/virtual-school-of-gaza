@@ -332,3 +332,4 @@ exports.getMyData = asyncHandler(async (req, res, next) => {
   const myData = await User.findById(req.user._id)
   res.status(200).json({data: myData})
 });
+
