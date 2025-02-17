@@ -11,6 +11,7 @@ const managerRoute = require("./routes/managerRoute");
 const managerAssistantRoute = require('./routes/managerAssistantRoute')
 const teacherRoute = require('./routes/teacherRoute')
 const studentRoute = require('./routes/studentRoute')
+const cookieParser = require("cookie-parser");
 
 const cors = require("cors");
 const path = require('path')
@@ -25,6 +26,7 @@ server.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 server.use(cors({
   credentials: true
 }));
+server.use(cookieParser());
 
 
 server.use("/auth", authRoute);
