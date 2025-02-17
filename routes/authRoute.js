@@ -20,6 +20,6 @@ router.route("/login").post(loginValidator, login);
 router.post("/forgotPassword", forgotPasswordValidator, forgotPassword);
 router.post("/verifyResetCode", verifyResetCodeValidator, verifyPassResetCode);
 router.put("/resetPassword", resetPasswordValidator, resetPassword);
-router.get('/refresh', refreshToken)
+router.post('/refresh', refreshToken)
 
 module.exports = router;
