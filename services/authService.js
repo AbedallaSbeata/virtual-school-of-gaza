@@ -48,7 +48,7 @@ exports.login = async (req, res) => {
   const { identity_number, password } = req.body;
   if (!identity_number || !password) return res.status(400).json({ 'message': 'Identity number and password are required.' });
 
-  const foundUser = await User.findOne({ identity_number: user }).exec();
+  const foundUser = await User.findOne({ identity_number: identity_number }).exec();
   if (!foundUser) return res.sendStatus(401); //Unauthorized 
   // evaluate password 
   const match = await bcrypt.compare(pwd, foundUser.password);
