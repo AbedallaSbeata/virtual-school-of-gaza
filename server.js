@@ -12,7 +12,6 @@ const managerAssistantRoute = require('./routes/managerAssistantRoute')
 const teacherRoute = require('./routes/teacherRoute')
 const studentRoute = require('./routes/studentRoute')
 const cookieParser = require("cookie-parser");
-const verifyJWT = require('./middlewares/verifyJWT')
 
 const cors = require("cors");
 const path = require('path')
@@ -22,8 +21,6 @@ dbConnection();
 
 server.use(express.json());
 server.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// server.use(verifyJWT)
 
 
 server.use(cors());
