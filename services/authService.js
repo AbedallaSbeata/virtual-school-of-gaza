@@ -22,8 +22,6 @@ exports.login = asyncHandler(async (req, res, next) => {
   console.log(userWithId._id);
   const token = createToken(userWithId._id);
   delete user._doc.password;
-  req.user.token = token;
-  await user.save()
   res.status(200).json({ data: user, token });
 });
 
@@ -166,7 +164,6 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   await user.save();
 
   const token = createToken(user._id);
-  req.user.token = token;
   res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token});
 });
 
