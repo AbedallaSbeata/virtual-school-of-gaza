@@ -23,6 +23,7 @@ exports.login = asyncHandler(async (req, res, next) => {
   const token = createToken(userWithId._id);
   delete user._doc.password;
   req.user.token = token;
+  await user.save()
   res.status(200).json({ data: user, token });
 });
 
