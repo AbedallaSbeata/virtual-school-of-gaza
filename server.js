@@ -23,10 +23,7 @@ server.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 server.use(cors({
-  origin: "http://localhost:5173", // استبدلها بعنوان الفرونت الفعلي
-  methods: "GET,POST,PUT,DELETE",  // السماح بالطلبات المطلوبة
-  allowedHeaders: "Content-Type,Authorization",
-  credentials:true
+  credentials: true
 }));
 
 
