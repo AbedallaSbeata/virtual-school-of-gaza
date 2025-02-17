@@ -184,26 +184,42 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 });
 
 exports.refreshToken = async (req, res) => {
-  const token  = req.body.token;  // Token sent from frontend
+  const token = req.body.token;  // Token sent from frontend
 
   if (!token) {
       return res.status(401).json({ message: "No token provided" });
   }
 
   try {
+      console.log("🔍 Token Received:", token);
+
+      // Decode Token Without Verification (to check expiration)
+      const decodedWithoutVerification = jwt.decode(token);
+      console.log("📌 Decoded Token (without verifying):", decodedWithoutVerification);
+
+      // Verify Token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("✅ Token Verified:", decoded);
+
       const identity_number = decoded.identity_number;
       const role = decoded.role;
-      console.log(role)
-      conole.log(identity_number)
+
+      console.log("User Role:", role);
+      console.log("User Identity Number:", identity_number);
+
+      // Generate New Token
       const newAccessToken = jwt.sign(
-          { identity_number: decoded.identity_number },
+          { identity_number, role },
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
       );
-      res.json({ accessToken: newAccessToken, identity_number: identity_number, role: role });
-      
+
+      console.log("✅ New Token Generated:", newAccessToken);
+
+      res.json({ accessToken: newAccessToken });
+
   } catch (error) {
+      console.error("❌ JWT Verification Error:", error.message);
       return res.status(403).json({ message: "Invalid or expired token" });
   }
 };
