@@ -50,6 +50,7 @@ exports.login = async (req, res) => {
 
   const foundUser = await User.findOne({ identity_number: identity_number }).exec();
   if (!foundUser) return res.sendStatus(401); //Unauthorized 
+
   // evaluate password 
   const match = await bcrypt.compare(password, foundUser.password);
   if (match) {
@@ -75,17 +76,16 @@ exports.login = async (req, res) => {
       foundUser.token = accessToken;
       await foundUser.save();
 
-
       // Creates Secure Cookie with refresh token
       res.cookie('jwt', refreshToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
 
       // Send authorization roles and access token to user
-      res.json({ foundUser});
-
+      res.json({ foundUser, accessToken });  // Send both access token and user details
   } else {
       res.sendStatus(401);
   }
 }
+
 
 exports.protect = asyncHandler(async (req, res, next) => {
   // 1) Check if token exist, if exist get
