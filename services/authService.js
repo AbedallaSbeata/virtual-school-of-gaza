@@ -231,7 +231,11 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 
   await user.save();
 
-  const token = createToken(user._id);
+  const token =jwt.sign(
+   user._id,
+    process.env.JWT_SECRET,
+    { expiresIn: "90d" }
+  );
   res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token });
 });
 
