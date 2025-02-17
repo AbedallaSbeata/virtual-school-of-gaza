@@ -264,7 +264,8 @@ exports.handleRefreshToken = async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET,
       (err, decoded) => {
           if (err || foundUser.identity_number !== decoded.identity_number) return res.sendStatus(403);
-          const role = Object.values(foundUser.role);
+          const role = foundUser.role;
+          const identity_number = foundUser.identity_number;
           const accessToken = jwt.sign(
               {
                   "UserInfo": {
@@ -275,7 +276,7 @@ exports.handleRefreshToken = async (req, res) => {
               process.env.JWT_SECRET,
               { expiresIn: '90d' }
           );
-          res.json({ role, accessToken })
+          res.json({ role, accessToken, identity_number })
       }
   );
 }
