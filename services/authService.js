@@ -8,107 +8,150 @@ const sendEmail = require("../utils/sendEmail");
 const createToken = require("../utils/createToken");
 const createRefereshToken = require('../utils/createToken')
 
-exports.login = asyncHandler(async (req, res, next) => {
-  const user = await User.findOne(
-    { identity_number: req.body.identity_number },
-    { __v: false, resetPasswordAt: false, _id: false }
-  );
-  if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
-    return next(new ApiError("خطأ في رقم الهوية أو كلمة المرور", 401));
-  }
-  if (user.active == false) {
-    return next(new ApiError("عذرا.. هذا الحساب غير فعال", 401));
-  }
-
-  const userWithId = await User.findOne({ identity_number: req.body.identity_number });
-
-  // إنشاء توكن جديد
-  const token = createToken(userWithId._id);
-  const refreshToken = createRefereshToken(userWithId._id);
-
-  // حفظ الريفرش توكن في قاعدة البيانات
-  userWithId.refreshToken = refreshToken;
-  await userWithId.save();
-
-  // **حفظ الريفرش توكن في الكوكيز**
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true, 
-    secure: process.env.NODE_ENV === "production", 
-    sameSite: "Strict", 
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  delete user._doc.password;
-  res.status(200).json({ data: user, token });
-});
-
-
-// exports.protect = asyncHandler(async (req, res, next) => {
-//   // 1) Check if token exist, if exist get
-//   let token;
-//   if (
-//     req.headers.authorization &&
-//     req.headers.authorization.startsWith("Bearer")
-//   ) {
-//     token = req.headers.authorization.split(" ")[1];
+// exports.login = asyncHandler(async (req, res, next) => {
+//   const user = await User.findOne(
+//     { identity_number: req.body.identity_number },
+//     { __v: false, resetPasswordAt: false, _id: false }
+//   );
+//   if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
+//     return next(new ApiError("خطأ في رقم الهوية أو كلمة المرور", 401));
 //   }
-//   if (!token) {
-//     return next(new ApiError("يحب عليك تسجيل الدخول أولا", 401));
+//   if (user.active == false) {
+//     return next(new ApiError("عذرا.. هذا الحساب غير فعال", 401));
 //   }
 
-//   // 2) Verify token (no change happens, expired token)
-//   const decoded = jwt.verify(token, process.env.JWT_SECRET); // return id of user
+//   const userWithId = await User.findOne({ identity_number: req.body.identity_number });
 
-//   // 3) Check if user exists
-//   const currentUser = await User.findById(decoded.userId);
+//   // إنشاء توكن جديد
+//   const token = createToken(userWithId._id);
+//   const refreshToken = createRefereshToken(userWithId._id);
 
-//   if (!currentUser) {
-//     return next(new ApiError("No user of this token", 401));
-//   }
+//   // حفظ الريفرش توكن في قاعدة البيانات
+//   userWithId.refreshToken = refreshToken;
+//   await userWithId.save();
 
-//   // 4) Check if user change his password after token created
+//   // **حفظ الريفرش توكن في الكوكيز**
+//   res.cookie("refreshToken", refreshToken, {
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production", // تأكد من هذه الإعدادات
+//     sameSite: "Strict",
+//     maxAge: 7 * 24 * 60 * 60 * 1000,
+//   });
+  
 
-//   if (currentUser.resetPasswordAt) {
-//     const resetPasswordTimestamp = parseInt(
-//       currentUser.resetPasswordAt.getTime() / 1000,
-//       10
-//     ); // تحويل الديت لتايم ستامب
-//     if (resetPasswordTimestamp > decoded.iat) {
-//       // تاريخ التعديل اكبر من تاريخ انشاء التوكن يعني انه حصل تعديل للباسورد بعد انشاء التوكن
-//       return next(
-//         new ApiError(
-//           "هذا المستخدم قام بتغيير كلمة المرور.. يرجى تسجيل الدخول مجددا",
-//           401
-//         )
-//       );
-//     }
-//   }
-//   req.user = currentUser;
-//   next();
+//   delete user._doc.password;
+//   res.status(200).json({ data: user, token });
 // });
-exports.protect = asyncHandler(async (req, res, next) => {
-  let token;
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-    token = req.headers.authorization.split(" ")[1];
+
+
+exports.login = async (req, res) => {
+  const { user, pwd } = req.body;
+  if (!user || !pwd) return res.status(400).json({ 'message': 'Identity number and password are required.' });
+
+  const foundUser = await User.findOne({ identity_number: user }).exec();
+  if (!foundUser) return res.sendStatus(401); //Unauthorized 
+  // evaluate password 
+  const match = await bcrypt.compare(pwd, foundUser.password);
+  if (match) {
+      const role = Object.values(foundUser.role).filter(Boolean);
+      // create JWTs
+      const accessToken = jwt.sign(
+          {
+              "UserInfo": {
+                  "identity_number": foundUser.identity_number,
+                  "role": role
+              }
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: '90d' }
+      );
+      const refreshToken = jwt.sign(
+          { "identity_number": foundUser.identity_number },
+          process.env.REFRESH_TOKEN_SECRET,
+          { expiresIn: '90d' }
+      );
+      // Saving refreshToken with current user
+      foundUser.refreshToken = refreshToken;
+      await foundUser.save();
+
+
+      // Creates Secure Cookie with refresh token
+      res.cookie('jwt', refreshToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
+
+      // Send authorization roles and access token to user
+      res.json({ role, accessToken });
+
   } else {
-    const user = await User.findOne({ identity_number: req.body.identity_number });
-    if (user) token = user.token;
+      res.sendStatus(401);
   }
+}
 
+exports.protect = asyncHandler(async (req, res, next) => {
+  // 1) Check if token exist, if exist get
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
   if (!token) {
-    return next(new ApiError("يجب عليك تسجيل الدخول أولا", 401));
+    return next(new ApiError("يحب عليك تسجيل الدخول أولا", 401));
   }
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  // 2) Verify token (no change happens, expired token)
+  const decoded = jwt.verify(token, process.env.JWT_SECRET); // return id of user
+
+  // 3) Check if user exists
   const currentUser = await User.findById(decoded.userId);
 
   if (!currentUser) {
     return next(new ApiError("No user of this token", 401));
   }
 
+  // 4) Check if user change his password after token created
+
+  if (currentUser.resetPasswordAt) {
+    const resetPasswordTimestamp = parseInt(
+      currentUser.resetPasswordAt.getTime() / 1000,
+      10
+    ); // تحويل الديت لتايم ستامب
+    if (resetPasswordTimestamp > decoded.iat) {
+      // تاريخ التعديل اكبر من تاريخ انشاء التوكن يعني انه حصل تعديل للباسورد بعد انشاء التوكن
+      return next(
+        new ApiError(
+          "هذا المستخدم قام بتغيير كلمة المرور.. يرجى تسجيل الدخول مجددا",
+          401
+        )
+      );
+    }
+  }
   req.user = currentUser;
   next();
 });
+// exports.protect = asyncHandler(async (req, res, next) => {
+//   let token;
+//   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+//     token = req.headers.authorization.split(" ")[1];
+//   } else {
+//     const user = await User.findOne({ identity_number: req.body.identity_number });
+//     if (user) token = user.token;
+//   }
+
+//   if (!token) {
+//     return next(new ApiError("يجب عليك تسجيل الدخول أولا", 401));
+//   }
+
+//   const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//   const currentUser = await User.findById(decoded.userId);
+
+//   if (!currentUser) {
+//     return next(new ApiError("No user of this token", 401));
+//   }
+
+//   req.user = currentUser;
+//   next();
+// });
 
 exports.allowedTo = (...roles) =>
   asyncHandler(async (req, res, next) => {
@@ -208,54 +251,31 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token});
 });
 
-// exports.refresh = asyncHandler(async (req, res, next) => {
-//   // البحث عن المستخدم واسترجاع التوكن المخزن
-//   const user = await User.findOne({ identity_number: req.user.identity_number });
-
-//   if (!user || !user.token) {
-//     return next(new ApiError("المستخدم غير موجود أو غير مسجل الدخول", 401));
-//   }
-
-//   res.status(200).json({ token: user.token, identity_number: user.identity_number, role: user.role });
-// });
-
-
 exports.handleRefreshToken = async (req, res) => {
-  try {
-    // التأكد من وجود كوكيز الريفرش توكن
-    const cookies = req.cookies;
-    if (!cookies?.refreshToken) return res.sendStatus(401); // لا يوجد كوكيز
+  const cookies = req.cookies;
+  if (!cookies?.jwt) return res.sendStatus(401);
+  const refreshToken = cookies.jwt;
 
-    const refreshToken = cookies.refreshToken;
-
-    // البحث عن المستخدم الذي يحتوي على الريفرش توكن
-    const foundUser = await User.findOne({ refreshToken }).exec();
-    if (!foundUser) return res.sendStatus(403); // المستخدم غير موجود
-
-    // التحقق من صلاحية التوكن باستخدام jwt.verify
-    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
-      if (err || foundUser._id.toString() !== decoded.userId) {
-        console.error("Invalid or mismatched token");
-        return res.sendStatus(403); // التوكن غير صالح
+  const foundUser = await User.findOne({ refreshToken }).exec();
+  if (!foundUser) return res.sendStatus(403); //Forbidden 
+  // evaluate jwt 
+  jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET,
+      (err, decoded) => {
+          if (err || foundUser.identity_number !== decoded.identity_number) return res.sendStatus(403);
+          const role = Object.values(foundUser.role);
+          const accessToken = jwt.sign(
+              {
+                  "UserInfo": {
+                      "identity_number": decoded.identity_number,
+                      "role": role
+                  }
+              },
+              process.env.JWT_SECRET,
+              { expiresIn: '90d' }
+          );
+          res.json({ role, accessToken })
       }
-
-      // إنشاء توكن جديد (Access Token)
-      const role = Object.values(foundUser.role);
-      const accessToken = jwt.sign(
-        {
-          userId: foundUser._id,
-          identity_number: decoded.identity_number,
-          role: role,
-        },
-        process.env.JWT_SECRET, // استخدام السر الخاص بـ Access Token
-        { expiresIn: process.env.JWT_EXPIRE_TIME } // مدة صلاحية التوكن
-      );
-
-      // إرسال التوكن الجديد
-      res.json({ role, accessToken });
-    });
-  } catch (error) {
-    console.error("Unexpected Error:", error);
-    res.sendStatus(500); // خطأ في الخادم
-  }
-};
+  );
+}
