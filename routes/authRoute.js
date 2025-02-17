@@ -21,8 +21,8 @@ router.post("/forgotPassword", forgotPasswordValidator, forgotPassword);
 router.post("/verifyResetCode", verifyResetCodeValidator, verifyPassResetCode);
 router.put("/resetPassword", resetPasswordValidator, resetPassword);
 
-router.use(authService.protect);
-router.use(authService.allowedTo("admin", "manager", "teacher", "student", "manager assistant"));
+// router.use(authService.protect);
+// router.use(authService.allowedTo("admin", "manager", "teacher", "student", "manager assistant"));
 router.get("/refresh", refresh);
 
 module.exports = router;
