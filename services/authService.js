@@ -45,8 +45,8 @@ const createRefereshToken = require('../utils/createToken')
 
 
 exports.login = async (req, res) => {
-  const { user, pwd } = req.body;
-  if (!user || !pwd) return res.status(400).json({ 'message': 'Identity number and password are required.' });
+  const { identity_number, password } = req.body;
+  if (!identity_number || !password) return res.status(400).json({ 'message': 'Identity number and password are required.' });
 
   const foundUser = await User.findOne({ identity_number: user }).exec();
   if (!foundUser) return res.sendStatus(401); //Unauthorized 
