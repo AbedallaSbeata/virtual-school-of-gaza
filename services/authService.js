@@ -51,7 +51,7 @@ exports.login = async (req, res) => {
   const foundUser = await User.findOne({ identity_number: identity_number }).exec();
   if (!foundUser) return res.sendStatus(401); //Unauthorized 
   // evaluate password 
-  const match = await bcrypt.compare(pwd, foundUser.password);
+  const match = await bcrypt.compare(password, foundUser.password);
   if (match) {
       const role = Object.values(foundUser.role).filter(Boolean);
       // create JWTs
