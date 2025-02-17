@@ -60,7 +60,7 @@ exports.login = async (req, res) => {
     // create JWTs
     const accessToken = jwt.sign(
       {
-        UserInfo: {
+        data: {
           identity_number: foundUser.identity_number,
           role: role,
         },
@@ -285,9 +285,9 @@ exports.handleRefreshToken = async (req, res) => {
       return res.sendStatus(403);
     const role = foundUser.role;
     const identity_number = foundUser.identity_number;
-    const accessToken = jwt.sign(
+    const token = jwt.sign(
       {
-        UserInfo: {
+        data: {
           identity_number: decoded.identity_number,
           role: role,
         },
@@ -295,6 +295,6 @@ exports.handleRefreshToken = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "90d" }
     );
-    res.json({ role, accessToken, identity_number });
+    res.json({ role, token, identity_number });
   });
 };
