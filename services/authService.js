@@ -66,28 +66,28 @@ exports.login = async (req, res) => {
         },
       },
       process.env.JWT_SECRET,
-      { expiresIn: "90d" }
+      { expiresIn: "10s" }
     );
     const refreshToken = jwt.sign(
       { identity_number: foundUser.identity_number },
       process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "90d" }
+      { expiresIn: "1d" }
     );
     // Saving refreshToken with current user
     foundUser.refreshToken = refreshToken;
-    foundUser.token = accessToken;
-    await foundUser.save();
+    const result = await foundUser.save();
+    console.log(result)
 
     // Creates Secure Cookie with refresh token
     res.cookie("jwt", refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: "None",
       maxAge: 24 * 60 * 60 * 1000,
     });
 
     // Send authorization roles and access token to user
-    res.json({ foundUser });
+    res.json({ foundUser, accessToken });
   } else {
     res.sendStatus(401);
   }
@@ -285,16 +285,16 @@ exports.handleRefreshToken = async (req, res) => {
       return res.sendStatus(403);
     const role = foundUser.role;
     const identity_number = foundUser.identity_number;
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
       {
-        data: {
-          identity_number: decoded.identity_number,
-          role: role,
+        "UserInfo": {
+          "identity_number": decoded.identity_number,
+          "role": role
         },
       },
       process.env.JWT_SECRET,
-      { expiresIn: "90d" }
+      { expiresIn: "10s" }
     );
-    res.json({ role, token, identity_number });
+    res.json({ role, accessToken, identity_number });
   });
 };
