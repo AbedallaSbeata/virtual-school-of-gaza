@@ -198,7 +198,7 @@ exports.refreshToken = async (req, res) => {
           { expiresIn: "1h" }
       );
 
-      res.json({ accessToken: newAccessToken });
+      res.json({ accessToken: newAccessToken, identity_number: decoded.identity_number, role: decoded.role });
   } catch (error) {
       return res.status(403).json({ message: "Invalid or expired token" });
   }
