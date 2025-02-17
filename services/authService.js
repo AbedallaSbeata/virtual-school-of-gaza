@@ -24,12 +24,19 @@ exports.login = asyncHandler(async (req, res, next) => {
 
   // إنشاء توكن جديد
   const token = createToken(userWithId._id);
-
   const refreshToken = createRefereshToken(userWithId._id);
 
-// Saving refreshToken with current user
+  // حفظ الريفرش توكن في قاعدة البيانات
   userWithId.refreshToken = refreshToken;
   await userWithId.save();
+
+  // **حفظ الريفرش توكن في الكوكيز**
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true, 
+    secure: process.env.NODE_ENV === "production", 
+    sameSite: "Strict", 
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
 
   delete user._doc.password;
   res.status(200).json({ data: user, token });
