@@ -7,18 +7,25 @@ const Class = require("../models/classModel");
 const Teacher = require("../models/teacherModel");
 const Student = require("../models/studentModel");
 const ApiFeatures = require("../utils/apiFeatures");
-const createToken = require("../utils/createToken")
+const createToken = require("../utils/createToken");
 
 exports.addUser = asyncHandler(async (req, res, next) => {
- 
-
-  if (!req.files || !req.files['identity_image'] || !req.files['profile_image']) {
-    return res.status(400).json({ message: 'يرجى رفع صورة الهوية وصورة الشخصية' });
+  if (
+    !req.files ||
+    !req.files["identity_image"] ||
+    !req.files["profile_image"]
+  ) {
+    return res
+      .status(400)
+      .json({ message: "يرجى رفع صورة الهوية وصورة الشخصية" });
   }
 
-  const identityImageUrl = `${req.protocol}://${req.get('host')}/uploads/users/${req.files['identity_image'][0].filename}`;
-  const profileImageUrl = `${req.protocol}://${req.get('host')}/uploads/users/${req.files['profile_image'][0].filename}`;
-
+  const identityImageUrl = `${req.protocol}://${req.get(
+    "host"
+  )}/uploads/users/${req.files["identity_image"][0].filename}`;
+  const profileImageUrl = `${req.protocol}://${req.get("host")}/uploads/users/${
+    req.files["profile_image"][0].filename
+  }`;
 
   const user = await User.create({
     basic_phone_number: req.body.basic_phone_number,
@@ -40,7 +47,7 @@ exports.addUser = asyncHandler(async (req, res, next) => {
     role: req.body.role,
     whatsapp_number: req.body.whatsapp_number,
     identity_image: identityImageUrl,
-    profile_image: profileImageUrl
+    profile_image: profileImageUrl,
   });
   const token = createToken(user._id);
   res.send({ data: user, token });
@@ -163,7 +170,7 @@ exports.addStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
 
 exports.disActiveUser = asyncHandler(async (req, res, next) => {
   const user = await User.find({ identity_number: req.body.identity_number });
-  if (user.length==0) {
+  if (user.length == 0) {
     return next(
       new ApiError(
         `No user for this identity number: ${req.body.identity_number}`,
@@ -226,19 +233,21 @@ exports.getClassesForSpecificLevel = asyncHandler(async (req, res, next) => {
     .json({ results: classes.length, paginationResult, data: classes });
 });
 
-exports.getTeachersFromSpecificSubject = asyncHandler(async (req, res,next) => {
-  const subjectID = await Subject.findById(req.params.subjectID);
-  if (!subjectID) {
-    return next(new ApiError("هذه المادة غير موجودة"));
+exports.getTeachersFromSpecificSubject = asyncHandler(
+  async (req, res, next) => {
+    const subjectID = await Subject.findById(req.params.subjectID);
+    if (!subjectID) {
+      return next(new ApiError("هذه المادة غير موجودة"));
+    }
+    const teachers = subjectID.teachersIDs;
+    let teachersData = [];
+    for (let i = 0; i < teachers.length; i++) {
+      let teacher = await User.find({ identity_number: teachers[i] });
+      teachersData.push(teacher[0]);
+    }
+    res.status(200).send({ data: teachersData });
   }
-  const teachers = subjectID.teachersIDs;
-  let teachersData = [];
-  for (let i = 0; i < teachers.length; i++) {
-    let teacher = await User.find({ identity_number: teachers[i] });
-    teachersData.push(teacher[0]);
-  }
-  res.status(200).send({ data: teachersData });
-});
+);
 
 exports.addSpecificSubjectToTeachers = asyncHandler(async (req, res, next) => {
   const subjectID = await Subject.findById(req.params.subjectID);
@@ -303,7 +312,9 @@ exports.getSpecificTeacher = asyncHandler(async (req, res, next) => {
   if (teacherExists.length == 0) {
     return next(new ApiError("هذا المعلم غير موجود"));
   }
-  const teacher = await User.find({identity_number: teacherExists[0].user_identity_number});
+  const teacher = await User.find({
+    identity_number: teacherExists[0].user_identity_number,
+  });
   res.status(200).send({ data: teacher });
 });
 
@@ -314,7 +325,9 @@ exports.getSpecificStudent = asyncHandler(async (req, res, next) => {
   if (studentExists.length == 0) {
     return next(new ApiError("هذا الطالب غير موجود"));
   }
-  const student = await User.find({identity_number: studentExists[0].user_identity_number});
+  const student = await User.find({
+    identity_number: studentExists[0].user_identity_number,
+  });
   res.status(200).send({ data: student });
 });
 
@@ -329,7 +342,6 @@ exports.getStudents = asyncHandler(async (req, res, next) => {
 });
 
 exports.getMyData = asyncHandler(async (req, res, next) => {
-  const myData = await User.findById(req.user._id)
-  res.status(200).json({data: myData})
+  const myData = await User.findById(req.user._id);
+  res.status(200).json({ data: myData });
 });
-

@@ -5,58 +5,27 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
-const createToken = require('../utils/createToken')
+const createToken = require("../utils/createToken");
 
-exports.login = async (req, res) => {
-  const { identity_number, password } = req.body;
-  if (!identity_number || !password)
-    return res
-      .status(400)
-      .json({ message: "Identity number and password are required." });
-
-  const foundUser = await User.findOne({
-    identity_number: identity_number,
-  }).exec();
-  if (!foundUser) return res.sendStatus(401); //Unauthorized
-  // evaluate password
-  const match = await bcrypt.compare(password, foundUser.password);
-  if (match) {
-    const role = Object.values(foundUser.role).filter(Boolean);
-    // create JWTs
-    const accessToken = jwt.sign(
-      {
-        data: {
-          identity_number: foundUser.identity_number,
-          role: role,
-        },
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "10s" }
-    );
-    const refreshToken = jwt.sign(
-      { identity_number: foundUser.identity_number },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: "1d" }
-    );
-    // Saving refreshToken with current user
-    foundUser.refreshToken = refreshToken;
-    const result = await foundUser.save();
-    console.log(result);
-
-    // Creates Secure Cookie with refresh token
-    res.cookie("jwt", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    // Send authorization roles and access token to user
-    res.json({ foundUser, accessToken });
-  } else {
-    res.sendStatus(401);
+exports.login = asyncHandler(async (req, res, next) => {
+  const user = await User.findOne(
+    { identity_number: req.body.identity_number },
+    { __v: false, resetPasswordAt: false, _id: false }
+  );
+  if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
+    return next(new ApiError("خطأ في رقم الهوية أو كلمة المرور", 401));
   }
-};
+  if (user.active == false) {
+    return next(new ApiError("عذرا.. هذا الحساب غير فعال", 401));
+  }
+  const userWithId = await User.findOne({
+    identity_number: req.body.identity_number,
+  });
+  console.log(userWithId._id);
+  const token = createToken(userWithId._id);
+  delete user._doc.password;
+  res.status(200).json({ data: user, token });
+});
 
 exports.protect = asyncHandler(async (req, res, next) => {
   // 1) Check if token exist, if exist get
@@ -101,29 +70,6 @@ exports.protect = asyncHandler(async (req, res, next) => {
   req.user = currentUser;
   next();
 });
-// exports.protect = asyncHandler(async (req, res, next) => {
-//   let token;
-//   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-//     token = req.headers.authorization.split(" ")[1];
-//   } else {
-//     const user = await User.findOne({ identity_number: req.body.identity_number });
-//     if (user) token = user.token;
-//   }
-
-//   if (!token) {
-//     return next(new ApiError("يجب عليك تسجيل الدخول أولا", 401));
-//   }
-
-//   const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//   const currentUser = await User.findById(decoded.userId);
-
-//   if (!currentUser) {
-//     return next(new ApiError("No user of this token", 401));
-//   }
-
-//   req.user = currentUser;
-//   next();
-// });
 
 exports.allowedTo = (...roles) =>
   asyncHandler(async (req, res, next) => {
@@ -177,11 +123,13 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
       new ApiError("هناك مشكلة في ارسال الرمز الى البريد الالكتروني", 500)
     );
   }
-  res.status(200).json({
-    message: "تم ارسال الرمز الى البريد الالكتروني بنجاح",
-    identity_number: user.identity_number,
-    role: user.role,
-  });
+  res
+    .status(200)
+    .json({
+      message: "تم ارسال الرمز الى البريد الالكتروني بنجاح",
+      identity_number: user.identity_number,
+      role: user.role,
+    });
 });
 
 exports.verifyPassResetCode = asyncHandler(async (req, res, next) => {
@@ -234,31 +182,3 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   const token = createToken(user._id);
   res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token });
 });
-
-exports.handleRefreshToken = async (req, res) => {
-  const cookies = req.cookies;
-  if (!cookies?.jwt) return res.sendStatus(401);
-  const refreshToken = cookies.jwt;
-
-  const foundUser = await User.findOne({ refreshToken }).exec();
-  if (!foundUser) return res.sendStatus(403); //Forbidden
-  // evaluate jwt
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
-    if (err || foundUser.identity_number !== decoded.identity_number)
-      return res.sendStatus(403);
-    const role = foundUser.role;
-    const identity_number = foundUser.identity_number;
-    const accessToken = jwt.sign(
-      {
-        UserInfo: {
-          identity_number: decoded.identity_number,
-          role: role,
-        },
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "10s" }
-    );
-    res.json({ role, accessToken, identity_number });
-  });
-};
-
