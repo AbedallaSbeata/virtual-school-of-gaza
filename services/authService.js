@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
 const createToken = require("../utils/createToken");
+const createRefereshToken = require('../utils/createToken')
 
 exports.login = asyncHandler(async (req, res, next) => {
   const user = await User.findOne(
@@ -24,8 +25,10 @@ exports.login = asyncHandler(async (req, res, next) => {
   // إنشاء توكن جديد
   const token = createToken(userWithId._id);
 
-  // حفظ التوكن في قاعدة البيانات
-  userWithId.token = token;
+  const refreshToken = createRefereshToken(userWithId._id);
+
+// Saving refreshToken with current user
+  userWithId.refreshToken = refreshToken;
   await userWithId.save();
 
   delete user._doc.password;
@@ -198,14 +201,42 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token});
 });
 
-exports.refresh = asyncHandler(async (req, res, next) => {
-  // البحث عن المستخدم واسترجاع التوكن المخزن
-  const user = await User.findOne({ identity_number: req.user.identity_number });
+// exports.refresh = asyncHandler(async (req, res, next) => {
+//   // البحث عن المستخدم واسترجاع التوكن المخزن
+//   const user = await User.findOne({ identity_number: req.user.identity_number });
 
-  if (!user || !user.token) {
-    return next(new ApiError("المستخدم غير موجود أو غير مسجل الدخول", 401));
-  }
+//   if (!user || !user.token) {
+//     return next(new ApiError("المستخدم غير موجود أو غير مسجل الدخول", 401));
+//   }
 
-  res.status(200).json({ token: user.token, identity_number: user.identity_number, role: user.role });
-});
+//   res.status(200).json({ token: user.token, identity_number: user.identity_number, role: user.role });
+// });
 
+exports.handleRefreshToken = async (req, res) => {
+    const cookies = req.cookies;
+    if (!cookies?.jwt) return res.sendStatus(401);
+    const refreshToken = cookies.jwt;
+
+    const foundUser = await User.findOne({ refreshToken }).exec();
+    if (!foundUser) return res.sendStatus(403); //Forbidden 
+    // evaluate jwt 
+    jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET,
+        (err, decoded) => {
+            if (err || foundUser._id !== decoded._id) return res.sendStatus(403);
+            const role = Object.values(foundUser.role);
+            const accessToken = jwt.sign(
+                {
+                    "data": {
+                        "identity_number": decoded.identity_number,
+                        "role": role
+                    }
+                },
+                process.env.ACCESS_TOKEN_SECRET,
+                { expiresIn: '90d' }
+            );
+            res.json({ role, accessToken })
+        }
+    );
+}

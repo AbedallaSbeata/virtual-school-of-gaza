@@ -7,7 +7,7 @@ const {
   forgotPassword,
   verifyPassResetCode,
   resetPassword,
-  refresh
+  handleRefreshToken
 } = require("../services/authService");
 const {
   loginValidator,
@@ -20,9 +20,7 @@ router.route("/login").post(loginValidator, login);
 router.post("/forgotPassword", forgotPasswordValidator, forgotPassword);
 router.post("/verifyResetCode", verifyResetCodeValidator, verifyPassResetCode);
 router.put("/resetPassword", resetPasswordValidator, resetPassword);
-
-// router.use(authService.protect);
-// router.use(authService.allowedTo("admin", "manager", "teacher", "student", "manager assistant"));
-router.get("/refresh", refresh);
+router.get('/refresh', handleRefreshToken);
 
 module.exports = router;
+
