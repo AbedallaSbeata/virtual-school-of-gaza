@@ -192,13 +192,15 @@ exports.refreshToken = async (req, res) => {
 
   try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const identity_number = decoded.identity_number;
+      const role = decoded.role;
       const newAccessToken = jwt.sign(
           { identity_number: decoded.identity_number, role: decoded.role },
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
       );
 
-      res.json({ accessToken: newAccessToken, identity_number: decoded.identity_number, role: decoded.role });
+      res.json({ accessToken: newAccessToken, identity_number: identity_number, role: role });
   } catch (error) {
       return res.status(403).json({ message: "Invalid or expired token" });
   }
