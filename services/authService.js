@@ -184,7 +184,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 });
 
 exports.refreshToken = async (req, res) => {
-  const { token } = req.body;  // Token sent from frontend
+  const token  = req.body.token;  // Token sent from frontend
 
   if (!token) {
       return res.status(401).json({ message: "No token provided" });
@@ -194,13 +194,15 @@ exports.refreshToken = async (req, res) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const identity_number = decoded.identity_number;
       const role = decoded.role;
+      console.log(role)
+      conole.log(identity_number)
       const newAccessToken = jwt.sign(
-          { identity_number: decoded.identity_number, role: decoded.role },
+          { identity_number: decoded.identity_number },
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
       );
-
       res.json({ accessToken: newAccessToken, identity_number: identity_number, role: role });
+      
   } catch (error) {
       return res.status(403).json({ message: "Invalid or expired token" });
   }
