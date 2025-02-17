@@ -183,6 +183,11 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token });
 });
 
+
+
+
+
+
 exports.refreshToken = async (req, res) => {
   const token = req.body.token;  // Token sent from frontend
 
@@ -201,15 +206,24 @@ exports.refreshToken = async (req, res) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       console.log("✅ Token Verified:", decoded);
 
-      const identity_number = decoded.identity_number;
-      const role = decoded.role;
+      let { identity_number, role } = decoded;
+
+      // إذا لم يتم العثور على identity_number أو role، احصل عليهما من قاعدة البيانات
+      if (!identity_number || !role) {
+          const user = await User.findById(decoded.userId);
+          if (!user) {
+              return res.status(404).json({ message: "User not found" });
+          }
+          identity_number = user.identity_number;
+          role = user.role;
+      }
 
       console.log("User Role:", role);
       console.log("User Identity Number:", identity_number);
 
       // Generate New Token
       const newAccessToken = jwt.sign(
-          { identity_number, role },
+          { identity_number, role, userId: decoded.userId },
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
       );
@@ -228,4 +242,5 @@ exports.refreshToken = async (req, res) => {
       return res.status(403).json({ message: "Invalid or expired token" });
   }
 };
+
 
