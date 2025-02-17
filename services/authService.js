@@ -5,42 +5,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
-const createToken = require("../utils/createToken");
-const createRefereshToken = require("../utils/createToken");
 
-// exports.login = asyncHandler(async (req, res, next) => {
-//   const user = await User.findOne(
-//     { identity_number: req.body.identity_number },
-//     { __v: false, resetPasswordAt: false, _id: false }
-//   );
-//   if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
-//     return next(new ApiError("خطأ في رقم الهوية أو كلمة المرور", 401));
-//   }
-//   if (user.active == false) {
-//     return next(new ApiError("عذرا.. هذا الحساب غير فعال", 401));
-//   }
-
-//   const userWithId = await User.findOne({ identity_number: req.body.identity_number });
-
-//   // إنشاء توكن جديد
-//   const token = createToken(userWithId._id);
-//   const refreshToken = createRefereshToken(userWithId._id);
-
-//   // حفظ الريفرش توكن في قاعدة البيانات
-//   userWithId.refreshToken = refreshToken;
-//   await userWithId.save();
-
-//   // **حفظ الريفرش توكن في الكوكيز**
-//   res.cookie("refreshToken", refreshToken, {
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === "production", // تأكد من هذه الإعدادات
-//     sameSite: "Strict",
-//     maxAge: 7 * 24 * 60 * 60 * 1000,
-//   });
-
-//   delete user._doc.password;
-//   res.status(200).json({ data: user, token });
-// });
 
 exports.login = async (req, res) => {
   const { identity_number, password } = req.body;
