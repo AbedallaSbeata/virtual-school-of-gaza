@@ -21,9 +21,8 @@ exports.login = asyncHandler(async (req, res, next) => {
   const userWithId = await User.findOne({ identity_number: req.body.identity_number });
   console.log(userWithId._id);
   const token = createToken(userWithId._id);
-  user.token = token;
-  // delete user._doc.password;
-  await user.save()
+  delete user._doc.password;
+  req.user.token = token;
   res.status(200).json({ data: user, token });
 });
 
@@ -45,6 +44,7 @@ exports.protect = asyncHandler(async (req, res, next) => {
 
   // 3) Check if user exists
   const currentUser = await User.findById(decoded.userId);
+
   if (!currentUser) {
     return next(new ApiError("No user of this token", 401));
   }
@@ -165,6 +165,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   await user.save();
 
   const token = createToken(user._id);
+  req.user.token = token;
   res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token});
 });
 
