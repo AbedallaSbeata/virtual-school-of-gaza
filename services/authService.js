@@ -15,56 +15,87 @@ exports.login = asyncHandler(async (req, res, next) => {
   if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
     return next(new ApiError("خطأ في رقم الهوية أو كلمة المرور", 401));
   }
-  if(user.active==false) {
+  if (user.active == false) {
     return next(new ApiError("عذرا.. هذا الحساب غير فعال", 401));
   }
+
   const userWithId = await User.findOne({ identity_number: req.body.identity_number });
-  console.log(userWithId._id);
+
+  // إنشاء توكن جديد
   const token = createToken(userWithId._id);
+
+  // حفظ التوكن في قاعدة البيانات
+  userWithId.token = token;
+  await userWithId.save();
+
   delete user._doc.password;
   res.status(200).json({ data: user, token });
 });
 
+
+// exports.protect = asyncHandler(async (req, res, next) => {
+//   // 1) Check if token exist, if exist get
+//   let token;
+//   if (
+//     req.headers.authorization &&
+//     req.headers.authorization.startsWith("Bearer")
+//   ) {
+//     token = req.headers.authorization.split(" ")[1];
+//   }
+//   if (!token) {
+//     return next(new ApiError("يحب عليك تسجيل الدخول أولا", 401));
+//   }
+
+//   // 2) Verify token (no change happens, expired token)
+//   const decoded = jwt.verify(token, process.env.JWT_SECRET); // return id of user
+
+//   // 3) Check if user exists
+//   const currentUser = await User.findById(decoded.userId);
+
+//   if (!currentUser) {
+//     return next(new ApiError("No user of this token", 401));
+//   }
+
+//   // 4) Check if user change his password after token created
+
+//   if (currentUser.resetPasswordAt) {
+//     const resetPasswordTimestamp = parseInt(
+//       currentUser.resetPasswordAt.getTime() / 1000,
+//       10
+//     ); // تحويل الديت لتايم ستامب
+//     if (resetPasswordTimestamp > decoded.iat) {
+//       // تاريخ التعديل اكبر من تاريخ انشاء التوكن يعني انه حصل تعديل للباسورد بعد انشاء التوكن
+//       return next(
+//         new ApiError(
+//           "هذا المستخدم قام بتغيير كلمة المرور.. يرجى تسجيل الدخول مجددا",
+//           401
+//         )
+//       );
+//     }
+//   }
+//   req.user = currentUser;
+//   next();
+// });
 exports.protect = asyncHandler(async (req, res, next) => {
-  // 1) Check if token exist, if exist get
   let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     token = req.headers.authorization.split(" ")[1];
+  } else {
+    const user = await User.findOne({ identity_number: req.body.identity_number });
+    if (user) token = user.token;
   }
+
   if (!token) {
-    return next(new ApiError("يحب عليك تسجيل الدخول أولا", 401));
+    return next(new ApiError("يجب عليك تسجيل الدخول أولا", 401));
   }
 
-  // 2) Verify token (no change happens, expired token)
-  const decoded = jwt.verify(token, process.env.JWT_SECRET); // return id of user
-
-  // 3) Check if user exists
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
   const currentUser = await User.findById(decoded.userId);
 
   if (!currentUser) {
     return next(new ApiError("No user of this token", 401));
   }
 
-  // 4) Check if user change his password after token created
-
-  if (currentUser.resetPasswordAt) {
-    const resetPasswordTimestamp = parseInt(
-      currentUser.resetPasswordAt.getTime() / 1000,
-      10
-    ); // تحويل الديت لتايم ستامب
-    if (resetPasswordTimestamp > decoded.iat) {
-      // تاريخ التعديل اكبر من تاريخ انشاء التوكن يعني انه حصل تعديل للباسورد بعد انشاء التوكن
-      return next(
-        new ApiError(
-          "هذا المستخدم قام بتغيير كلمة المرور.. يرجى تسجيل الدخول مجددا",
-          401
-        )
-      );
-    }
-  }
   req.user = currentUser;
   next();
 });
@@ -168,5 +199,13 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 });
 
 exports.refresh = asyncHandler(async (req, res, next) => {
-  res.status(200).json({token: req.user.token, identity_number: req.user.identity_number, role: req.user.role})
+  // البحث عن المستخدم واسترجاع التوكن المخزن
+  const user = await User.findOne({ identity_number: req.user.identity_number });
+
+  if (!user || !user.token) {
+    return next(new ApiError("المستخدم غير موجود أو غير مسجل الدخول", 401));
+  }
+
+  res.status(200).json({ token: user.token, identity_number: user.identity_number, role: user.role });
 });
+
