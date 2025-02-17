@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
-
+const createToken = require('../utils/createToken')
 
 exports.login = async (req, res) => {
   const { identity_number, password } = req.body;
@@ -231,11 +231,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 
   await user.save();
 
-  const token =jwt.sign(
-   user._id,
-    process.env.JWT_SECRET,
-    { expiresIn: "90d" }
-  );
+  const token = createToken(user._id);
   res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token });
 });
 
