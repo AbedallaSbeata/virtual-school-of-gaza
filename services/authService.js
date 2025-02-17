@@ -76,7 +76,7 @@ exports.login = async (req, res) => {
     // Saving refreshToken with current user
     foundUser.refreshToken = refreshToken;
     const result = await foundUser.save();
-    console.log(result)
+    console.log(result);
 
     // Creates Secure Cookie with refresh token
     res.cookie("jwt", refreshToken, {
@@ -212,13 +212,11 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
       new ApiError("هناك مشكلة في ارسال الرمز الى البريد الالكتروني", 500)
     );
   }
-  res
-    .status(200)
-    .json({
-      message: "تم ارسال الرمز الى البريد الالكتروني بنجاح",
-      identity_number: user.identity_number,
-      role: user.role,
-    });
+  res.status(200).json({
+    message: "تم ارسال الرمز الى البريد الالكتروني بنجاح",
+    identity_number: user.identity_number,
+    role: user.role,
+  });
 });
 
 exports.verifyPassResetCode = asyncHandler(async (req, res, next) => {
@@ -287,14 +285,27 @@ exports.handleRefreshToken = async (req, res) => {
     const identity_number = foundUser.identity_number;
     const accessToken = jwt.sign(
       {
-        "UserInfo": {
-          "identity_number": decoded.identity_number,
-          "role": role
+        UserInfo: {
+          identity_number: decoded.identity_number,
+          role: role,
         },
       },
       process.env.JWT_SECRET,
       { expiresIn: "10s" }
     );
     res.json({ role, accessToken, identity_number });
+  });
+};
+
+exports.verifyJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401);
+  const token = authHeader.split(" ")[1];
+  console.log(token);
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) return res.sendStatus(403); //invalid token
+    req.user = decoded.UserInfo.username;
+    req.roles = decoded.UserInfo.roles;
+    next();
   });
 };
