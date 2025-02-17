@@ -63,12 +63,12 @@ exports.login = async (req, res) => {
               }
           },
           process.env.JWT_SECRET,
-          { expiresIn: '10s' }
+          { expiresIn: '90d' }
       );
       const refreshToken = jwt.sign(
           { "identity_number": foundUser.identity_number },
           process.env.REFRESH_TOKEN_SECRET,
-          { expiresIn: '1d' }
+          { expiresIn: '90d' }
       );
       // Saving refreshToken with current user
       foundUser.refreshToken = refreshToken;
@@ -275,7 +275,7 @@ exports.handleRefreshToken = async (req, res) => {
                   }
               },
               process.env.JWT_SECRET,
-              { expiresIn: '10s' }
+              { expiresIn: '90d' }
           );
           res.json({ role, accessToken, identity_number })
       }

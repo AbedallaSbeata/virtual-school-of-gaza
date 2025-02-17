@@ -24,7 +24,10 @@ server.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 server.use(cors({
-  credentials: true
+  credentials: true,
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 server.use(cookieParser());
 
