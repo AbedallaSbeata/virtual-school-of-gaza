@@ -216,10 +216,16 @@ exports.refreshToken = async (req, res) => {
 
       console.log("✅ New Token Generated:", newAccessToken);
 
-      res.json({ accessToken: newAccessToken });
+      // Send response with identity_number, role, and new token
+      res.json({ 
+          accessToken: newAccessToken, 
+          identity_number, 
+          role 
+      });
 
   } catch (error) {
       console.error("❌ JWT Verification Error:", error.message);
       return res.status(403).json({ message: "Invalid or expired token" });
   }
 };
+
