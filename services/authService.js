@@ -219,25 +219,43 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 //   res.status(200).json({ token: user.token, identity_number: user.identity_number, role: user.role });
 // });
 
+
 exports.handleRefreshToken = async (req, res) => {
-  const cookies = req.cookies;
-  if (!cookies?.jwt) return res.sendStatus(401); // لا يوجد كوكيز
+  try {
+    // التأكد من وجود كوكيز الريفرش توكن
+    const cookies = req.cookies;
+    if (!cookies?.refreshToken) return res.sendStatus(401); // لا يوجد كوكيز
 
-  const refreshToken = cookies.jwt;
-  const foundUser = await User.findOne({ refreshToken }).exec();
-  if (!foundUser) return res.sendStatus(403); // المستخدم غير موجود
+    const refreshToken = cookies.refreshToken;
 
-  // التحقق من التوكن
-  jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET,
-      (err, decoded) => {
-          if (err || foundUser._id.toString() !== decoded._id) return res.sendStatus(403);
-          
-          const role = Object.values(foundUser.role);
-          const accessToken = createToken(foundUser._id)
+    // البحث عن المستخدم الذي يحتوي على الريفرش توكن
+    const foundUser = await User.findOne({ refreshToken }).exec();
+    if (!foundUser) return res.sendStatus(403); // المستخدم غير موجود
 
-          res.json({ role, accessToken });
+    // التحقق من صلاحية التوكن باستخدام jwt.verify
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+      if (err || foundUser._id.toString() !== decoded.userId) {
+        console.error("Invalid or mismatched token");
+        return res.sendStatus(403); // التوكن غير صالح
       }
-  );
+
+      // إنشاء توكن جديد (Access Token)
+      const role = Object.values(foundUser.role);
+      const accessToken = jwt.sign(
+        {
+          userId: foundUser._id,
+          identity_number: decoded.identity_number,
+          role: role,
+        },
+        process.env.JWT_SECRET, // استخدام السر الخاص بـ Access Token
+        { expiresIn: process.env.JWT_EXPIRE_TIME } // مدة صلاحية التوكن
+      );
+
+      // إرسال التوكن الجديد
+      res.json({ role, accessToken });
+    });
+  } catch (error) {
+    console.error("Unexpected Error:", error);
+    res.sendStatus(500); // خطأ في الخادم
+  }
 };
