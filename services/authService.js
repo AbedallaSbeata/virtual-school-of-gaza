@@ -6,7 +6,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
 const createToken = require("../utils/createToken");
-const createRefereshToken = require('../utils/createToken')
+const createRefereshToken = require("../utils/createToken");
 
 // exports.login = asyncHandler(async (req, res, next) => {
 //   const user = await User.findOne(
@@ -37,55 +37,61 @@ const createRefereshToken = require('../utils/createToken')
 //     sameSite: "Strict",
 //     maxAge: 7 * 24 * 60 * 60 * 1000,
 //   });
-  
 
 //   delete user._doc.password;
 //   res.status(200).json({ data: user, token });
 // });
 
-
 exports.login = async (req, res) => {
   const { identity_number, password } = req.body;
-  if (!identity_number || !password) return res.status(400).json({ 'message': 'Identity number and password are required.' });
+  if (!identity_number || !password)
+    return res
+      .status(400)
+      .json({ message: "Identity number and password are required." });
 
-  const foundUser = await User.findOne({ identity_number: identity_number }).exec();
-  if (!foundUser) return res.sendStatus(401); //Unauthorized 
-
-  // evaluate password 
+  const foundUser = await User.findOne({
+    identity_number: identity_number,
+  }).exec();
+  if (!foundUser) return res.sendStatus(401); //Unauthorized
+  // evaluate password
   const match = await bcrypt.compare(password, foundUser.password);
   if (match) {
-      const role = Object.values(foundUser.role).filter(Boolean);
-      // create JWTs
-      const accessToken = jwt.sign(
-          {
-              "UserInfo": {
-                  "identity_number": foundUser.identity_number,
-                  "role": role
-              }
-          },
-          process.env.JWT_SECRET,
-          { expiresIn: '90d' }
-      );
-      const refreshToken = jwt.sign(
-          { "identity_number": foundUser.identity_number },
-          process.env.REFRESH_TOKEN_SECRET,
-          { expiresIn: '90d' }
-      );
-      // Saving refreshToken with current user
-      foundUser.refreshToken = refreshToken;
-      foundUser.token = accessToken;
-      await foundUser.save();
+    const role = Object.values(foundUser.role).filter(Boolean);
+    // create JWTs
+    const accessToken = jwt.sign(
+      {
+        UserInfo: {
+          identity_number: foundUser.identity_number,
+          role: role,
+        },
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "90d" }
+    );
+    const refreshToken = jwt.sign(
+      { identity_number: foundUser.identity_number },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "90d" }
+    );
+    // Saving refreshToken with current user
+    foundUser.refreshToken = refreshToken;
+    foundUser.token = accessToken;
+    await foundUser.save();
 
-      // Creates Secure Cookie with refresh token
-      res.cookie('jwt', refreshToken, { httpOnly: true, secure: true, sameSite: 'None', maxAge: 24 * 60 * 60 * 1000 });
+    // Creates Secure Cookie with refresh token
+    res.cookie("jwt", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
 
-      // Send authorization roles and access token to user
-      res.json({ foundUser, accessToken });  // Send both access token and user details
+    // Send authorization roles and access token to user
+    res.json({ foundUser });
   } else {
-      res.sendStatus(401);
+    res.sendStatus(401);
   }
-}
-
+};
 
 exports.protect = asyncHandler(async (req, res, next) => {
   // 1) Check if token exist, if exist get
@@ -167,10 +173,15 @@ exports.allowedTo = (...roles) =>
   });
 
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
-  const user = await User.findOne({ identity_number: req.body.identity_number });
+  const user = await User.findOne({
+    identity_number: req.body.identity_number,
+  });
   if (!user) {
     return next(
-      new ApiError(`لا يوجد مستخدم برقم الهوية هذا: ${req.body.identity_number}`, 404)
+      new ApiError(
+        `لا يوجد مستخدم برقم الهوية هذا: ${req.body.identity_number}`,
+        404
+      )
     );
   }
   const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -203,7 +214,11 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   }
   res
     .status(200)
-    .json({ message: "تم ارسال الرمز الى البريد الالكتروني بنجاح", identity_number: user.identity_number, role: user.role});
+    .json({
+      message: "تم ارسال الرمز الى البريد الالكتروني بنجاح",
+      identity_number: user.identity_number,
+      role: user.role,
+    });
 });
 
 exports.verifyPassResetCode = asyncHandler(async (req, res, next) => {
@@ -229,10 +244,15 @@ exports.verifyPassResetCode = asyncHandler(async (req, res, next) => {
 });
 
 exports.resetPassword = asyncHandler(async (req, res, next) => {
-  const user = await User.findOne({ identity_number: req.body.identity_number });
+  const user = await User.findOne({
+    identity_number: req.body.identity_number,
+  });
   if (!user) {
     return next(
-      new ApiError(`There is no user with ID:  ${req.body.identity_number}`, 404)
+      new ApiError(
+        `There is no user with ID:  ${req.body.identity_number}`,
+        404
+      )
     );
   }
 
@@ -249,7 +269,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   await user.save();
 
   const token = createToken(user._id);
-  res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token});
+  res.status(200).json({ message: "تم تحديث كلمة المرور بنجاح", token });
 });
 
 exports.handleRefreshToken = async (req, res) => {
@@ -258,26 +278,23 @@ exports.handleRefreshToken = async (req, res) => {
   const refreshToken = cookies.jwt;
 
   const foundUser = await User.findOne({ refreshToken }).exec();
-  if (!foundUser) return res.sendStatus(403); //Forbidden 
-  // evaluate jwt 
-  jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET,
-      (err, decoded) => {
-          if (err || foundUser.identity_number !== decoded.identity_number) return res.sendStatus(403);
-          const role = foundUser.role;
-          const identity_number = foundUser.identity_number;
-          const accessToken = jwt.sign(
-              {
-                  "UserInfo": {
-                      "identity_number": decoded.identity_number,
-                      "role": role
-                  }
-              },
-              process.env.JWT_SECRET,
-              { expiresIn: '90d' }
-          );
-          res.json({ role, accessToken, identity_number })
-      }
-  );
-}
+  if (!foundUser) return res.sendStatus(403); //Forbidden
+  // evaluate jwt
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+    if (err || foundUser.identity_number !== decoded.identity_number)
+      return res.sendStatus(403);
+    const role = foundUser.role;
+    const identity_number = foundUser.identity_number;
+    const accessToken = jwt.sign(
+      {
+        UserInfo: {
+          identity_number: decoded.identity_number,
+          role: role,
+        },
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "90d" }
+    );
+    res.json({ role, accessToken, identity_number });
+  });
+};
