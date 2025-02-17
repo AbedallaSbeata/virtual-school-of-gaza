@@ -235,16 +235,7 @@ exports.handleRefreshToken = async (req, res) => {
           if (err || foundUser._id.toString() !== decoded._id) return res.sendStatus(403);
           
           const role = Object.values(foundUser.role);
-          const accessToken = jwt.sign(
-              {
-                  "data": {
-                      "identity_number": decoded.identity_number,
-                      "role": role
-                  }
-              },
-              process.env.ACCESS_TOKEN_SECRET,
-              { expiresIn: '90d' }
-          );
+          const accessToken = createToken(foundUser._id)
 
           res.json({ role, accessToken });
       }

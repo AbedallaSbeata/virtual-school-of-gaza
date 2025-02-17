@@ -10,4 +10,4 @@ const createRefereshToken = (data) =>
     expiresIn: process.env.JWT_EXPIRE_TIME,
   });
 
-module.exports = createToken;
+module.exports = {createToken, createRefereshToken};
