@@ -43,8 +43,7 @@ exports.addLevelValidator = [
   check("level_number").notEmpty().withMessage("Level Number Required"),
   check("level_name").notEmpty().withMessage("Level Name Required"),
   check("classes")
-    .notEmpty()
-    .withMessage("Classes Required")
+    .optional()
     .isArray()
     .withMessage("Classes Must Be Array Of Classes"),
   validatorMiddleware,
