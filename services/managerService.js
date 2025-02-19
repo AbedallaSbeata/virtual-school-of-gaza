@@ -338,3 +338,11 @@ exports.deleteLevel = asyncHandler(async (req, res, next) => {
 
   res.status(204).json();
 });
+
+exports.getSpecificClass = asyncHandler(async (req, res, next) => {
+  const classExists = await Class.find({level_number: req.body.level_number, class_number: req.body.class_number})
+  if(classExists.length == 0) {
+    return next(new ApiError("هذا الصف غير موجود", 404));
+  }
+  res.status(200).json({data: classExists})
+})
