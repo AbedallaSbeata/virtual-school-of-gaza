@@ -329,8 +329,9 @@ exports.deleteLevel = asyncHandler(async (req, res, next) => {
     return next(new ApiError("هذا المرحلة غير موجود"));
   }
   const classes = await Class.findById({level_number: levelExists})
+  console.log(classes)
   for(let i = 0; i < classes.length; i++){
-    await this.deleteClass({level_number: req.body.level_number, class_number: classes[0].class_number})
+    // await this.deleteClass({level_number: req.body.level_number, class_number: classes[i].})
   } 
   
   await Level.findByIdAndDelete(levelExists[0]._id);
