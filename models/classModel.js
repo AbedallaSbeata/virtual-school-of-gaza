@@ -27,7 +27,6 @@ classSchema.pre("save", async function (next) {
       this.available_subjects.push((await Subject.find()).at(i).subject_name);
     }
   }
-  this.numberOfClasses = this.classes.length;
   next();
 });
 
