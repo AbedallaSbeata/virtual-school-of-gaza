@@ -17,18 +17,9 @@ const classSchema = new mongoose.Schema({
   },
   teachersIDs: [String],
   studentsIDs: [String],
-  available_subjects: [String],
 }, {timestamps: true});
 
-classSchema.pre("save", async function (next) {
-  const documents = await Subject.find().countDocuments();
-  for (let i = 0; i < documents; i++) {
-    if ((await Subject.find()).at(i).levels.includes(this.level_number)) {
-      this.available_subjects.push((await Subject.find()).at(i).subject_name);
-    }
-  }
-  next();
-});
+
 
 const classModel = mongoose.model("Class", classSchema);
 module.exports = classModel;
