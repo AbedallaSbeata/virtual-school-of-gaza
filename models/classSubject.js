@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const classSubjectSchema = new mongoose.Schema(
   {
-    name: String,
     class_id: {
       type: mongoose.Schema.ObjectId,
       ref: "Class",
