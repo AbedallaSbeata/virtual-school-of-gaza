@@ -183,18 +183,8 @@ exports.disActiveUser = asyncHandler(async (req, res, next) => {
 });
 
 exports.getLevels = asyncHandler(async (req, res, next) => {
-  const levelsLength = await Level.countDocuments();
-  const apiFeatures = new ApiFeatures(Level.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate(levelsLength);
-
-  const { mongooseQuery, paginationResult } = apiFeatures;
-  const levels = await mongooseQuery;
-  res
-    .status(200)
-    .json({ results: levels.length, paginationResult, data: levels });
+  const levels = await Level.find();
+  res.status(200).json({ data: levels });
 });
 
 exports.getClasses = asyncHandler(async (req, res, next) => {
@@ -213,24 +203,8 @@ exports.getClasses = asyncHandler(async (req, res, next) => {
 });
 
 exports.getClassesForSpecificLevel = asyncHandler(async (req, res, next) => {
-  const classesLength = await Class.countDocuments();
-  const apiFeatures = new ApiFeatures(
-    Class.find(
-      { level_number: req.params.level_number },
-      { _id: false, __v: false }
-    ),
-    req.query
-  )
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate(classesLength);
-
-  const { mongooseQuery, paginationResult } = apiFeatures;
-  const classes = await mongooseQuery;
-  res
-    .status(200)
-    .json({ results: classes.length, paginationResult, data: classes });
+  const classes = await Class.find({ level_number: req.params.level_number });
+  res.status(200).json({ data: classes });
 });
 
 exports.getTeachersFromSpecificSubject = asyncHandler(
