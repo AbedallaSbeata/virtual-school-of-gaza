@@ -87,7 +87,7 @@ exports.addNewClass = asyncHandler(async (req, res, next) => {
     numberOfClasses: levelEXists[0].numberOfClasses + 1,
     classes: classes,
   });
-  res.status(201).json({ message: "تم اضافة هذا الصف بنجاح" });
+  res.status(201).json({ message: "تم اضافة هذا الصف بنجاح", data: classExists });
 });
 
 exports.addTeachersToSpecificClass = asyncHandler(async (req, res, next) => {
