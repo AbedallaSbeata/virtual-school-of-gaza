@@ -320,3 +320,15 @@ exports.getMyData = asyncHandler(async (req, res, next) => {
   const myData = await User.findById(req.user._id);
   res.status(200).json({ data: myData });
 });
+
+exports.deleteLevel = asyncHandler(async (req, res, next) => {
+  const levelExists = await Level.find({
+    level_number: req.body.level_number,
+  });
+  if (levelExists.length == 0) {
+    return next(new ApiError("هذا المرحلة غير موجود"));
+  }
+  
+  await Level.findByIdAndDelete(levelExists[0]._id);
+  res.send({ message: "تم حذف هذا الصف بنجاح" });
+});

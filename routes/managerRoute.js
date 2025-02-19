@@ -22,6 +22,7 @@ const {
   getStudents,
   getTeachers,
   getMyData,
+  deleteLevel
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -59,6 +60,7 @@ router
 router.route("/subjects").get(getSubjects);
 router.route("/disActiveUser").put(disActiveUserValidator, disActiveUser);
 router.route("/deleteClass").delete(deleteClassValidator, deleteClass);
+router.route("/deleteLevel").delete(deleteLevel);
 router.route("/getSpecificStudent/:identity_number").get(getSpecificStudent);
 router.route("/getSpecificTeacher/:identity_number").get(getSpecificTeacher);
 router.route("/students").get(getStudents);
