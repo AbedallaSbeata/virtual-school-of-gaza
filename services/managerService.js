@@ -8,6 +8,7 @@ const Teacher = require("../models/teacherModel");
 const Student = require("../models/studentModel");
 const ApiFeatures = require("../utils/apiFeatures");
 const createToken = require("../utils/createToken");
+const ClassSubject = require('../models/classSubject')
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -346,3 +347,12 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
   }
   res.status(200).json({data: classExists})
 })
+
+exports.getSubjectsForSpecificClass = asyncHandler(async(req, res, next) => {
+  const classSubjectExists = await ClassSubject.find({level_number: req.params.level_number, class_number: req.params.class_number})
+  if(classSubjectExists.length == 0) {
+    return next(new ApiError("لا يوجد مواد مضافة الى هذا الصف ", 404));
+  }
+  res.status(200).send({data: classSubjectExists})
+})
+
