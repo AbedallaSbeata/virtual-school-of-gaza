@@ -353,13 +353,11 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
 
   // البحث عن المواد المرتبطة بالصف
   const classSubjectExists = await ClassSubject.find({ class_id: classExists._id });
+  let classSubjectData=[];
 
-  if (classSubjectExists.length === 0) {
-    return next(new ApiError("لا يوجد مواد مضافة", 404));
-  }
-
-  // جلب بيانات المواد والمعلمين باستخدام Promise.all
-  const classSubjectData = await Promise.all(
+  if (classSubjectExists.length !== 0) {
+    // جلب بيانات المواد والمعلمين باستخدام Promise.all
+   classSubjectData = await Promise.all(
     classSubjectExists.map(async (classSubject) => {
       const subject = await Subject.findById(classSubject.subject_id);
       const teacher = await User.findById(classSubject.teacher_id);
@@ -372,6 +370,9 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
     })
   );
 
+  }
+
+  
   res.status(200).json({ data: classExists, classSubjectData });
 });
 
