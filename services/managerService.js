@@ -336,5 +336,5 @@ exports.deleteLevel = asyncHandler(async (req, res, next) => {
   // 3️⃣ حذف الليفل
   await Level.findByIdAndDelete(levelExists._id);
 
-  res.status(204);
+  res.status(204).json();
 });
