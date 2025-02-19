@@ -321,19 +321,20 @@ exports.getMyData = asyncHandler(async (req, res, next) => {
   res.status(200).json({ data: myData });
 });
 
+
 exports.deleteLevel = asyncHandler(async (req, res, next) => {
-  const levelExists = await Level.find({
-    level_number: req.body.level_number,
-  });
-  if (levelExists.length == 0) {
-    return next(new ApiError("هذا المرحلة غير موجود"));
+  // 1️⃣ التحقق مما إذا كان الليفل موجودًا
+  const levelExists = await Level.findOne({ level_number: req.body.level_number });
+
+  if (!levelExists) {
+    return next(new ApiError("هذا المرحلة غير موجود", 404));
   }
-  const classes = await Class.findById({level_number: levelExists})
-  console.log(classes)
-  // for(let i = 0; i < classes.le; i++){ 
-    //  this.deleteClass({level_number: req.body.level_number, class_number: classes[i].})
-  // } 
-  
-  // await Level.findByIdAndDelete(levelExists[0]._id);
-  // res.send({ message: "تم حذف هذا الصف بنجاح" });
+
+  // 2️⃣ البحث عن جميع الكلاسات المرتبطة بهذا الليفل
+  await Class.deleteMany({ level_number: req.body.level_number });
+
+  // 3️⃣ حذف الليفل
+  await Level.findByIdAndDelete(levelExists._id);
+
+  res.status(200).json({ message: "تم حذف المرحلة وجميع الكلاسات المرتبطة بها بنجاح" });
 });
