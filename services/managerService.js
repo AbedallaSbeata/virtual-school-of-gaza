@@ -340,6 +340,43 @@ exports.deleteLevel = asyncHandler(async (req, res, next) => {
   res.status(204).json();
 });
 
+// exports.getSpecificClass = asyncHandler(async (req, res, next) => {
+//   // البحث عن الصف
+//   const classExists = await Class.findOne({
+//     level_number: req.params.level_number,
+//     class_number: req.params.class_number
+//   });
+
+//   if (!classExists) {
+//     return next(new ApiError("هذا الصف غير موجود", 404));
+//   }
+
+//   // البحث عن المواد المرتبطة بالصف
+//   const classSubjectExists = await ClassSubject.find({ class_id: classExists._id });
+//   let classSubjectData=[];
+
+//   if (classSubjectExists.length !== 0) {
+//     // جلب بيانات المواد والمعلمين باستخدام Promise.all
+//    classSubjectData = await Promise.all(
+//     classSubjectExists.map(async (classSubject) => {
+//       const subject = await Subject.findById(classSubject.subject_id);
+//       const teacher = await User.findById(classSubject.teacher_id);
+
+//       return {
+//         classSubject_id: classSubject._id,
+//         classSubject_name: subject ? subject.name : "غير متوفر",
+//         classSubject_teacher: teacher ? teacher.name : "غير متوفر"
+//       };
+//     })
+//   );
+
+//   }
+
+  
+//   res.status(200).json({ data: classExists, classSubjectData });
+// });
+
+
 exports.getSpecificClass = asyncHandler(async (req, res, next) => {
   // البحث عن الصف
   const classExists = await Class.findOne({
@@ -353,35 +390,33 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
 
   // البحث عن المواد المرتبطة بالصف
   const classSubjectExists = await ClassSubject.find({ class_id: classExists._id });
-  let classSubjectData=[];
+  let classSubjectData = [];
 
   if (classSubjectExists.length !== 0) {
     // جلب بيانات المواد والمعلمين باستخدام Promise.all
-   classSubjectData = await Promise.all(
-    classSubjectExists.map(async (classSubject) => {
-      const subject = await Subject.findById(classSubject.subject_id);
-      const teacher = await User.findById(classSubject.teacher_id);
+    classSubjectData = await Promise.all(
+      classSubjectExists.map(async (classSubject) => {
+        const subject = await Subject.findById(classSubject.subject_id);
+        const teacher = await User.findById(classSubject.teacher_id);
 
-      return {
-        classSubject_id: classSubject._id,
-        classSubject_name: subject ? subject.name : "غير متوفر",
-        classSubject_teacher: teacher ? teacher.name : "غير متوفر"
-      };
-    })
-  );
-
+        return {
+          classSubject_id: classSubject._id,
+          classSubject_name: subject ? subject.name : "غير متوفر",
+          classSubject_teacher: teacher ? teacher.name : "غير متوفر"
+        };
+      })
+    );
   }
 
-  
-  res.status(200).json({ data: classExists, classSubjectData });
+  // جلب المواد المتاحة لهذا المستوى
+  const availableSubjects = await Subject.find({ levels: classExists.level_number }).select("_id subject_name");
+
+  res.status(200).json({ 
+    data: classExists, 
+    classSubjectData, 
+    available_subjects: availableSubjects 
+  });
 });
 
 
-// exports.getSubjectsForSpecificClass = asyncHandler(async(req, res, next) => {
-//   const classSubjectExists = await ClassSubject.find({level_number: req.params.level_number, class_number: req.params.class_number})
-//   if(classSubjectExists.length == 0) {
-//     return next(new ApiError("لا يوجد مواد مضافة الى هذا الصف ", 404));
-//   }
-//   res.status(200).send({data: classSubjectExists})
-// })
 
