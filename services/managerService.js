@@ -336,5 +336,5 @@ exports.deleteLevel = asyncHandler(async (req, res, next) => {
   // 3️⃣ حذف الليفل
   await Level.findByIdAndDelete(levelExists._id);
 
-  res.status(200).json({ message: "تم حذف المرحلة وجميع الكلاسات المرتبطة بها بنجاح" });
+  res.status(204);
 });
