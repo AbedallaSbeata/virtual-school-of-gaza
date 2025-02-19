@@ -21,7 +21,6 @@ exports.login = asyncHandler(async (req, res, next) => {
   const userWithId = await User.findOne({
     identity_number: req.body.identity_number,
   });
-  console.log(userWithId._id);
   const token = createToken(userWithId._id);
   delete user._doc.password;
   res.status(200).json({ data: user, token });
@@ -196,15 +195,12 @@ exports.refreshToken = async (req, res) => {
   }
 
   try {
-      console.log("🔍 Token Received:", token);
 
       // Decode Token Without Verification (to check expiration)
       const decodedWithoutVerification = jwt.decode(token);
-      console.log("📌 Decoded Token (without verifying):", decodedWithoutVerification);
 
       // Verify Token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("✅ Token Verified:", decoded);
 
       let { identity_number, role } = decoded;
 
@@ -218,8 +214,6 @@ exports.refreshToken = async (req, res) => {
           role = user.role;
       }
 
-      console.log("User Role:", role);
-      console.log("User Identity Number:", identity_number);
 
       // Generate New Token
       const newAccessToken = jwt.sign(
@@ -228,7 +222,6 @@ exports.refreshToken = async (req, res) => {
           { expiresIn: "1h" }
       );
 
-      console.log("✅ New Token Generated:", newAccessToken);
 
       // Send response with identity_number, role, and new token
       res.json({ 
