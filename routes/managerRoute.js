@@ -9,7 +9,6 @@ const {
   addStudentsToSpecificClass,
   deleteClass,
   addTeachersToSpecificClass,
-  addSpecificSubjectToTeachers,
   addUser,
   getClasses,
   getClassesForSpecificLevel,
@@ -23,8 +22,8 @@ const {
   getTeachers,
   getMyData,
   deleteLevel,
-  getSubjectsForSpecificClass,
-  getSpecificClass
+  getSpecificClass,
+  assignSpecificSubjectToTeachers
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -32,7 +31,7 @@ const {
   addNewClassValidator,
   addStudentsToSpecificClassValidator,
   addTeachersToSpecificClassValidator,
-  addSpecificSubjectToTeachersValidator,
+  assignSpecificSubjectToTeachersValidator,
   addUserValidator,
   disActiveUserValidator,
 } = require("../utils/validators/managerValidator");
@@ -54,8 +53,8 @@ router
   .route("/getClassesInSpecificLevel/:level_number")
   .get(getClassesForSpecificLevel);
 router
-  .route("/addSpecificSubjectToTeachers/:subjectID")
-  .post(addSpecificSubjectToTeachersValidator, addSpecificSubjectToTeachers);
+  .route("/assignSpecificSubjectToTeachers/:subjectID")
+  .post(assignSpecificSubjectToTeachersValidator, assignSpecificSubjectToTeachers);
 router
   .route("/getTeachersFromSpecificSubject/:subjectID")
   .get(getTeachersFromSpecificSubject);

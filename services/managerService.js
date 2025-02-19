@@ -225,7 +225,7 @@ exports.getTeachersFromSpecificSubject = asyncHandler(
   }
 );
 
-exports.addSpecificSubjectToTeachers = asyncHandler(async (req, res, next) => {
+exports.assignSpecificSubjectToTeachers = asyncHandler(async (req, res, next) => {
   const subjectID = await Subject.findById(req.params.subjectID);
   if (!subjectID) {
     return next(new ApiError("هذه المادة غير موجودة"));

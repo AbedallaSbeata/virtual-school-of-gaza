@@ -76,7 +76,7 @@ exports.addStudentsToSpecificClassValidator = [
   validatorMiddleware,
 ];
 
-exports.addSpecificSubjectToTeachersValidator = [
+exports.assignSpecificSubjectToTeachersValidator = [
   check("teachersIDs")
     .notEmpty()
     .withMessage("Teachers IDs Required")
