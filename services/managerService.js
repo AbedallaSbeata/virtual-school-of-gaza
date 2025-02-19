@@ -277,7 +277,7 @@ exports.deleteClass = asyncHandler(async (req, res, next) => {
     classes: classes,
   });
   await Class.findByIdAndDelete(classExists[0]._id);
-  res.send({ message: "تم حذف هذا الصف بنجاح" });
+  res.status(204).json()
 });
 
 exports.getSpecificTeacher = asyncHandler(async (req, res, next) => {
