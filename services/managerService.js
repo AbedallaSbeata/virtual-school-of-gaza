@@ -183,9 +183,10 @@ exports.disActiveUser = asyncHandler(async (req, res, next) => {
 });
 
 exports.getLevels = asyncHandler(async (req, res, next) => {
-  const levels = await Level.find();
+  const levels = await Level.find().sort({ level_number: 1 }); 
   res.status(200).json({ data: levels });
 });
+
 
 exports.getClasses = asyncHandler(async (req, res, next) => {
   const classesLength = await Class.countDocuments();
