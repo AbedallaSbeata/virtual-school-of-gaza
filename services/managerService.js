@@ -395,6 +395,7 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
         return {
           classSubject_id: classSubject._id,
           classSubject_name: subject ? subject.subject_name : "",
+          subject_id: subject ? subject._id : '',
           classSubject_teacher: teacher ? teacher._id : ""
         };
       })
