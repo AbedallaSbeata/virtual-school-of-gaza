@@ -49,14 +49,16 @@ levelSchema.post("save", async function () {
     });
 
     // جلب المواد المتاحة لهذا المستوى
-    const subjects = await Subject.find({ subject_name: { $in: this.available_subjects } });
+    const subjects = await Subject.find({ subject_name: { $in: this.available_subjects } }).lean();
 
-    // إنشاء ClassSubject لكل مادة متاحة وربطها بالكلاس الجديد
+    // إنشاء ClassSubject فقط إذا كان subject_id غير فارغ
     for (const subject of subjects) {
-      await ClassSubject.create({
-        class_id: newClass._id,
-        subject_id: subject._id,
-      });
+      if (subject._id) {
+        await ClassSubject.create({
+          class_id: newClass._id,
+          subject_id: subject._id,
+        });
+      }
     }
   }
 });
