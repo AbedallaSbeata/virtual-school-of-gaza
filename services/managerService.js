@@ -369,12 +369,11 @@ exports.deleteLevel = asyncHandler(async (req, res, next) => {
 //   res.status(200).json({ data: classExists, classSubjectData });
 // });
 
-
 exports.getSpecificClass = asyncHandler(async (req, res, next) => {
   // البحث عن الصف
   const classExists = await Class.findOne({
     level_number: req.params.level_number,
-    class_number: req.params.class_number
+    class_number: req.params.class_number,
   });
 
   if (!classExists) {
@@ -390,13 +389,15 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
     classSubjectData = await Promise.all(
       classSubjectExists.map(async (classSubject) => {
         const subject = await Subject.findById(classSubject.subject_id);
+        // البحث عن المعلم بناءً على identity_number
         const teacher = await Teacher.findById(classSubject.teacher_id);
+        const user = teacher ? await User.findOne({ identity_number: teacher.identity_number }) : null; // جلب معلومات المستخدم
 
         return {
           classSubject_id: classSubject._id,
           classSubject_name: subject ? subject.subject_name : "",
           subject_id: subject ? subject._id : '',
-          classSubject_teacher: teacher ? teacher._id : ""
+          classSubject_teacher: user // إرجاع كائن المستخدم بالكامل
         };
       })
     );
@@ -411,6 +412,8 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
     available_subjects: availableSubjects 
   });
 });
+
+
 
 // https://virtual-school-of-gaza.onrender.com/manager/getClassSubjectsByClassId/classId
 
