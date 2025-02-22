@@ -24,7 +24,7 @@ const {
   deleteLevel,
   getSpecificClass,
   assignSpecificSubjectToTeachers,
-  getClassSubjectsByClassId
+  assignTeacherToClassSubject
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -56,6 +56,7 @@ router
 router
   .route("/assignSpecificSubjectToTeachers/:subjectID")
   .post(assignSpecificSubjectToTeachersValidator, assignSpecificSubjectToTeachers);
+router.route("/assignTeacherToClassSubject/:subjectID").post(assignTeacherToClassSubject)
 router
   .route("/getTeachersFromSpecificSubject/:subjectID")
   .get(getTeachersFromSpecificSubject);
