@@ -441,7 +441,7 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
   }
 
   const newTeacher = await Teacher.find({
-    identity_number: req.body.identity_number,
+    user_identity_number: req.body.identity_number,
   });
 
   if (!newTeacher) {
