@@ -444,12 +444,12 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
     identity_number: req.body.identity_number,
   });
  console.log(newTeacher)
- 
-  if (!newTeacher) {
+
+  if (newTeacher.length ===0) {
     return next(new ApiError("المعلم غير موجود"));
   }
 
-  classSubject.teacher_id = newTeacher._id; // إضافة ID المعلم
+  classSubject.teacher_id = newTeacher[0]._id; // إضافة ID المعلم
   await classSubject.save(); // حفظ التغييرات
 
   // إرسال استجابة ناجحة
