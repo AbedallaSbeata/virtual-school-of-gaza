@@ -389,8 +389,8 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
     // جلب بيانات المواد والمعلمين باستخدام Promise.all
     classSubjectData = await Promise.all(
       classSubjectExists.map(async (classSubject) => {
-        const subject = await Subject.findById(classSubject.subject_id);
-        const teacher = await Teacher.findById(classSubject.teacher_id);
+        let subject = await Subject.findById(classSubject.subject_id);
+        let teacher = await Teacher.findById(classSubject.teacher_id);
 
         return {
           classSubject_id: classSubject._id,
