@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Subject = require("./subjectModel");
 const Class = require("./classModel");
-const ClassSubject = require("./subjectModel");
+const ClassSubject = require("./classSubject");
 
 const levelSchema = new mongoose.Schema(
   {
@@ -39,7 +39,7 @@ levelSchema.pre("save", async function (next) {
   next();
 });
 
-// بعد الحفظ: إنشاء الفصول وربطها بالمواد المتاحة
+// بعد الحفظ: إنشاء الفصول وإضافة المواد في classSubject
 levelSchema.post("save", async function () {
   for (let i = 0; i < this.classes.length; i++) {
     // إنشاء الكلاس
@@ -48,17 +48,15 @@ levelSchema.post("save", async function () {
       level_number: this.level_number,
     });
 
-    // جلب المواد المتاحة لهذا المستوى
-    const subjects = await Subject.find({ subject_name: { $in: this.available_subjects } }).lean();
+    // جلب المواد الخاصة بالمستوى
+    const subjects = await Subject.find({ subject_name: { $in: this.available_subjects } });
 
-    // إنشاء ClassSubject فقط إذا كان subject_id غير فارغ
+    // إنشاء ClassSubject لكل مادة في هذا الصف
     for (const subject of subjects) {
-      if (subject._id) {
-        await ClassSubject.create({
-          class_id: newClass._id,
-          subject_id: subject._id,
-        });
-      }
+      await ClassSubject.create({
+        class_id: newClass._id,
+        subject_id: subject._id,
+      });
     }
   }
 });
