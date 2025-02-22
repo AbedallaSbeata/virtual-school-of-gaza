@@ -443,7 +443,8 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
   const newTeacher = await User.find({
     identity_number: req.body.identity_number,
   });
-
+ console.log(newTeacher)
+ 
   if (!newTeacher) {
     return next(new ApiError("المعلم غير موجود"));
   }
