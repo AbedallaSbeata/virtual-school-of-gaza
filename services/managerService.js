@@ -238,14 +238,7 @@ exports.assignSpecificSubjectToTeachers = asyncHandler(async (req, res, next) =>
       return next(new ApiError("هناك معلم واحد على الاقل غير موجود"));
     }
   }
-  for (let i = 0; i < req.body.teachersIDs.length; i++) {
-    const teacherExists = await Teacher.find({
-      user_identity_number: req.body.teachersIDs[i],
-    });
-    teacherExists[0].teacher_subjects.push(subjectID.subject_name);
-    subjectID.teachersIDs.push(req.body.teachersIDs[i]);
-    await teacherExists[0].save();
-  }
+  subjectID.teachersIDs = req.body.teachersIDs
   await subjectID.save();
   res.status(200).send({ message: "تم اضافة المعلمين الى هذه المادة" });
 });
