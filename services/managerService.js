@@ -393,10 +393,10 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
       classSubjectExists.map(async (classSubject) => {
         const subject = await Subject.findById(classSubject.subject_id);
         // البحث عن المعلم بناءً على identity_number
-        const teacher = await Teacher.findById(classSubject.teacher_id);
+        const teacher = await User.findById(classSubject.teacher_id);
         const user = teacher
           ? await User.findOne({
-              identity_number: teacher.user_identity_number,
+              identity_number: teacher.identity_number,
             })
           : null; // جلب معلومات المستخدم
 
