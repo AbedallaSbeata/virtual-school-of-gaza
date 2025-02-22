@@ -9,14 +9,9 @@ const examSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  class_id: {
+  classSubject_id: {
     type: mongoose.Schema.ObjectId,
-    ref: 'Class',
-    required: true,
-  },
-  subject_id: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Subject',
+    ref: 'ClassSubject',
     required: true,
   },
   questions: [

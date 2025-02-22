@@ -4,13 +4,9 @@ const mongoose = require("mongoose");
 const recordedLectureSchema = new mongoose.Schema(
   {
     title: String,
-    class_id: {
+    classSubject_id: {
       type: mongoose.Schema.ObjectId,
-      ref: "Class",
-    },
-    subject_id: {
-      type: mongoose.Schema.ObjectId,
-      ref: "Subject",
+      ref: "ClassSubject",
     },
     description: String,
     video_url: String,
@@ -32,5 +28,8 @@ const recordedLectureSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const recordedLectureModel = mongoose.model("RecordedLecture", recordedLectureSchema);
+const recordedLectureModel = mongoose.model(
+  "RecordedLecture",
+  recordedLectureSchema
+);
 module.exports = recordedLectureModel;

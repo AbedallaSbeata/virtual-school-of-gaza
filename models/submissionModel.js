@@ -1,23 +1,30 @@
 // submissionModel.js
 const mongoose = require("mongoose");
 
-const submissionSchema = new mongoose.Schema({
-  user_identity_number: {
-    type: String,
-    ref: 'Student'
+const submissionSchema = new mongoose.Schema(
+  {
+    user_identity_number: {
+      type: String,
+      ref: "Student",
+    },
+    activity_id: {
+      type: mongoose.Schema.ObjectId,
+      ref: "Activity",
+    },
+    classSubject_id: {
+      type: mongoose.Schema.ObjectId,
+      ref: "ClassSubject",
+    },
+    file_url: String, // الملف الذي يرفعه الطالب
+    grade: Number,
+    feedback: String,
+    gradedBy: {
+      type: String,
+      ref: "Teacher",
+    },
   },
-  activity_id: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Activity',
-  },
-  file_url: String, // الملف الذي يرفعه الطالب
-  grade: Number,
-  feedback: String,
-  gradedBy: {
-    type: String,
-    ref: 'Teacher'
-  }
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 const submissionModel = mongoose.model("Submission", submissionSchema);
 module.exports = submissionModel;

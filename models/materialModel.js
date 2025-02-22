@@ -3,13 +3,9 @@ const mongoose = require("mongoose");
 const materialSchema = new mongoose.Schema(
   {
     name: String,
-    class_id: {
+    classSubject_id: {
       type: mongoose.Schema.ObjectId,
-      ref: "Class",
-    },
-    subject_id: {
-      type: mongoose.Schema.ObjectId,
-      ref: "Subject",
+      ref: "ClassSubject",
     },
     type_file: String,
     file_url: String,
