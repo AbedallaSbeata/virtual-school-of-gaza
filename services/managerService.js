@@ -8,7 +8,7 @@ const Teacher = require("../models/teacherModel");
 const Student = require("../models/studentModel");
 const ApiFeatures = require("../utils/apiFeatures");
 const createToken = require("../utils/createToken");
-const ClassSubject = require('../models/classSubject')
+const ClassSubject = require("../models/classSubject");
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -184,10 +184,9 @@ exports.disActiveUser = asyncHandler(async (req, res, next) => {
 });
 
 exports.getLevels = asyncHandler(async (req, res, next) => {
-  const levels = await Level.find().sort({ level_number: 1 }); 
+  const levels = await Level.find().sort({ level_number: 1 });
   res.status(200).json({ data: levels });
 });
-
 
 exports.getClasses = asyncHandler(async (req, res, next) => {
   const classesLength = await Class.countDocuments();
@@ -225,23 +224,25 @@ exports.getTeachersFromSpecificSubject = asyncHandler(
   }
 );
 
-exports.assignSpecificSubjectToTeachers = asyncHandler(async (req, res, next) => {
-  const subjectID = await Subject.findById(req.params.subjectID);
-  if (!subjectID) {
-    return next(new ApiError("هذه المادة غير موجودة"));
-  }
-  for (let i = 0; i < req.body.teachersIDs.length; i++) {
-    const teacherExists = await Teacher.find({
-      user_identity_number: req.body.teachersIDs[i],
-    });
-    if (teacherExists.length == 0) {
-      return next(new ApiError("هناك معلم واحد على الاقل غير موجود"));
+exports.assignSpecificSubjectToTeachers = asyncHandler(
+  async (req, res, next) => {
+    const subjectID = await Subject.findById(req.params.subjectID);
+    if (!subjectID) {
+      return next(new ApiError("هذه المادة غير موجودة"));
     }
+    for (let i = 0; i < req.body.teachersIDs.length; i++) {
+      const teacherExists = await Teacher.find({
+        user_identity_number: req.body.teachersIDs[i],
+      });
+      if (teacherExists.length == 0) {
+        return next(new ApiError("هناك معلم واحد على الاقل غير موجود"));
+      }
+    }
+    subjectID.teachersIDs = req.body.teachersIDs;
+    await subjectID.save();
+    res.status(200).send({ message: "تم اضافة المعلمين الى هذه المادة" });
   }
-  subjectID.teachersIDs = req.body.teachersIDs
-  await subjectID.save();
-  res.status(200).send({ message: "تم اضافة المعلمين الى هذه المادة" });
-});
+);
 
 exports.getSubjects = asyncHandler(async (req, res, next) => {
   const subjects = await Subject.find({}, { __v: false });
@@ -271,7 +272,7 @@ exports.deleteClass = asyncHandler(async (req, res, next) => {
     classes: classes,
   });
   await Class.findByIdAndDelete(classExists[0]._id);
-  res.status(204).json()
+  res.status(204).json();
 });
 
 exports.getSpecificTeacher = asyncHandler(async (req, res, next) => {
@@ -315,10 +316,11 @@ exports.getMyData = asyncHandler(async (req, res, next) => {
   res.status(200).json({ data: myData });
 });
 
-
 exports.deleteLevel = asyncHandler(async (req, res, next) => {
   // 1️⃣ التحقق مما إذا كان الليفل موجودًا
-  const levelExists = await Level.findOne({ level_number: req.body.level_number });
+  const levelExists = await Level.findOne({
+    level_number: req.body.level_number,
+  });
 
   if (!levelExists) {
     return next(new ApiError("هذا المرحلة غير موجود", 404));
@@ -365,7 +367,6 @@ exports.deleteLevel = asyncHandler(async (req, res, next) => {
 
 //   }
 
-  
 //   res.status(200).json({ data: classExists, classSubjectData });
 // });
 
@@ -381,7 +382,9 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
   }
 
   // البحث عن المواد المرتبطة بالصف
-  const classSubjectExists = await ClassSubject.find({ class_id: classExists._id });
+  const classSubjectExists = await ClassSubject.find({
+    class_id: classExists._id,
+  });
   let classSubjectData = [];
 
   if (classSubjectExists.length !== 0) {
@@ -391,32 +394,35 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
         const subject = await Subject.findById(classSubject.subject_id);
         // البحث عن المعلم بناءً على identity_number
         const teacher = await Teacher.findById(classSubject.teacher_id);
-        const user = teacher ? await User.findOne({ identity_number: teacher.user_identity_number }) : null; // جلب معلومات المستخدم
+        const user = teacher
+          ? await User.findOne({
+              identity_number: teacher.user_identity_number,
+            })
+          : null; // جلب معلومات المستخدم
 
         return {
           classSubject_id: classSubject._id,
           classSubject_name: subject ? subject.subject_name : "",
-          subject_id: subject ? subject._id : '',
-          classSubject_teacher: user // إرجاع كائن المستخدم بالكامل
+          subject_id: subject ? subject._id : "",
+          classSubject_teacher: user, // إرجاع كائن المستخدم بالكامل
         };
       })
     );
   }
 
   // جلب المواد المتاحة لهذا المستوى
-  const availableSubjects = await Subject.find({ levels: classExists.level_number }).select("_id subject_name");
+  const availableSubjects = await Subject.find({
+    levels: classExists.level_number,
+  }).select("_id subject_name");
 
-  res.status(200).json({ 
-    data: classExists, 
-    classSubjectData, 
-    available_subjects: availableSubjects 
+  res.status(200).json({
+    data: classExists,
+    classSubjectData,
+    available_subjects: availableSubjects,
   });
 });
 
-
-
 // https://virtual-school-of-gaza.onrender.com/manager/getClassSubjectsByClassId/classId
-
 
 // exports.getClassSubjectsByClassId = asyncHandler(async (req, res, next) => {
 //   const classExists = await Class.findById(req.params.classId)
@@ -428,21 +434,21 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
 // })
 
 exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
-
-
   const classSubject = await ClassSubject.findById(req.params.classSubjectID);
 
   if (!classSubject) {
     return next(new ApiError("This ClassSubject Not Exists!"));
   }
 
-  const teacher = await User.find({identity_number: req.body.identity_number})
+  const newTeacher = await Teacher.find({
+    identity_number: req.body.identity_number,
+  });
 
-  if (!teacher) {
+  if (!newTeacher) {
     return next(new ApiError("المعلم غير موجود"));
   }
 
-  classSubject.teacher_id = teacher._id; // إضافة ID المعلم
+  classSubject.teacher_id = newTeacher._id; // إضافة ID المعلم
   await classSubject.save(); // حفظ التغييرات
 
   // إرسال استجابة ناجحة
@@ -451,4 +457,3 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
     message: "تمت إضافة المعلم بنجاح إلى المادة الدراسية.",
   });
 });
-
