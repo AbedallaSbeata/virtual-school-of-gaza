@@ -56,7 +56,7 @@ router
 router
   .route("/assignSpecificSubjectToTeachers/:subjectID")
   .post(assignSpecificSubjectToTeachersValidator, assignSpecificSubjectToTeachers);
-router.route("/assignTeacherToClassSubject/:subjectID").post(assignTeacherToClassSubject)
+router.route("/assignTeacherToClassSubject/:classSubjectID").post(assignTeacherToClassSubject)
 router
   .route("/getTeachersFromSpecificSubject/:subjectID")
   .get(getTeachersFromSpecificSubject);
