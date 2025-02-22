@@ -390,12 +390,12 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
     classSubjectData = await Promise.all(
       classSubjectExists.map(async (classSubject) => {
         const subject = await Subject.findById(classSubject.subject_id);
-        const teacher = await User.findById(classSubject.teacher_id);
+        const teacher = await Teacher.findById(classSubject.teacher_id);
 
         return {
           classSubject_id: classSubject._id,
-          classSubject_name: subject ? subject.subject_name : "غير متوفر",
-          classSubject_teacher: teacher ? teacher._id : "غير متوفر"
+          classSubject_name: subject.subject_name,
+          classSubject_teacher: teacher._id
         };
       })
     );
