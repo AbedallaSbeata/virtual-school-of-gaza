@@ -425,25 +425,20 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
 // })
 
 exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
-  // البحث عن المادة باستخدام ID
-  const subjectID = await Subject.findById(req.params.subjectID);
-  if (!subjectID) {
-    return next(new ApiError("هذه المادة غير موجودة"));
+
+
+  const classSubject = await ClassSubject.findById(req.params.classSubjectID);
+
+  if (!classSubject) {
+    return next(new ApiError("This ClassSubject Not Exists!"));
   }
 
-  // البحث عن المعلم باستخدام رقم الهوية
-  const teacher = await Teacher.findOne({ user_identity_number: req.body.identity_number });
+  const teacher = await Teacher.findById(req.body.teacherID)
+
   if (!teacher) {
     return next(new ApiError("المعلم غير موجود"));
   }
 
-  // البحث عن ClassSubject المرتبطة بالمادة
-  const classSubject = await ClassSubject.findOne({ subject_id: subjectID });
-  if (!classSubject) {
-    return next(new ApiError("لا يوجد ClassSubject مرتبط بهذه المادة"));
-  }
-
-  // تحديث ClassSubject وإضافة teacher_id
   classSubject.teacher_id = teacher._id; // إضافة ID المعلم
   await classSubject.save(); // حفظ التغييرات
 
