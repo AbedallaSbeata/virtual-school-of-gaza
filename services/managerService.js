@@ -411,5 +411,14 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
   });
 });
 
+// https://virtual-school-of-gaza.onrender.com/manager/getClassSubjectsByClassId/classId
 
 
+exports.getClassSubjectsByClassId = asyncHandler(async (req, res, next) => {
+  const classExists = await Class.findById(req.params.classId)
+  if(!classExists) {
+    return next(new ApiError("هذا الصف غير موجود", 404));
+  }
+  const classSubjects = await ClassSubject.find({class_id: req.params.classId})
+  res.status(200).json(classSubjects)
+})
