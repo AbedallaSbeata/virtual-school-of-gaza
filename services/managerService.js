@@ -394,8 +394,8 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
 
         return {
           classSubject_id: classSubject._id,
-          classSubject_name: subject ? subject.name : "غير متوفر",
-          classSubject_teacher: teacher ? teacher.name : "غير متوفر"
+          classSubject_name: subject ? subject.subject_name : "غير متوفر",
+          classSubject_teacher: teacher ? teacher._id : "غير متوفر"
         };
       })
     );
@@ -414,11 +414,42 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
 // https://virtual-school-of-gaza.onrender.com/manager/getClassSubjectsByClassId/classId
 
 
-exports.getClassSubjectsByClassId = asyncHandler(async (req, res, next) => {
-  const classExists = await Class.findById(req.params.classId)
-  if(!classExists) {
-    return next(new ApiError("هذا الصف غير موجود", 404));
+// exports.getClassSubjectsByClassId = asyncHandler(async (req, res, next) => {
+//   const classExists = await Class.findById(req.params.classId)
+//   if(!classExists) {
+//     return next(new ApiError("هذا الصف غير موجود", 404));
+//   }
+//   const classSubjects = await ClassSubject.find({class_id: req.params.classId})
+//   res.status(200).json(classSubjects)
+// })
+
+exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
+  // البحث عن المادة باستخدام ID
+  const subjectID = await Subject.findById(req.params.subjectID);
+  if (!subjectID) {
+    return next(new ApiError("هذه المادة غير موجودة"));
   }
-  const classSubjects = await ClassSubject.find({class_id: req.params.classId})
-  res.status(200).json(classSubjects)
-})
+
+  // البحث عن المعلم باستخدام رقم الهوية
+  const teacher = await Teacher.findOne({ user_identity_number: req.body.identity_number });
+  if (!teacher) {
+    return next(new ApiError("المعلم غير موجود"));
+  }
+
+  // البحث عن ClassSubject المرتبطة بالمادة
+  const classSubject = await ClassSubject.findOne({ subject_id: subjectID });
+  if (!classSubject) {
+    return next(new ApiError("لا يوجد ClassSubject مرتبط بهذه المادة"));
+  }
+
+  // تحديث ClassSubject وإضافة teacher_id
+  classSubject.teacher_id = teacher._id; // إضافة ID المعلم
+  await classSubject.save(); // حفظ التغييرات
+
+  // إرسال استجابة ناجحة
+  res.status(200).json({
+    status: "success",
+    message: "تمت إضافة المعلم بنجاح إلى المادة الدراسية.",
+  });
+});
+
