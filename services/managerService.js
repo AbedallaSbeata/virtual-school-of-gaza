@@ -433,7 +433,7 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
     return next(new ApiError("This ClassSubject Not Exists!"));
   }
 
-  const teacher = await Teacher.findById(req.body.teacherID)
+  const teacher = await User.find({identity_number: req.body.identity_number})
 
   if (!teacher) {
     return next(new ApiError("المعلم غير موجود"));
