@@ -16,6 +16,10 @@ const materialSchema = new mongoose.Schema(
       type: String,
       ref: "User",
     },
+    edited_by: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User"
+    }
   },
   { timestamps: true }
 );

@@ -503,7 +503,8 @@ exports.updateMaterial = asyncHandler(async (req, res, next) => {
     req.params.materialId,
     {
       name: req.body.name, 
-      file_url: req.body.file_url 
+      file_url: req.body.file_url,
+      updated_by: req.user._id
     },
     { new: true }
   );
@@ -562,7 +563,8 @@ exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
     {
       title: req.body.title, 
       description: req.body.description,
-      video_url: req.body.video_url 
+      video_url: req.body.video_url,
+      updated_by: req.user._id
     },
     { new: true }
   );
