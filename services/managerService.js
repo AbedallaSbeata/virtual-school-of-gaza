@@ -561,7 +561,7 @@ exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
     req.params.recordedLecturesIds,
     {
       title: req.body.title, 
-      file_url: req.body.description,
+      description: req.body.description,
       video_url: req.body.video_url 
     },
     { new: true }
