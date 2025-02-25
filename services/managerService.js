@@ -473,6 +473,7 @@ exports.addMaterial = asyncHandler(async (req,res,next) => {
 
 exports.getMaterials = asyncHandler(async (req, res, next) => {
   const classId = await ClassSubject.find({class_id: req.params.classId})
+  console.log(classId)
   const materials = await Material.find({classSubject_id: classId[0]._id})
   res.status(200).send(materials)
 })
