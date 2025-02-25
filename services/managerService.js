@@ -605,36 +605,36 @@ exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
     .json({ message: "تم تحديث بيانات المحاضرة بنجاح", data: recordedLecture });
 });
 
+
 exports.getRecordedLectureById = asyncHandler(async (req, res, next) => {
-  const recordedLecture = await RecordedLecture.findById(
-    req.params.recordedLectureId
-  );
+  const recordedLecture = await RecordedLecture.findById(req.params.recordedLectureId);
 
   if (!recordedLecture) {
     return next(new ApiError("المحاضرة غير موجودة", 404));
   }
 
-  const classSubject = await ClassSubject.findById(
-    recordedLecture.classSubject_id
-  );
+  const classSubject = await ClassSubject.findById(recordedLecture.classSubject_id);
 
   if (!classSubject) {
     return next(new ApiError("المادة غير موجودة", 404));
   }
 
-  const subjectData = await Subject.findById(classSubject.subject_id); // افترض أن لديك حقل subject_id في ClassSubject
+  const subjectData = await Subject.findById(classSubject.subject_id); // تأكد من وجود حقل subject_id في ClassSubject
 
   if (!subjectData) {
     return next(new ApiError("اسم المادة غير موجود", 404));
   }
 
-  const userData = await User.find(
-    (user) => user._id === recordedLecture.uploaded_by
-  ).select('first_name second_name third_name last_name profile_image');
-  
+  const userData = await User.findById(recordedLecture.uploaded_by).select('first_name second_name third_name last_name profile_image'); // استخدام findById بدلاً من find
+
+  if (!userData) {
+    return next(new ApiError("المعلم غير موجود", 404)); // تحقق من وجود بيانات المستخدم
+  }
+
   res.status(200).json({
     recordedLectureData: recordedLecture,
     teacherData: userData,
     subject_name: subjectData.subject_name
   });
 });
+
