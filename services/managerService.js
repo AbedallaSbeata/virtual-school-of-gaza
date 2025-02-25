@@ -460,7 +460,7 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
 });
 
 exports.addMaterial = asyncHandler(async (req,res,next) => {
-  
+
   await Material.create({
       classSubject_id: req.body.classSubject_id,
       file_url: req.body.file_url,
@@ -470,3 +470,8 @@ exports.addMaterial = asyncHandler(async (req,res,next) => {
   });
   res.status(201).send({message: 'تم رفع ملف جديد'})
 });
+
+exports.getMaterials = asyncHandler(async (req, res, next) => {
+  const materials = await Material.find({classSubject_id: req.params.classSubject_id})
+  res.status(200).send(materials)
+})
