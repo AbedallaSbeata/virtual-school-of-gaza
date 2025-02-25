@@ -84,8 +84,8 @@ router.route('/deleteMaterials').delete(deleteMaterials)
 router.route('/addRecordedLecture').post(addRecordedLecture)
 router.route('/getRecordedLectures/:classId').get(getRecordedLectures)
 router.route('/deleteRecordedLectures').delete(deleteRecordedLectures)
-router.route("/updateMaterial").put(updateMaterial);
-router.route("/updateRecordedLecture").put(updateRecordedLecture);
+router.route("/updateMaterial/:materialId").put(updateMaterial);
+router.route("/updateRecordedLecture/:recordedLecturesIds").put(updateRecordedLecture);
 
 
 module.exports = router;
