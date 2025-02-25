@@ -471,11 +471,15 @@ exports.addMaterial = asyncHandler(async (req, res, next) => {
 });
 
 exports.getMaterials = asyncHandler(async (req, res, next) => {
-  const classSubjects_ids = await ClassSubject.find({
-    class_id: req.params.classId,
-  });
-  const materials = await Material.filter((material) =>
-    classSubjects_ids.includes(material.classSubject_id)
-  );
+  // البحث عن جميع classSubjects المرتبطة بالـ classId المحدد
+  const classSubjects = await ClassSubject.find({ class_id: req.params.classId });
+
+  // استخراج فقط المعرفات (IDs) الخاصة بـ classSubjects
+  const classSubjects_ids = classSubjects.map(subject => subject._id);
+
+  // البحث عن المواد (materials) التي تنتمي إلى أي من هذه المعرفات
+  const materials = await Material.find({ classSubject_id: { $in: classSubjects_ids } });
+
   res.status(200).send(materials);
 });
+
