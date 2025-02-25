@@ -9,6 +9,7 @@ const Student = require("../models/studentModel");
 const ApiFeatures = require("../utils/apiFeatures");
 const createToken = require("../utils/createToken");
 const ClassSubject = require("../models/classSubject");
+const Material = require('../models/materialModel')
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
