@@ -639,7 +639,7 @@ exports.getRecordedLectureById = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.addRecordedLectureComments = asyncHandler(async (req, res, next) => {
+exports.addRecordedLectureComment = asyncHandler(async (req, res, next) => {
   const comment = await RecordedLectureComments.create({
     content: req.body.content,
     recorded_lecture_id: req.body.recorded_lecture_id,
@@ -656,27 +656,20 @@ exports.getRecordedLectureComments = asyncHandler(async (req, res, next) => {
     return next(new ApiError("لا توجد تعليقات لهذه المحاضرة", 404));
   }
 
-  const userIds = comments.map(comment => comment.user_id);
-  const users = await User.find({ _id: { $in: userIds } }).select('first_name second_name third_name last_name profile_image');
-
-  const usersMap = {};
-  users.forEach(user => {
-    usersMap[user._id] = user;
-  });
-
-  const formattedComments = comments.map(comment => ({
-    _id: comment._id,
-    recordedLecture_id: comment.recorded_lecture_id,
-    user_id: comment.user_id,
-    content: comment.content,
-    createdAt: comment.createdAt,
-    updatedAt: comment.updatedAt
+  const commentsWithUserData = await Promise.all(comments.map(async (comment) => {
+    const userData = await User.findById(comment.user_id).select('first_name second_name third_name last_name profile_image');
+    return {
+      _id: comment._id,
+      recordedLecture_id: comment.recorded_lecture_id,
+      user_id: comment.user_id,
+      content: comment.content,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+      userData: userData || null 
+    };
   }));
 
-  res.status(200).json({
-    comments: formattedComments,
-    userData: users
-  });
+  res.status(200).json(commentsWithUserData);
 });
 
 

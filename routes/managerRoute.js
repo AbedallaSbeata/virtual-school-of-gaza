@@ -34,7 +34,7 @@ const {
   updateMaterial,
   updateRecordedLecture,
   getRecordedLectureById,
-  addRecordedLectureComments,
+  addRecordedLectureComment,
   deleteRecordedLectureComment,
   getRecordedLectureComments,
   updateRecordedLectureComment
@@ -92,10 +92,10 @@ router.route('/deleteRecordedLectures').delete(deleteRecordedLectures)
 router.route("/updateMaterial/:materialId").put(updateMaterial);
 router.route("/updateRecordedLecture/:recordedLecturesIds").put(updateRecordedLecture);
 router.route('/getRecordedLectureById/:recordedLectureId').get(getRecordedLectureById)
-router.route('/addRecordedLectureComment').post(addRecordedLectureComments)
-router.route('/getRecordedLectureComments/:comment_id').get(getRecordedLectureComments)
-router.route('/updateRecordedLectureComments/:comment_id').put(updateRecordedLectureComment)
-router.route('/deleteRecordedLectureComments/:comment_id').delete(deleteRecordedLectureComment)
+router.route('/addRecordedLectureComment').post(addRecordedLectureComment)
+router.route('/getRecordedLectureComments/:recorded_lecture_id').get(getRecordedLectureComments)
+router.route('/updateRecordedLectureComment/:comment_id').put(updateRecordedLectureComment)
+router.route('/deleteRecordedLectureComment/:comment_id').delete(deleteRecordedLectureComment)
 
 
 module.exports = router;
