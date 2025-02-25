@@ -93,7 +93,7 @@ router.route("/updateMaterial/:materialId").put(updateMaterial);
 router.route("/updateRecordedLecture/:recordedLecturesIds").put(updateRecordedLecture);
 router.route('/getRecordedLectureById/:recordedLectureId').get(getRecordedLectureById)
 router.route('/addRecordedLectureComment').post(addRecordedLectureComments)
-router.route('/getRecordedLectureComments/:comment_id').get(getRecordedLectureById)
+router.route('/getRecordedLectureComments/:comment_id').get(getRecordedLectureComments)
 router.route('/updateRecordedLectureComments/:comment_id').put(updateRecordedLectureComment)
 router.route('/deleteRecordedLectureComments/:comment_id').delete(deleteRecordedLectureComment)
 
