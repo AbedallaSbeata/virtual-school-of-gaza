@@ -30,7 +30,9 @@ const {
   deleteMaterials,
   addRecordedLecture,
   getRecordedLectures,
-  deleteRecordedLectures
+  deleteRecordedLectures,
+  updateMaterial,
+  updateRecordedLecture
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -82,6 +84,8 @@ router.route('/deleteMaterials').delete(deleteMaterials)
 router.route('/addRecordedLecture').post(addRecordedLecture)
 router.route('/getRecordedLectures/:classId').get(getRecordedLectures)
 router.route('/deleteRecordedLectures').delete(deleteRecordedLectures)
+router.route("/updateMaterial").put(updateMaterial);
+router.route("/updateRecordedLecture").put(updateRecordedLecture);
 
 
 module.exports = router;

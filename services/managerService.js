@@ -498,6 +498,24 @@ exports.deleteMaterials = asyncHandler(async (req, res, next) => {
   res.status(204).json();
 });
 
+exports.updateMaterial = asyncHandler(async (req, res, next) => {
+  const material = await Material.findByIdAndUpdate(
+    req.params.materialId,
+    {
+      name: req.body.name, 
+      file_url: req.body.file_url 
+    },
+    { new: true }
+  );
+
+  if (!material) {
+    return next(new ApiError("المادة غير موجودة", 404));
+  }
+
+  res.status(200).json({"message": "تم تحديث المادة بنجاح", data: material});
+});
+
+
 exports.addRecordedLecture = asyncHandler(async (req, res, next) => {
   await RecordedLecture.create({
     classSubject_id: req.body.classSubject_id,
@@ -537,6 +555,25 @@ exports.deleteRecordedLectures = asyncHandler(async (req, res, next) => {
 
   res.status(204).json();
 });
+
+exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
+  const recordedLecture = await RecordedLecture.findByIdAndUpdate(
+    req.params.recordedLecturesIds,
+    {
+      title: req.body.title, 
+      file_url: req.body.description,
+      video_url: req.body.video_url 
+    },
+    { new: true }
+  );
+
+  if (!recordedLecture) {
+    return next(new ApiError("المحاضرة غير موجودة", 404));
+  }
+
+  res.status(200).json({"message": "تم تحديث بيانات المحاضرة بنجاح", data: recordedLecture});
+});
+
 
 
 
