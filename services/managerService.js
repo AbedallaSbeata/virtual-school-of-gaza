@@ -477,9 +477,11 @@ exports.getMaterials = asyncHandler(async (req, res, next) => {
   // استخراج فقط المعرفات (IDs) الخاصة بـ classSubjects
   const classSubjects_ids = classSubjects.map(subject => subject._id);
 
-  // البحث عن المواد (materials) التي تنتمي إلى أي من هذه المعرفات
-  const materials = await Material.find({ classSubject_id: { $in: classSubjects_ids } });
+  // البحث عن المواد (materials) التي تنتمي إلى أي من هذه المعرفات وترتيبها من الأحدث إلى الأقدم
+  const materials = await Material.find({ classSubject_id: { $in: classSubjects_ids } })
+    .sort({ createdAt: -1 });
 
   res.status(200).send(materials);
 });
+
 
