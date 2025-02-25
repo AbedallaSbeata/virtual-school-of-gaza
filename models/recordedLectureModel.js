@@ -1,4 +1,3 @@
-// recordedLectureModel.js
 const mongoose = require("mongoose");
 
 const recordedLectureSchema = new mongoose.Schema(
@@ -10,20 +9,12 @@ const recordedLectureSchema = new mongoose.Schema(
     },
     description: String,
     video_url: String,
-    views: Number,
     rating: Number,
     size: Number,
     uploaded_by: {
       type: String,
-      ref: "Teacher",
+      ref: "User",
     },
-    // إضافة حقل جديد لتخزين الطلاب الذين انضموا إلى المحاضرة
-    enrolled_students: [
-      {
-        type: String,
-        ref: "Student",
-      },
-    ],
   },
   { timestamps: true }
 );

@@ -27,7 +27,10 @@ const {
   assignTeacherToClassSubject,
   addMaterial,
   getMaterials,
-  deleteMaterials
+  deleteMaterials,
+  addRecordedLecture,
+  getRecordedLectures,
+  deleteRecordedLectures
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -76,6 +79,9 @@ router.route("/getMyData").get(getMyData);
 router.route('/addMaterial').post(addMaterial)
 router.route('/getMaterials/:classId').get(getMaterials)
 router.route('/deleteMaterials').delete(deleteMaterials)
+router.route('/addRecordedLecture').post(addRecordedLecture)
+router.route('/getRecordedLectures/:classId').get(getRecordedLectures)
+router.route('/deleteRecordedLectures').delete(deleteRecordedLectures)
 
 
 module.exports = router;

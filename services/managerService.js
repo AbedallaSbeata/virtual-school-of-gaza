@@ -10,6 +10,7 @@ const ApiFeatures = require("../utils/apiFeatures");
 const createToken = require("../utils/createToken");
 const ClassSubject = require("../models/classSubject");
 const Material = require("../models/materialModel");
+const RecordedLecture = require('../models/recordedLectureModel')
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -493,6 +494,46 @@ exports.deleteMaterials = asyncHandler(async (req, res, next) => {
   }
 
   await Material.deleteMany({ _id: { $in: req.body.materialIds } });
+
+  res.status(204).json();
+});
+
+exports.addRecordedLecture = asyncHandler(async (req, res, next) => {
+  await RecordedLecture.create({
+    classSubject_id: req.body.classSubject_id,
+    video_url: req.body.video_url,
+    title: req.body.title,
+    description: req.body.description,
+    size: req.body.size,
+    rating: req.body.rating,
+    uploaded_by: req.user._id,
+  });
+  res.status(201).send({ message: "تم رفع محاضرة جديدة" });
+});
+
+exports.getRecordedLectures = asyncHandler(async (req, res, next) => {
+  const classSubjects = await ClassSubject.find({ class_id: req.params.classId });
+  const classSubjects_ids = classSubjects.map(subject => subject._id);
+  const recordedLectures = await RecordedLecture.find({ classSubject_id: { $in: classSubjects_ids } })
+    .sort({ createdAt: -1 });
+  res.status(200).send(recordedLectures);
+});
+
+exports.deleteRecordedLectures = asyncHandler(async (req, res, next) => {
+  if (!req.body.recordedLecturesIds || !Array.isArray(req.body.recordedLecturesIds) || req.body.recordedLecturesIds.length === 0) {
+    return next(new ApiError("يجب إرسال معرفات المواد للحذف", 400));
+  }
+
+  const existingRecordedLectures = await RecordedLecture.find({ _id: { $in: req.body.recordedLecturesIds } });
+
+  const existingIds = existingRecordedLectures.map(recordedLecture => recordedLecture._id.toString());
+  const nonExistentIds = req.body.recordedLecturesIds.filter(id => !existingIds.includes(id));
+
+  if (nonExistentIds.length > 0) {
+    return next(new ApiError(`هنالك ايدي على الاقل غير موجود!`, 404));
+  }
+
+  await Material.deleteMany({ _id: { $in: req.body.recordedLecturesIds } });
 
   res.status(204).json();
 });
