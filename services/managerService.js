@@ -576,6 +576,14 @@ exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
   res.status(200).json({"message": "تم تحديث بيانات المحاضرة بنجاح", data: recordedLecture});
 });
 
+exports.getRecordedLecturesById = asyncHandler(async (req,res,next)=> {
+  const recordedLecture = await RecordedLecture.findById(req.params.recordedLectureId)
+  const classSubject_id = recordedLecture.classSubject_id
+  const subject_id = await ClassSubject.findById(classSubject_id)
+  const subjectData = await Subject.findById(subject_id)
+
+  res.status(200).json({"recordedLectureData": recordedLecture, "subject_name: ": subjectData.subject_name})
+})
 
 
 
