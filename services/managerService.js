@@ -482,9 +482,19 @@ exports.deleteMaterials = asyncHandler(async (req, res, next) => {
   if (!req.body.materialIds || !Array.isArray(req.body.materialIds) || req.body.materialIds.length === 0) {
     return next(new ApiError("يجب إرسال معرفات المواد للحذف", 400));
   }
+
+  const existingMaterials = await Material.find({ _id: { $in: req.body.materialIds } });
+
+  const existingIds = existingMaterials.map(material => material._id.toString());
+  const nonExistentIds = req.body.materialIds.filter(id => !existingIds.includes(id));
+
+  if (nonExistentIds.length > 0) {
+    return next(new ApiError(`هنالك ايدي على الاقل غير موجود!`, 404));
+  }
+
   await Material.deleteMany({ _id: { $in: req.body.materialIds } });
 
-  res.status(204).json(); 
+  res.status(204).json();
 });
 
 
