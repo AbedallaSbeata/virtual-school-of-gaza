@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 
 const recordedLectureReplieSchema = new mongoose.Schema(
   {
-    user_identity_number: {
-      type: String,
+    user_id: {
+      type: mongoose.Schema.ObjectId,
       ref: "User",
     },
     comment_id: {
@@ -11,10 +11,6 @@ const recordedLectureReplieSchema = new mongoose.Schema(
       ref: "RecordedLectureComment",
     },
     content: String,
-    classSubject_id: {
-      type: mongoose.Schema.ObjectId,
-      ref: "ClassSubject",
-    },
   },
   { timestamps: true }
 );

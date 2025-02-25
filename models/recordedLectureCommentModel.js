@@ -2,19 +2,16 @@ const mongoose = require("mongoose");
 
 const recordedLectureCommentSchema = new mongoose.Schema(
   {
-    user_identity_number: {
-      type: String,
-      ref: "User",
-    },
-    classSubject_id: {
+    user_id: {
       type: mongoose.Schema.ObjectId,
-      ref: "ClassSubject",
+      ref: "User",
     },
     recorded_lecture_id: {
       type: mongoose.Schema.ObjectId,
       ref: "RecordedLecture",
     },
     content: String,
+    
   },
   { timestamps: true }
 );

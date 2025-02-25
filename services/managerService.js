@@ -11,6 +11,7 @@ const createToken = require("../utils/createToken");
 const ClassSubject = require("../models/classSubject");
 const Material = require("../models/materialModel");
 const RecordedLecture = require("../models/recordedLectureModel");
+const RecordedLectureComments = require('../models/recordedLectureCommentModel')
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -633,8 +634,72 @@ exports.getRecordedLectureById = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     recordedLectureData: recordedLecture,
-    teacherData: userData,
+    userData: userData,
     subject_name: subjectData.subject_name
   });
 });
 
+exports.addRecordedLectureComments = asyncHandler(async (req, res, next) => {
+  const comment = await RecordedLectureComments.create({
+    content: req.body.content,
+    recorded_lecture_id: req.body.recorded_lecture_id,
+    user_id: req.user._id
+  })
+  const userData = await User.findById(comment.user_id).select('first_name second_name third_name last_name profile_image'); 
+  res.status(201).json({"commentData": comment, "userData": userData})
+})
+
+exports.getRecordedLectureComments = asyncHandler(async (req, res, next) => {
+  const comments = await RecordedLectureComments.find({ recordedLecture_id: req.params.comment_id });
+
+  if (!comments || comments.length === 0) {
+    return next(new ApiError("لا توجد تعليقات لهذه المحاضرة", 404));
+  }
+
+  const userIds = comments.map(comment => comment.user_id);
+  const users = await User.find({ _id: { $in: userIds } }).select('first_name second_name third_name last_name profile_image');
+
+  const usersMap = {};
+  users.forEach(user => {
+    usersMap[user._id] = user;
+  });
+
+  const formattedComments = comments.map(comment => ({
+    _id: comment._id,
+    recordedLecture_id: comment.recordedLecture_id,
+    user_id: comment.user_id,
+    content: comment.content,
+    createdAt: comment.createdAt,
+    updatedAt: comment.updatedAt
+  }));
+
+  res.status(200).json({
+    comments: formattedComments,
+    userData: users
+  });
+});
+
+
+
+exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
+  const recordedLectureComment = await RecordedLectureComments.findByIdAndUpdate(
+    req.params.comment_id,
+    {
+      content: req.body.content
+    },
+    { new: true }
+  );
+
+  if (!recordedLectureComment) {
+    return next(new ApiError("التعليق غير موجود", 404));
+  }
+
+  res
+    .status(200)
+    .json({ message: "تم تحديث بيانات التعليق بنجاح", data: recordedLectureComment });
+});
+
+exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
+  await RecordedLectureComments.findByIdAndDelete(req.params.comment_id)
+  res.status(204).json();
+});
