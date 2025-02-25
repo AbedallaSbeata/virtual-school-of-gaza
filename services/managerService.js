@@ -581,7 +581,7 @@ exports.getRecordedLecturesById = asyncHandler(async (req,res,next)=> {
   const classSubject_id = recordedLecture.classSubject_id
   const subject_id = await ClassSubject.findById(classSubject_id)
   const subjectData = await Subject.findById(subject_id)
-console.log(subjectData)
+console.log(`kngbk retkbnr ${subjectData}`)
   res.status(200).json({"recordedLectureData": recordedLecture, "subject_name: ": subjectData.subject_name})
 })
 
