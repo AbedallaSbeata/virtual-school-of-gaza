@@ -467,7 +467,7 @@ exports.addMaterial = asyncHandler(async (req,res,next) => {
   await Material.create({
       classSubject_id: req.params.ClassSubject_id,
       file_url: file_url,
-      type_file: req.file.mimetype,
+      type_file: req.body.typeFile,
       name: req.body.name,
       uploaded_by: req.user.identity_number
   });
