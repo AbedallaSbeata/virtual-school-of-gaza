@@ -650,7 +650,7 @@ exports.addRecordedLectureComments = asyncHandler(async (req, res, next) => {
 })
 
 exports.getRecordedLectureComments = asyncHandler(async (req, res, next) => {
-  const comments = await RecordedLectureComments.find({ recordedLecture_id: req.params.comment_id });
+  const comments = await RecordedLectureComments.find({ recordedLecture_id: req.params.recorded_lecture_id });
 
   if (!comments || comments.length === 0) {
     return next(new ApiError("لا توجد تعليقات لهذه المحاضرة", 404));
@@ -666,7 +666,7 @@ exports.getRecordedLectureComments = asyncHandler(async (req, res, next) => {
 
   const formattedComments = comments.map(comment => ({
     _id: comment._id,
-    recordedLecture_id: comment.recordedLecture_id,
+    recordedLecture_id: comment.recorded_lecture_id,
     user_id: comment.user_id,
     content: comment.content,
     createdAt: comment.createdAt,
