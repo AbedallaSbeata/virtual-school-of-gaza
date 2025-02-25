@@ -10,7 +10,7 @@ const ApiFeatures = require("../utils/apiFeatures");
 const createToken = require("../utils/createToken");
 const ClassSubject = require("../models/classSubject");
 const Material = require("../models/materialModel");
-const RecordedLecture = require('../models/recordedLectureModel')
+const RecordedLecture = require("../models/recordedLectureModel");
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -472,22 +472,35 @@ exports.addMaterial = asyncHandler(async (req, res, next) => {
 });
 
 exports.getMaterials = asyncHandler(async (req, res, next) => {
-  const classSubjects = await ClassSubject.find({ class_id: req.params.classId });
-  const classSubjects_ids = classSubjects.map(subject => subject._id);
-  const materials = await Material.find({ classSubject_id: { $in: classSubjects_ids } })
-    .sort({ createdAt: -1 });
+  const classSubjects = await ClassSubject.find({
+    class_id: req.params.classId,
+  });
+  const classSubjects_ids = classSubjects.map((subject) => subject._id);
+  const materials = await Material.find({
+    classSubject_id: { $in: classSubjects_ids },
+  }).sort({ createdAt: -1 });
   res.status(200).send(materials);
 });
 
 exports.deleteMaterials = asyncHandler(async (req, res, next) => {
-  if (!req.body.materialIds || !Array.isArray(req.body.materialIds) || req.body.materialIds.length === 0) {
+  if (
+    !req.body.materialIds ||
+    !Array.isArray(req.body.materialIds) ||
+    req.body.materialIds.length === 0
+  ) {
     return next(new ApiError("يجب إرسال معرفات المواد للحذف", 400));
   }
 
-  const existingMaterials = await Material.find({ _id: { $in: req.body.materialIds } });
+  const existingMaterials = await Material.find({
+    _id: { $in: req.body.materialIds },
+  });
 
-  const existingIds = existingMaterials.map(material => material._id.toString());
-  const nonExistentIds = req.body.materialIds.filter(id => !existingIds.includes(id));
+  const existingIds = existingMaterials.map((material) =>
+    material._id.toString()
+  );
+  const nonExistentIds = req.body.materialIds.filter(
+    (id) => !existingIds.includes(id)
+  );
 
   if (nonExistentIds.length > 0) {
     return next(new ApiError(`هنالك ايدي على الاقل غير موجود!`, 404));
@@ -502,9 +515,9 @@ exports.updateMaterial = asyncHandler(async (req, res, next) => {
   const material = await Material.findByIdAndUpdate(
     req.params.materialId,
     {
-      name: req.body.name, 
+      name: req.body.name,
       file_url: req.body.file_url,
-      updated_by: req.user._id
+      updated_by: req.user._id,
     },
     { new: true }
   );
@@ -513,9 +526,8 @@ exports.updateMaterial = asyncHandler(async (req, res, next) => {
     return next(new ApiError("المادة غير موجودة", 404));
   }
 
-  res.status(200).json({"message": "تم تحديث المادة بنجاح", data: material});
+  res.status(200).json({ message: "تم تحديث المادة بنجاح", data: material });
 });
-
 
 exports.addRecordedLecture = asyncHandler(async (req, res, next) => {
   await RecordedLecture.create({
@@ -531,28 +543,43 @@ exports.addRecordedLecture = asyncHandler(async (req, res, next) => {
 });
 
 exports.getRecordedLectures = asyncHandler(async (req, res, next) => {
-  const classSubjects = await ClassSubject.find({ class_id: req.params.classId });
-  const classSubjects_ids = classSubjects.map(subject => subject._id);
-  const recordedLectures = await RecordedLecture.find({ classSubject_id: { $in: classSubjects_ids } })
-    .sort({ createdAt: -1 });
+  const classSubjects = await ClassSubject.find({
+    class_id: req.params.classId,
+  });
+  const classSubjects_ids = classSubjects.map((subject) => subject._id);
+  const recordedLectures = await RecordedLecture.find({
+    classSubject_id: { $in: classSubjects_ids },
+  }).sort({ createdAt: -1 });
   res.status(200).send(recordedLectures);
 });
 
 exports.deleteRecordedLectures = asyncHandler(async (req, res, next) => {
-  if (!req.body.recordedLecturesIds || !Array.isArray(req.body.recordedLecturesIds) || req.body.recordedLecturesIds.length === 0) {
+  if (
+    !req.body.recordedLecturesIds ||
+    !Array.isArray(req.body.recordedLecturesIds) ||
+    req.body.recordedLecturesIds.length === 0
+  ) {
     return next(new ApiError("يجب إرسال معرفات المواد للحذف", 400));
   }
 
-  const existingRecordedLectures = await RecordedLecture.find({ _id: { $in: req.body.recordedLecturesIds } });
+  const existingRecordedLectures = await RecordedLecture.find({
+    _id: { $in: req.body.recordedLecturesIds },
+  });
 
-  const existingIds = existingRecordedLectures.map(recordedLecture => recordedLecture._id.toString());
-  const nonExistentIds = req.body.recordedLecturesIds.filter(id => !existingIds.includes(id));
+  const existingIds = existingRecordedLectures.map((recordedLecture) =>
+    recordedLecture._id.toString()
+  );
+  const nonExistentIds = req.body.recordedLecturesIds.filter(
+    (id) => !existingIds.includes(id)
+  );
 
   if (nonExistentIds.length > 0) {
     return next(new ApiError(`هنالك ايدي على الاقل غير موجود!`, 404));
   }
 
-  await RecordedLecture.deleteMany({ _id: { $in: req.body.recordedLecturesIds } });
+  await RecordedLecture.deleteMany({
+    _id: { $in: req.body.recordedLecturesIds },
+  });
 
   res.status(204).json();
 });
@@ -561,10 +588,10 @@ exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
   const recordedLecture = await RecordedLecture.findByIdAndUpdate(
     req.params.recordedLecturesIds,
     {
-      title: req.body.title, 
+      title: req.body.title,
       description: req.body.description,
       video_url: req.body.video_url,
-      updated_by: req.user._id
+      updated_by: req.user._id,
     },
     { new: true }
   );
@@ -573,17 +600,23 @@ exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
     return next(new ApiError("المحاضرة غير موجودة", 404));
   }
 
-  res.status(200).json({"message": "تم تحديث بيانات المحاضرة بنجاح", data: recordedLecture});
+  res
+    .status(200)
+    .json({ message: "تم تحديث بيانات المحاضرة بنجاح", data: recordedLecture });
 });
 
-exports.getRecordedLecturesById = asyncHandler(async (req, res, next) => {
-  const recordedLecture = await RecordedLecture.findById(req.params.recordedLectureId);
-  
+exports.getRecordedLectureById = asyncHandler(async (req, res, next) => {
+  const recordedLecture = await RecordedLecture.findById(
+    req.params.recordedLectureId
+  );
+
   if (!recordedLecture) {
     return next(new ApiError("المحاضرة غير موجودة", 404));
   }
 
-  const classSubject = await ClassSubject.findById(recordedLecture.classSubject_id);
+  const classSubject = await ClassSubject.findById(
+    recordedLecture.classSubject_id
+  );
 
   if (!classSubject) {
     return next(new ApiError("المادة غير موجودة", 404));
@@ -595,12 +628,13 @@ exports.getRecordedLecturesById = asyncHandler(async (req, res, next) => {
     return next(new ApiError("اسم المادة غير موجود", 404));
   }
 
+  const userData = await User.find(
+    (user) => user._id === recordedLecture.uploaded_by
+  ).select('first_name second_name third_name last_name profile_image');
+  
   res.status(200).json({
     recordedLectureData: recordedLecture,
-    subject_name: subjectData.subject_name // تأكد من أن المفتاح لا يحتوي على مسافات غير ضرورية
+    teacherData: userData,
+    subject_name: subjectData.subject_name
   });
 });
-
-
-
-
