@@ -478,9 +478,14 @@ exports.getMaterials = asyncHandler(async (req, res, next) => {
   res.status(200).send(materials);
 });
 
-exports.deleteMaterial = asyncHandler(async (req, res, next) => {
-  await Material.findByIdAndDelete(req.params.materialId)
-  res.status(204).json()
-})
+exports.deleteMaterials = asyncHandler(async (req, res, next) => {
+  if (!req.body.materialIds || !Array.isArray(req.body.materialIds) || req.body.materialIds.length === 0) {
+    return next(new ApiError("يجب إرسال معرفات المواد للحذف", 400));
+  }
+  await Material.deleteMany({ _id: { $in: req.body.materialIds } });
+
+  res.status(204).json(); 
+});
+
 
 
