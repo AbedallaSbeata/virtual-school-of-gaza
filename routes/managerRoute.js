@@ -75,7 +75,7 @@ router.route("/teachers").get(getTeachers);
 router.route("/getMyData").get(getMyData);
 router.route('/addMaterial').post(addMaterial)
 router.route('/getMaterials/:classId').get(getMaterials)
-router.route('/deleteMaterial').delete(deleteMaterial)
+router.route('/deleteMaterial/:materialId').delete(deleteMaterial)
 
 
 module.exports = router;
