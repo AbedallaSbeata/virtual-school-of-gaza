@@ -533,7 +533,7 @@ exports.deleteRecordedLectures = asyncHandler(async (req, res, next) => {
     return next(new ApiError(`هنالك ايدي على الاقل غير موجود!`, 404));
   }
 
-  await Material.deleteMany({ _id: { $in: req.body.recordedLecturesIds } });
+  await RecordedLecture.deleteMany({ _id: { $in: req.body.recordedLecturesIds } });
 
   res.status(204).json();
 });
