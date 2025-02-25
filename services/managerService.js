@@ -576,14 +576,31 @@ exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
   res.status(200).json({"message": "تم تحديث بيانات المحاضرة بنجاح", data: recordedLecture});
 });
 
-exports.getRecordedLecturesById = asyncHandler(async (req,res,next)=> {
-  const recordedLecture = await RecordedLecture.findById(req.params.recordedLectureId)
-  const classSubject_id = recordedLecture.classSubject_id
-  const subject_id = await ClassSubject.findById(classSubject_id)
-  const subjectData = await Subject.findById(subject_id)
-console.log(`kngbk retkbnr ${subjectData}`)
-  res.status(200).json({"recordedLectureData": recordedLecture, "subject_name: ": subjectData.subject_name})
-})
+exports.getRecordedLecturesById = asyncHandler(async (req, res, next) => {
+  const recordedLecture = await RecordedLecture.findById(req.params.recordedLectureId);
+  
+  if (!recordedLecture) {
+    return next(new ApiError("المحاضرة غير موجودة", 404));
+  }
+
+  const classSubject = await ClassSubject.findById(recordedLecture.classSubject_id);
+
+  if (!classSubject) {
+    return next(new ApiError("المادة غير موجودة", 404));
+  }
+
+  const subjectData = await Subject.findById(classSubject.subject_id); // افترض أن لديك حقل subject_id في ClassSubject
+
+  if (!subjectData) {
+    return next(new ApiError("اسم المادة غير موجود", 404));
+  }
+
+  res.status(200).json({
+    recordedLectureData: recordedLecture,
+    subject_name: subjectData.subject_name // تأكد من أن المفتاح لا يحتوي على مسافات غير ضرورية
+  });
+});
+
 
 
 
