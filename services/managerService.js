@@ -9,7 +9,7 @@ const Student = require("../models/studentModel");
 const ApiFeatures = require("../utils/apiFeatures");
 const createToken = require("../utils/createToken");
 const ClassSubject = require("../models/classSubject");
-const Material = require('../models/materialModel')
+const Material = require("../models/materialModel");
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -445,7 +445,7 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
     identity_number: req.body.identity_number,
   });
 
-  if (newTeacher.length ===0) {
+  if (newTeacher.length === 0) {
     return next(new ApiError("المعلم غير موجود"));
   }
 
@@ -459,21 +459,23 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
   });
 });
 
-exports.addMaterial = asyncHandler(async (req,res,next) => {
-
+exports.addMaterial = asyncHandler(async (req, res, next) => {
   await Material.create({
-      classSubject_id: req.body.classSubject_id,
-      file_url: req.body.file_url,
-      type_file: req.body.type_file,
-      name: req.body.name,
-      uploaded_by: req.user._id
+    classSubject_id: req.body.classSubject_id,
+    file_url: req.body.file_url,
+    type_file: req.body.type_file,
+    name: req.body.name,
+    uploaded_by: req.user._id,
   });
-  res.status(201).send({message: 'تم رفع ملف جديد'})
+  res.status(201).send({ message: "تم رفع ملف جديد" });
 });
 
 exports.getMaterials = asyncHandler(async (req, res, next) => {
-  const classId = await ClassSubject.find({class_id: req.params.classId})
-  console.log(classId)
-  const materials = await Material.find({classSubject_id: classId[0]._id})
-  res.status(200).send(materials)
-})
+  const classSubjects_ids = await ClassSubject.find({
+    class_id: req.params.classId,
+  });
+  const materials = await Material.filter((material) =>
+    classSubjects_ids.includes(material.classSubject_id)
+  );
+  res.status(200).send(materials);
+});
