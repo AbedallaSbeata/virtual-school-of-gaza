@@ -460,17 +460,13 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
 });
 
 exports.addMaterial = asyncHandler(async (req,res,next) => {
-  if (!req.file) {
-      return next(new ApiError('لم يتم رفع أي ملف', 400));
-  }
-  const file_url = `${req.protocol}://${req.get('host')}/uploads/materials/${req.file.filename}`;
-
+  
   await Material.create({
-      classSubject_id: req.params.ClassSubject_id,
-      file_url: file_url,
-      type_file: req.body.typeFile,
+      classSubject_id: req.body.classSubject_id,
+      file_url: req.body.file_url,
+      type_file: req.body.type_file,
       name: req.body.name,
-      uploaded_by: req.user.identity_number
+      uploaded_by: req.user._id
   });
   res.status(201).send({message: 'تم رفع ملف جديد'})
 });

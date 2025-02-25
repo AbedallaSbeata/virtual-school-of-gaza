@@ -36,7 +36,6 @@ const {
   assignSpecificSubjectToTeachersValidator,
   addUserValidator,
   disActiveUserValidator,
-  addMaterialValidator
 } = require("../utils/validators/managerValidator");
 
 router.use(authService.protect);
@@ -68,13 +67,11 @@ router.route("/deleteClass").delete(deleteClassValidator, deleteClass);
 router.route("/deleteLevel").delete(deleteLevel);
 router.route("/getSpecificStudent/:identity_number").get(getSpecificStudent);
 router.route("/getSpecificTeacher/:identity_number").get(getSpecificTeacher);
-// router.route('/getClassSubjectsByClassId/:classId').get(getClassSubjectsByClassId)
-// router.route("/getSubjectForSpecificClass/:level_number/:class_number").get(getSubjectsForSpecificClass)
 router.route("/getSpecificClass/:level_number/:class_number").get(getSpecificClass)
 router.route("/students").get(getStudents);
 router.route("/teachers").get(getTeachers);
 router.route("/getMyData").get(getMyData);
-router.route('/addMaterial/:ClassSubject_id').post(addMaterialValidator, addMaterial)
+router.route('/addMaterial').post(addMaterial)
 
 
 module.exports = router;
