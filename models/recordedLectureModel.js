@@ -15,7 +15,7 @@ const recordedLectureSchema = new mongoose.Schema(
       type: String,
       ref: "User",
     },
-    edited_by: {
+    updated_by: {
       type: mongoose.Schema.ObjectId,
       ref: "User",
     },
