@@ -74,7 +74,7 @@ router.route("/getSpecificClass/:level_number/:class_number").get(getSpecificCla
 router.route("/students").get(getStudents);
 router.route("/teachers").get(getTeachers);
 router.route("/getMyData").get(getMyData);
-router.route('/addMaterial').post(addMaterialValidator, addMaterial)
+router.route('/addMaterial/:ClassSubject_id').post(addMaterialValidator, addMaterial)
 
 
 module.exports = router;
