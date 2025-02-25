@@ -24,7 +24,8 @@ const {
   deleteLevel,
   getSpecificClass,
   assignSpecificSubjectToTeachers,
-  assignTeacherToClassSubject
+  assignTeacherToClassSubject,
+  addMaterial
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -35,6 +36,7 @@ const {
   assignSpecificSubjectToTeachersValidator,
   addUserValidator,
   disActiveUserValidator,
+  addMaterialValidator
 } = require("../utils/validators/managerValidator");
 
 router.use(authService.protect);
@@ -72,6 +74,7 @@ router.route("/getSpecificClass/:level_number/:class_number").get(getSpecificCla
 router.route("/students").get(getStudents);
 router.route("/teachers").get(getTeachers);
 router.route("/getMyData").get(getMyData);
+router.route('/addMaterial').post(addMaterialValidator, addMaterial)
 
 
 module.exports = router;

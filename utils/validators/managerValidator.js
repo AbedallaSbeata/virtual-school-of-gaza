@@ -91,4 +91,8 @@ exports.deleteClassValidator = [
   validatorMiddleware,
 ];
 
+exports.addMaterialValidator = [
+  check("name").notEmpty().withMessage("Name Required"),
+];
+
 

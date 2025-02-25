@@ -7,11 +7,14 @@ const materialSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "ClassSubject",
     },
-    type_file: String,
+    type_file: {
+      type: String,
+      enum: ["كتاب", "نموذج اختبار", "مادة مساعدة", "رابط خارجي", "ملف"]
+    },
     file_url: String,
     uploaded_by: {
       type: String,
-      ref: "Teacher",
+      ref: "User",
     },
   },
   { timestamps: true }

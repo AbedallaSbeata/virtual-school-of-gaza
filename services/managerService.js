@@ -443,7 +443,6 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
   const newTeacher = await User.find({
     identity_number: req.body.identity_number,
   });
- console.log(newTeacher)
 
   if (newTeacher.length ===0) {
     return next(new ApiError("المعلم غير موجود"));
@@ -457,4 +456,20 @@ exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
     status: "success",
     message: "تمت إضافة المعلم بنجاح إلى المادة الدراسية.",
   });
+});
+
+exports.addMaterial = asyncHandler(async (req,res,next) => {
+  if (!req.file) {
+      return next(new ApiError('لم يتم رفع أي ملف', 400));
+  }
+  const file_url = `${req.protocol}://${req.get('host')}/uploads/materials/${req.file.filename}`;
+
+  await Material.create({
+      classSubject_id: req.params.ClassSubject_id,
+      file_url: file_url,
+      type_file: req.file.mimetype,
+      name: req.body.name,
+      uploaded_by: req.user.identity_number
+  });
+  res.status(201).send({message: 'تم رفع ملف جديد'})
 });
