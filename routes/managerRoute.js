@@ -41,7 +41,8 @@ const {
  deleteReply,
  getCommentReplies,
  getClassStudents,
- assignStudentsToSpecificClass
+ assignStudentsToSpecificClass,
+ getLevelStudents
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -98,6 +99,8 @@ router.route('/updateReply/:reply_id').put(updateReply)
 router.route('/deleteReply/:reply_id').delete(deleteReply)
 router.route('/getClassStudents/:class_id').get(getClassStudents)
 router.route('/assignStudentsToSpecificClass').post(assignStudentsToSpecificClass)
+router.route('/getLevelStudents/:level_number').get(getLevelStudents)
+
 
 
 module.exports = router;
