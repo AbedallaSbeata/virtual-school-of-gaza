@@ -693,17 +693,21 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
 });
 
 
+
 exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   const classes = await Class.find({ level_number: req.params.level_number });
   if (classes.length === 0) {
-    return res.status(404).json({ message: "لا يوجد صفوف لهذه المرحلة" });
+      return res.status(404).json({ message: "لا يوجد صفوف لهذه المرحلة" });
   }
   const classesIds = classes.map(classObj => classObj._id);
-  
-  const users = await User.find({ class_id: { $in: classesIds } });
-  if (users.length === 0) {
-    return res.status(404).json({ message: "لا يوجد طلاب في هذه المرحلة" });
+  const students = await Student.find({ class_id: { $in: classesIds } });
+  if (students.length === 0) {
+      return res.status(404).json({ message: "لا يوجد طلاب في هذه المرحلة" });
   }
+  
+  const identity_numbers = students.map(student => student.user_identity_number);
+  
+  const users = await User.find({ identity_number: { $in: identity_numbers } });
+  
   res.status(200).json({ users });
 });
-
