@@ -704,10 +704,7 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   if (students.length === 0) {
       return res.status(404).json({ message: "لا يوجد طلاب في هذه المرحلة" });
   }
-  
   const identity_numbers = students.map(student => student.user_identity_number);
-  
   const users = await User.find({ identity_number: { $in: identity_numbers } });
-  
-  res.status(200).json({ users });
+  res.status(200).json(users);
 });
