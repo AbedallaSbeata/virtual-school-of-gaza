@@ -95,83 +95,83 @@ exports.addNewClass = asyncHandler(async (req, res, next) => {
   res.status(201).json({ message: "تم اضافة هذا الصف بنجاح", data: classData });
 });
 
-exports.addTeachersToSpecificClass = asyncHandler(async (req, res, next) => {
-  const classExists = await Class.find({
-    class_number: req.body.class_number,
-    level_number: req.body.level_number,
-  });
-  if (classExists.length == 0) {
-    return next(new ApiError("لا يوجد صف يحتوي على هذه المعلومات"));
-  }
-  for (let i = 0; i < req.body.teachersIDs.length; i++) {
-    const teacherExists = await Teacher.find({
-      user_identity_number: req.body.teachersIDs[i],
-    });
-    if (teacherExists.length == 0) {
-      return next(new ApiError("هناك معلم واحد على الاقل غير موجود"));
-    }
-  }
-  for (let i = 0; i < req.body.teachersIDs.length; i++) {
-    classExists[0].teachersIDs.push(req.body.teachersIDs[i]);
-  }
-  const levelEXists = await Level.find({
-    level_number: classExists[0].level_number,
-  });
+// exports.addTeachersToSpecificClass = asyncHandler(async (req, res, next) => {
+//   const classExists = await Class.find({
+//     class_number: req.body.class_number,
+//     level_number: req.body.level_number,
+//   });
+//   if (classExists.length == 0) {
+//     return next(new ApiError("لا يوجد صف يحتوي على هذه المعلومات"));
+//   }
+//   for (let i = 0; i < req.body.teachersIDs.length; i++) {
+//     const teacherExists = await Teacher.find({
+//       user_identity_number: req.body.teachersIDs[i],
+//     });
+//     if (teacherExists.length == 0) {
+//       return next(new ApiError("هناك معلم واحد على الاقل غير موجود"));
+//     }
+//   }
+//   for (let i = 0; i < req.body.teachersIDs.length; i++) {
+//     classExists[0].teachersIDs.push(req.body.teachersIDs[i]);
+//   }
+//   const levelEXists = await Level.find({
+//     level_number: classExists[0].level_number,
+//   });
 
-  for (let i = 0; i < req.body.teachersIDs.length; i++) {
-    let teacherExists = await Teacher.find({
-      user_identity_number: req.body.teachersIDs[i],
-    });
-    teacherExists[0].classes_ids.push(classExists[0]._id);
-    await teacherExists[0].save();
-  }
-  await Level.findByIdAndUpdate(levelEXists[0]._id, {
-    numberOfTeachers:
-      levelEXists[0].numberOfTeachers + req.body.teachersIDs.length,
-  });
-  classExists[0].numberOfTeachers = classExists[0].teachersIDs.length;
+//   for (let i = 0; i < req.body.teachersIDs.length; i++) {
+//     let teacherExists = await Teacher.find({
+//       user_identity_number: req.body.teachersIDs[i],
+//     });
+//     teacherExists[0].classes_ids.push(classExists[0]._id);
+//     await teacherExists[0].save();
+//   }
+//   await Level.findByIdAndUpdate(levelEXists[0]._id, {
+//     numberOfTeachers:
+//       levelEXists[0].numberOfTeachers + req.body.teachersIDs.length,
+//   });
+//   classExists[0].numberOfTeachers = classExists[0].teachersIDs.length;
 
-  await classExists[0].save();
-  res.status(201).json({ message: "تم اضافة المعلمين الى هذا الصف بنجاح" });
-});
+//   await classExists[0].save();
+//   res.status(201).json({ message: "تم اضافة المعلمين الى هذا الصف بنجاح" });
+// });
 
-exports.addStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
-  const classExists = await Class.find({
-    class_number: req.body.class_number,
-    level_number: req.body.level_number,
-  });
-  if (classExists.length == 0) {
-    return next(new ApiError("لا يوحد صف يحتوي على هذه المعلومات"));
-  }
-  for (let i = 0; i < req.body.studentsIDs.length; i++) {
-    const studentExists = await Student.find({
-      user_identity_number: req.body.studentsIDs[i],
-    });
-    if (studentExists.length == 0) {
-      return next(new ApiError("هناك طالب واحد على الاقل غير موجود"));
-    }
-  }
-  for (let i = 0; i < req.body.studentsIDs.length; i++) {
-    classExists[0].studentsIDs.push(req.body.studentsIDs[i]);
-  }
-  const levelEXists = await Level.find({
-    level_number: classExists[0].level_number,
-  });
-  for (let i = 0; i < req.body.studentsIDs.length; i++) {
-    let studentExists = await Student.find({
-      user_identity_number: req.body.studentsIDs[i],
-    });
-    studentExists[0].class_id = classExists[0]._id;
-    await studentExists[0].save();
-  }
-  await Level.findByIdAndUpdate(levelEXists[0]._id, {
-    numberOfStudents:
-      levelEXists[0].numberOfStudents + req.body.studentsIDs.length,
-  });
-  classExists[0].numberOfStudents = classExists[0].studentsIDs.length;
-  await classExists[0].save();
-  res.status(201).json({ message: "تم اضافة الطلاب الى هذا الصف بنجاح" });
-});
+// exports.addStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
+//   const classExists = await Class.find({
+//     class_number: req.body.class_number,
+//     level_number: req.body.level_number,
+//   });
+//   if (classExists.length == 0) {
+//     return next(new ApiError("لا يوحد صف يحتوي على هذه المعلومات"));
+//   }
+//   for (let i = 0; i < req.body.studentsIDs.length; i++) {
+//     const studentExists = await Student.find({
+//       user_identity_number: req.body.studentsIDs[i],
+//     });
+//     if (studentExists.length == 0) {
+//       return next(new ApiError("هناك طالب واحد على الاقل غير موجود"));
+//     }
+//   }
+//   for (let i = 0; i < req.body.studentsIDs.length; i++) {
+//     classExists[0].studentsIDs.push(req.body.studentsIDs[i]);
+//   }
+//   const levelEXists = await Level.find({
+//     level_number: classExists[0].level_number,
+//   });
+//   for (let i = 0; i < req.body.studentsIDs.length; i++) {
+//     let studentExists = await Student.find({
+//       user_identity_number: req.body.studentsIDs[i],
+//     });
+//     studentExists[0].class_id = classExists[0]._id;
+//     await studentExists[0].save();
+//   }
+//   await Level.findByIdAndUpdate(levelEXists[0]._id, {
+//     numberOfStudents:
+//       levelEXists[0].numberOfStudents + req.body.studentsIDs.length,
+//   });
+//   classExists[0].numberOfStudents = classExists[0].studentsIDs.length;
+//   await classExists[0].save();
+//   res.status(201).json({ message: "تم اضافة الطلاب الى هذا الصف بنجاح" });
+// });
 
 exports.disActiveUser = asyncHandler(async (req, res, next) => {
   const user = await User.find({ identity_number: req.body.identity_number });
@@ -532,7 +532,7 @@ exports.updateMaterial = asyncHandler(async (req, res, next) => {
 });
 
 exports.addRecordedLecture = asyncHandler(async (req, res, next) => {
-  await RecordedLecture.create({
+  const recordedLecture = await RecordedLecture.create({
     classSubject_id: req.body.classSubject_id,
     video_url: req.body.video_url,
     title: req.body.title,
@@ -541,7 +541,7 @@ exports.addRecordedLecture = asyncHandler(async (req, res, next) => {
     rating: req.body.rating,
     uploaded_by: req.user._id,
   });
-  res.status(201).send({ message: "تم رفع محاضرة جديدة" });
+  res.status(201).send({ message: "تم رفع محاضرة جديدة", data: recordedLecture});
 });
 
 exports.getRecordedLectures = asyncHandler(async (req, res, next) => {
@@ -787,3 +787,39 @@ exports.getClassStudents = asyncHandler(async (req, res, next) => {
   const users = await User.find({ identity_number: { $in: identityNumbers } });
   res.status(200).json(users);
 });
+
+
+// exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
+//   const classExists = await Class.findById(req.body.class_id)
+//   if (!classExists) {
+//     return next(new ApiError("لا يوحد صف يحتوي على هذه المعلومات"));
+//   }
+//   for (let i = 0; i < req.body.studentsIDs.length; i++) {
+//     const studentExists = await Student.find({
+//       user_identity_number: req.body.studentsIDs[i],
+//     });
+//     if (studentExists.length == 0) {
+//       return next(new ApiError("هناك طالب واحد على الاقل غير موجود"));
+//     }
+//   }
+//   for (let i = 0; i < req.body.studentsIDs.length; i++) {
+//     classExists[0].studentsIDs.push(req.body.studentsIDs[i]);
+//   }
+//   const levelEXists = await Level.find({
+//     level_number: classExists[0].level_number,
+//   });
+//   for (let i = 0; i < req.body.studentsIDs.length; i++) {
+//     let studentExists = await Student.find({
+//       user_identity_number: req.body.studentsIDs[i],
+//     });
+//     studentExists[0].class_id = classExists[0]._id;
+//     await studentExists[0].save();
+//   }
+//   await Level.findByIdAndUpdate(levelEXists[0]._id, {
+//     numberOfStudents:
+//       levelEXists[0].numberOfStudents + req.body.studentsIDs.length,
+//   });
+//   classExists[0].numberOfStudents = classExists[0].studentsIDs.length;
+//   await classExists[0].save();
+//   res.status(201).json({ message: "تم اضافة الطلاب الى هذا الصف بنجاح" });
+// });
