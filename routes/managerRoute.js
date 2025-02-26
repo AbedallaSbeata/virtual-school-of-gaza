@@ -6,9 +6,7 @@ const { uploadFields } = require("../middlewares/uploadImageMiddleware");
 const {
   addLevel,
   addNewClass,
-  // addStudentsToSpecificClass,
   deleteClass,
-  // addTeachersToSpecificClass,
   addUser,
   getClasses,
   getClassesForSpecificLevel,
@@ -42,14 +40,13 @@ const {
  updateReply,
  deleteReply,
  getCommentReplies,
- getClassStudents
+ getClassStudents,
+ assignStudentsToSpecificClass
 } = require("../services/managerService");
 const {
   deleteClassValidator,
   addLevelValidator,
   addNewClassValidator,
-  addStudentsToSpecificClassValidator,
-  addTeachersToSpecificClassValidator,
   assignSpecificSubjectToTeachersValidator,
   addUserValidator,
   disActiveUserValidator,
@@ -60,12 +57,6 @@ router.use(authService.allowedTo("manager"));
 router.route("/addUser").post(uploadFields, addUserValidator, addUser);
 router.route("/addNewLevel").post(addLevelValidator, addLevel);
 router.route("/addNewClass").post(addNewClassValidator, addNewClass);
-// router
-//   .route("/addTeachersToSpecificClass")
-//   .post(addTeachersToSpecificClassValidator, addTeachersToSpecificClass);
-// router
-//   .route("/addStudentsToSpecificClass")
-//   .post(addStudentsToSpecificClassValidator, addStudentsToSpecificClass);
 router.route("/levels").get(getLevels);
 router.route("/classes").get(getClasses);
 router
@@ -106,6 +97,7 @@ router.route('/getCommentReplies/:comment_id').get(getCommentReplies)
 router.route('/updateReply/:reply_id').put(updateReply)
 router.route('/deleteReply/:reply_id').delete(deleteReply)
 router.route('/getClassStudents/:class_id').get(getClassStudents)
+router.route('/assignStudentsToSpecificClass').post(assignStudentsToSpecificClass)
 
 
 module.exports = router;
