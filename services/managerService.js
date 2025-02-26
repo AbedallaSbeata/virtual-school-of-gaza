@@ -11,8 +11,8 @@ const createToken = require("../utils/createToken");
 const ClassSubject = require("../models/classSubject");
 const Material = require("../models/materialModel");
 const RecordedLecture = require("../models/recordedLectureModel");
-const RecordedLectureComments = require('../models/recordedLectureCommentModel')
-const RecordedLectureReplies = require('../models/recordedLectureReplieModel')
+const RecordedLectureComments = require("../models/recordedLectureCommentModel");
+const RecordedLectureReplies = require("../models/recordedLectureReplieModel");
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -607,15 +607,18 @@ exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
     .json({ message: "تم تحديث بيانات المحاضرة بنجاح", data: recordedLecture });
 });
 
-
 exports.getRecordedLectureById = asyncHandler(async (req, res, next) => {
-  const recordedLecture = await RecordedLecture.findById(req.params.recordedLectureId);
+  const recordedLecture = await RecordedLecture.findById(
+    req.params.recordedLectureId
+  );
 
   if (!recordedLecture) {
     return next(new ApiError("المحاضرة غير موجودة", 404));
   }
 
-  const classSubject = await ClassSubject.findById(recordedLecture.classSubject_id);
+  const classSubject = await ClassSubject.findById(
+    recordedLecture.classSubject_id
+  );
 
   if (!classSubject) {
     return next(new ApiError("المادة غير موجودة", 404));
@@ -627,7 +630,9 @@ exports.getRecordedLectureById = asyncHandler(async (req, res, next) => {
     return next(new ApiError("اسم المادة غير موجود", 404));
   }
 
-  const userData = await User.findById(recordedLecture.uploaded_by).select('first_name second_name third_name last_name profile_image'); // استخدام findById بدلاً من find
+  const userData = await User.findById(recordedLecture.uploaded_by).select(
+    "first_name second_name third_name last_name profile_image"
+  ); // استخدام findById بدلاً من find
 
   if (!userData) {
     return next(new ApiError("المعلم غير موجود", 404)); // تحقق من وجود بيانات المستخدم
@@ -636,7 +641,7 @@ exports.getRecordedLectureById = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     recordedLectureData: recordedLecture,
     userData: userData,
-    subject_name: subjectData.subject_name
+    subject_name: subjectData.subject_name,
   });
 });
 
@@ -644,45 +649,52 @@ exports.addRecordedLectureComment = asyncHandler(async (req, res, next) => {
   const comment = await RecordedLectureComments.create({
     content: req.body.content,
     recorded_lecture_id: req.body.recorded_lecture_id,
-    user_id: req.user._id
-  })
-  const userData = await User.findById(comment.user_id).select('first_name second_name third_name last_name profile_image'); 
-  res.status(201).json({"commentData": comment, "userData": userData})
-})
+    user_id: req.user._id,
+  });
+  const userData = await User.findById(comment.user_id).select(
+    "first_name second_name third_name last_name profile_image"
+  );
+  res.status(201).json({ commentData: comment, userData: userData });
+});
 
 exports.getRecordedLectureComments = asyncHandler(async (req, res, next) => {
-  const comments = await RecordedLectureComments.find({ recorded_lecture_id: req.params.recorded_lecture_id });
+  const comments = await RecordedLectureComments.find({
+    recorded_lecture_id: req.params.recorded_lecture_id,
+  });
 
   if (!comments || comments.length === 0) {
     return next(new ApiError("لا توجد تعليقات لهذه المحاضرة", 404));
   }
 
-  const commentsWithUserData = await Promise.all(comments.map(async (comment) => {
-    const userData = await User.findById(comment.user_id).select('first_name second_name third_name last_name profile_image');
-    return {
-      _id: comment._id,
-      recordedLecture_id: comment.recorded_lecture_id,
-      user_id: comment.user_id,
-      content: comment.content,
-      createdAt: comment.createdAt,
-      updatedAt: comment.updatedAt,
-      userData: userData || null 
-    };
-  }));
+  const commentsWithUserData = await Promise.all(
+    comments.map(async (comment) => {
+      const userData = await User.findById(comment.user_id).select(
+        "first_name second_name third_name last_name profile_image"
+      );
+      return {
+        _id: comment._id,
+        recordedLecture_id: comment.recorded_lecture_id,
+        user_id: comment.user_id,
+        content: comment.content,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        userData: userData || null,
+      };
+    })
+  );
 
   res.status(200).json(commentsWithUserData);
 });
 
-
-
 exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
-  const recordedLectureComment = await RecordedLectureComments.findByIdAndUpdate(
-    req.params.comment_id,
-    {
-      content: req.body.content
-    },
-    { new: true }
-  );
+  const recordedLectureComment =
+    await RecordedLectureComments.findByIdAndUpdate(
+      req.params.comment_id,
+      {
+        content: req.body.content,
+      },
+      { new: true }
+    );
 
   if (!recordedLectureComment) {
     return next(new ApiError("التعليق غير موجود", 404));
@@ -690,55 +702,63 @@ exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
 
   res
     .status(200)
-    .json({ message: "تم تحديث بيانات التعليق بنجاح", data: recordedLectureComment });
+    .json({
+      message: "تم تحديث بيانات التعليق بنجاح",
+      data: recordedLectureComment,
+    });
 });
 
 exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
-  await RecordedLectureComments.findByIdAndDelete(req.params.comment_id)
+  await RecordedLectureComments.findByIdAndDelete(req.params.comment_id);
   res.status(204).json();
 });
-
 
 exports.addReplyToComment = asyncHandler(async (req, res, next) => {
   const reply = await RecordedLectureReplies.create({
     content: req.body.content,
     comment_id: req.body.comment_id,
-    user_id: req.user._id
-  })
-  const userData = await User.findById(reply.user_id).select('first_name second_name third_name last_name profile_image'); 
-  res.status(201).json({"replyData": reply, "userData": userData})
-})
+    user_id: req.user._id,
+  });
+  const userData = await User.findById(reply.user_id).select(
+    "first_name second_name third_name last_name profile_image"
+  );
+  res.status(201).json({ replyData: reply, userData: userData });
+});
 
 exports.getCommentReplies = asyncHandler(async (req, res, next) => {
-  const replies = await RecordedLectureReplies.find({ comment_id: req.params.comment_id });
+  const replies = await RecordedLectureReplies.find({
+    comment_id: req.params.comment_id,
+  });
 
   if (!replies || replies.length === 0) {
     return next(new ApiError("لا توجد ردود لهذا التعليق", 404));
   }
 
-  const repliesWithUserData = await Promise.all(replies.map(async (reply) => {
-    const userData = await User.findById(reply.user_id).select('first_name second_name third_name last_name profile_image');
-    return {
-      _id: reply._id,
-      comment_id: reply.comment_id,
-      user_id: reply.user_id,
-      content: reply.content,
-      createdAt: reply.createdAt,
-      updatedAt: reply.updatedAt,
-      userData: userData || null 
-    };
-  }));
+  const repliesWithUserData = await Promise.all(
+    replies.map(async (reply) => {
+      const userData = await User.findById(reply.user_id).select(
+        "first_name second_name third_name last_name profile_image"
+      );
+      return {
+        _id: reply._id,
+        comment_id: reply.comment_id,
+        user_id: reply.user_id,
+        content: reply.content,
+        createdAt: reply.createdAt,
+        updatedAt: reply.updatedAt,
+        userData: userData || null,
+      };
+    })
+  );
 
   res.status(200).json(repliesWithUserData);
 });
-
-
 
 exports.updateReply = asyncHandler(async (req, res, next) => {
   const reply = await RecordedLectureReplies.findByIdAndUpdate(
     req.params.reply_id,
     {
-      content: req.body.content
+      content: req.body.content,
     },
     { new: true }
   );
@@ -747,12 +767,23 @@ exports.updateReply = asyncHandler(async (req, res, next) => {
     return next(new ApiError("هذا الرد غير موجود", 404));
   }
 
-  res
-    .status(200)
-    .json({ message: "تم تعديل الرد بنجاح", data: reply });
+  res.status(200).json({ message: "تم تعديل الرد بنجاح", data: reply });
 });
 
 exports.deleteReply = asyncHandler(async (req, res, next) => {
-  await RecordedLectureReplies.findByIdAndDelete(req.params.reply_id)
+  await RecordedLectureReplies.findByIdAndDelete(req.params.reply_id);
   res.status(204).json();
+});
+
+exports.getClassStudents = asyncHandler(async (req, res, next) => {
+  const students = await Student.find({ class_id: req.params.class_id });
+});
+
+exports.getClassStudents = asyncHandler(async (req, res, next) => {
+  const students = await Student.find({ class_id: req.params.class_id });
+  const identityNumbers = students.map(
+    (student) => student.user_identity_number
+  );
+  const users = await User.find({ identity_number: { $in: identityNumbers } });
+  res.status(200).json(users);
 });
