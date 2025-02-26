@@ -6,9 +6,9 @@ const { uploadFields } = require("../middlewares/uploadImageMiddleware");
 const {
   addLevel,
   addNewClass,
-  addStudentsToSpecificClass,
+  // addStudentsToSpecificClass,
   deleteClass,
-  addTeachersToSpecificClass,
+  // addTeachersToSpecificClass,
   addUser,
   getClasses,
   getClassesForSpecificLevel,
@@ -60,12 +60,12 @@ router.use(authService.allowedTo("manager"));
 router.route("/addUser").post(uploadFields, addUserValidator, addUser);
 router.route("/addNewLevel").post(addLevelValidator, addLevel);
 router.route("/addNewClass").post(addNewClassValidator, addNewClass);
-router
-  .route("/addTeachersToSpecificClass")
-  .post(addTeachersToSpecificClassValidator, addTeachersToSpecificClass);
-router
-  .route("/addStudentsToSpecificClass")
-  .post(addStudentsToSpecificClassValidator, addStudentsToSpecificClass);
+// router
+//   .route("/addTeachersToSpecificClass")
+//   .post(addTeachersToSpecificClassValidator, addTeachersToSpecificClass);
+// router
+//   .route("/addStudentsToSpecificClass")
+//   .post(addStudentsToSpecificClassValidator, addStudentsToSpecificClass);
 router.route("/levels").get(getLevels);
 router.route("/classes").get(getClasses);
 router
