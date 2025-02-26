@@ -545,6 +545,8 @@ exports.getRecordedLectureComments = asyncHandler(async (req, res, next) => {
     return next(new ApiError("لا توجد تعليقات لهذه المحاضرة", 404));
   }
 
+  comments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
   const commentsWithUserData = await Promise.all(
     comments.map(async (comment) => {
       const userData = await User.findById(comment.user_id).select(
@@ -564,6 +566,7 @@ exports.getRecordedLectureComments = asyncHandler(async (req, res, next) => {
 
   res.status(200).json(commentsWithUserData);
 });
+
 
 exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
   const recordedLectureComment =
