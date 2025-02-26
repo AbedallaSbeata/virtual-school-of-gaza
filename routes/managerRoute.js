@@ -37,7 +37,11 @@ const {
   addRecordedLectureComment,
   deleteRecordedLectureComment,
   getRecordedLectureComments,
-  updateRecordedLectureComment
+  updateRecordedLectureComment,
+ addReplyToComment,
+ updateReply,
+ deleteReply,
+ getCommentReplies
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -96,6 +100,10 @@ router.route('/addRecordedLectureComment').post(addRecordedLectureComment)
 router.route('/getRecordedLectureComments/:recorded_lecture_id').get(getRecordedLectureComments)
 router.route('/updateRecordedLectureComment/:comment_id').put(updateRecordedLectureComment)
 router.route('/deleteRecordedLectureComment/:comment_id').delete(deleteRecordedLectureComment)
+router.route('/addReplyToComment').post(addReplyToComment)
+router.route('/getCommentReplies/:comment_id').get(getCommentReplies)
+router.route('/updateReply/:reply_id').put(updateReply)
+router.route('/deleteReply/:reply_id').delete(deleteReply)
 
 
 module.exports = router;

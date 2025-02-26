@@ -12,6 +12,7 @@ const ClassSubject = require("../models/classSubject");
 const Material = require("../models/materialModel");
 const RecordedLecture = require("../models/recordedLectureModel");
 const RecordedLectureComments = require('../models/recordedLectureCommentModel')
+const RecordedLectureReplies = require('../models/recordedLectureReplieModel')
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -694,5 +695,64 @@ exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
 
 exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
   await RecordedLectureComments.findByIdAndDelete(req.params.comment_id)
+  res.status(204).json();
+});
+
+
+exports.addReplyToComment = asyncHandler(async (req, res, next) => {
+  const reply = await RecordedLectureReplies.create({
+    content: req.body.content,
+    comment_id: req.body.comment_id,
+    user_id: req.user._id
+  })
+  const userData = await User.findById(reply.user_id).select('first_name second_name third_name last_name profile_image'); 
+  res.status(201).json({"replyData": reply, "userData": userData})
+})
+
+exports.getCommentReplies = asyncHandler(async (req, res, next) => {
+  const replies = await RecordedLectureReplies.find({ comment_id: req.params.comment_id });
+
+  if (!replies || replies.length === 0) {
+    return next(new ApiError("لا توجد ردود لهذا التعليق", 404));
+  }
+
+  const repliesWithUserData = await Promise.all(replies.map(async (reply) => {
+    const userData = await User.findById(reply.user_id).select('first_name second_name third_name last_name profile_image');
+    return {
+      _id: reply._id,
+      comment_id: reply.comment_id,
+      user_id: reply.user_id,
+      content: reply.content,
+      createdAt: reply.createdAt,
+      updatedAt: reply.updatedAt,
+      userData: userData || null 
+    };
+  }));
+
+  res.status(200).json(repliesWithUserData);
+});
+
+
+
+exports.updateReply = asyncHandler(async (req, res, next) => {
+  const reply = await RecordedLectureReplies.findByIdAndUpdate(
+    req.params.reply_id,
+    {
+      content: req.body.content
+    },
+    { new: true }
+  );
+
+  if (!reply) {
+    return next(new ApiError("هذا الرد غير موجود", 404));
+  }
+
+  res
+    .status(200)
+    .json({ message: "تم تعديل الرد بنجاح", data: reply });
+});
+
+exports.deleteReply = asyncHandler(async (req, res, next) => {
+  await RecordedLectureReplies.findByIdAndDelete(req.params.reply_id)
   res.status(204).json();
 });
