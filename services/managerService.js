@@ -668,26 +668,6 @@ exports.getClassStudents = asyncHandler(async (req, res, next) => {
 });
 
 
-// exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
-//     const { class_id, student_identity_numbers } = req.body;
-//     if (!class_id || !student_identity_numbers || !Array.isArray(student_identity_numbers)) {
-//       return res.status(400).json({ message: "هذه البيانات خاطئة" });
-//     }
-//     const result = await Student.updateMany(
-//       { user_identity_number: { $in: student_identity_numbers } }, 
-//       { $set: { class_id } } 
-//     );
-
-//     if (result.modifiedCount === 0) {
-//       return res.status(404).json({message: "يوجد خطأ في ارقام الهويات" });
-//     }
-
-//     res.status(200).json({
-//       message: "تم تعيين الطلاب الى هذا الصف بنجاح"
-//     });
-  
-// });
-
 
 exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
     const { class_id, student_identity_numbers } = req.body;
@@ -708,7 +688,20 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
     }
 
     res.status(200).json({
-      success: true,
       message: `تم تعيين الطلاب الى هذا الصف بنجاح`
     });
+});
+
+
+exports.getLevelStudents = asyncHandler(async (req, res, next) => {
+    const classes = await Class.find({ level_number: req.params.level_number });
+    if (classes.length === 0) {
+      return res.status(404).json({ message: "لا يوجد صفوف لهذه المرحلة" });
+    }
+    const classesIds = classes.map(classObj => classObj._id);
+    const students = await Student.find({ class_id: { $in: classesIds } });
+    if (students.length === 0) {
+      return res.status(404).json({ message: "لا يوجد طلاب في هذه المرحلة" });
+    }
+    res.status(200).json({ students });
 });
