@@ -668,22 +668,47 @@ exports.getClassStudents = asyncHandler(async (req, res, next) => {
 });
 
 
+// exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
+//     const { class_id, student_identity_numbers } = req.body;
+//     if (!class_id || !student_identity_numbers || !Array.isArray(student_identity_numbers)) {
+//       return res.status(400).json({ message: "هذه البيانات خاطئة" });
+//     }
+//     const result = await Student.updateMany(
+//       { user_identity_number: { $in: student_identity_numbers } }, 
+//       { $set: { class_id } } 
+//     );
+
+//     if (result.modifiedCount === 0) {
+//       return res.status(404).json({message: "يوجد خطأ في ارقام الهويات" });
+//     }
+
+//     res.status(200).json({
+//       message: "تم تعيين الطلاب الى هذا الصف بنجاح"
+//     });
+  
+// });
+
+
 exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
     const { class_id, student_identity_numbers } = req.body;
-    if (!class_id || !student_identity_numbers || !Array.isArray(student_identity_numbers)) {
-      return res.status(400).json({ message: "هذه البيانات خاطئة" });
+
+    if (!class_id || !student_identity_numbers) {
+      return res.status(400).json({ success: false, message: "Invalid data" });
     }
+
+    const studentIdsArray = Array.isArray(student_identity_numbers) ? student_identity_numbers : [student_identity_numbers];
+
     const result = await Student.updateMany(
-      { user_identity_number: { $in: student_identity_numbers } }, 
-      { $set: { class_id } } 
+      { user_identity_number: { $in: studentIdsArray } },
+      { $set: { class_id } }
     );
 
     if (result.modifiedCount === 0) {
-      return res.status(404).json({message: "يوجد خطأ في ارقام الهويات" });
+      return res.status(404).json({ success: false, message: "No students were updated. Check the identity numbers." });
     }
 
     res.status(200).json({
-      message: "تم تعيين الطلاب الى هذا الصف بنجاح"
+      success: true,
+      message: `تم تعيين الطلاب الى هذا الصف بنجاح`
     });
-  
 });
