@@ -596,32 +596,17 @@ exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
     return next(new ApiError("لا يوجد تعليقات للحذف", 400));
   }
 
-  const existingRecordedLectureComments = await RecordedLectureComments.find({
+  // Attempt to delete comments
+  const result = await RecordedLectureComments.deleteMany({
     _id: { $in: req.body.commentsIds },
   });
 
-  const existingIds = existingRecordedLectureComments.map((comment) =>
-    comment._id.toString()
-  );
-  const nonExistentIds = req.body.commentsIds.filter(
-    (id) => !existingIds.includes(id)
-  );
-  
-  if (nonExistentIds.length > 0) {
-    return res.status(400).json({
-      message: "بعض التعليقات غير موجودة في قاعدة البيانات",
-      nonExistentIds,
-    });
+  if (result.deletedCount === 0) {
+    return res.status(404).json({ message: "لا يوجد تعليقات للحذف" });
   }
 
-  await RecordedLectureComments.deleteMany({
-    _id: { $in: req.body.commentsIds },
-  });
-
-  res.status(204).end(); // Correct way for a 204 response
-
+  res.status(200).json({ message: `تم حذف ${result.deletedCount} تعليق(ات)` });
 });
-
 
 exports.addReplyToComment = asyncHandler(async (req, res, next) => {
   const reply = await RecordedLectureReplies.create({
