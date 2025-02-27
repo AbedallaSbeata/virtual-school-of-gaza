@@ -587,6 +587,7 @@ exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
 });
 
 
+
 exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
   if (
     !req.body.commentsIds ||
@@ -596,7 +597,16 @@ exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
     return next(new ApiError("لا يوجد تعليقات للحذف", 400));
   }
 
-  // Attempt to delete comments
+  // Check if comments exist before deleting
+  const existingComments = await RecordedLectureComments.find({
+    _id: { $in: req.body.commentsIds },
+  });
+
+  if (existingComments.length === 0) {
+    return res.status(404).json({ message: "لم يتم العثور على التعليقات المحددة" });
+  }
+
+  // Delete comments
   const result = await RecordedLectureComments.deleteMany({
     _id: { $in: req.body.commentsIds },
   });
@@ -607,6 +617,7 @@ exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({ message: `تم حذف ${result.deletedCount} تعليق(ات)` });
 });
+
 
 exports.addReplyToComment = asyncHandler(async (req, res, next) => {
   const reply = await RecordedLectureReplies.create({
