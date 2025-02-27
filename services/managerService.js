@@ -586,10 +586,38 @@ exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
   });
 });
 
+
 exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
-  await RecordedLectureComments.findByIdAndDelete(req.params.comment_id);
+  if (
+    !req.body.commentsIds ||
+    !Array.isArray(req.body.commentsIds) ||
+    req.body.commentsIds.length === 0
+  ) {
+    return next(new ApiError("لا يوجد تعليقات للحذف", 400));
+  }
+
+  const existingRecordedLectureComments = await RecordedLectureComments.find({
+    _id: { $in: req.body.commentsIds },
+  });
+
+  const existingIds = existingRecordedLectureComments.map((comment) =>
+    comment._id.toString()
+  );
+  const nonExistentIds = req.body.commentsIds.filter(
+    (id) => !existingIds.includes(id)
+  );
+
+  if (nonExistentIds.length > 0) {
+    return next(new ApiError(`هذا التعليق غير موجود في قاعدة البيانات`, 404));
+  }
+
+  await RecordedLectureComments.deleteMany({
+    _id: { $in: req.body.commentsIds },
+  });
+
   res.status(204).json();
 });
+
 
 exports.addReplyToComment = asyncHandler(async (req, res, next) => {
   const reply = await RecordedLectureReplies.create({
