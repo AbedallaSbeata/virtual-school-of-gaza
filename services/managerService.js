@@ -466,7 +466,7 @@ exports.deleteRecordedLectures = asyncHandler(async (req, res, next) => {
 
 exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
   const recordedLecture = await RecordedLecture.findByIdAndUpdate(
-    req.params.recordedLecturesIds,
+    req.params.recordedLecturesId,
     {
       title: req.body.title,
       description: req.body.description,
