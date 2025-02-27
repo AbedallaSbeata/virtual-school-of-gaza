@@ -606,16 +606,20 @@ exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
   const nonExistentIds = req.body.commentsIds.filter(
     (id) => !existingIds.includes(id)
   );
-
+  
   if (nonExistentIds.length > 0) {
-    return next(new ApiError(`هذا التعليق غير موجود في قاعدة البيانات`, 404));
+    return res.status(400).json({
+      message: "بعض التعليقات غير موجودة في قاعدة البيانات",
+      nonExistentIds,
+    });
   }
 
   await RecordedLectureComments.deleteMany({
     _id: { $in: req.body.commentsIds },
   });
 
-  res.status(204).json();
+  res.status(204).end(); // Correct way for a 204 response
+
 });
 
 
