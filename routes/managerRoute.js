@@ -36,13 +36,17 @@ const {
   deleteRecordedLectureComment,
   getRecordedLectureComments,
   updateRecordedLectureComment,
- addReplyToComment,
- updateReply,
- deleteReply,
- getCommentReplies,
- getClassStudents,
- assignStudentsToSpecificClass,
- getLevelStudents
+  addReplyToComment,
+  updateReply,
+  deleteReply,
+  getCommentReplies,
+  getClassStudents,
+  assignStudentsToSpecificClass,
+  getLevelStudents,
+  addAnnouncement,
+  getClassSubjectAnnouncements,
+  updateAnnouncement,
+  deleteAnnouncement,
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -65,8 +69,13 @@ router
   .get(getClassesForSpecificLevel);
 router
   .route("/assignSpecificSubjectToTeachers/:subjectID")
-  .post(assignSpecificSubjectToTeachersValidator, assignSpecificSubjectToTeachers);
-router.route("/assignTeacherToClassSubject/:classSubjectID").post(assignTeacherToClassSubject)
+  .post(
+    assignSpecificSubjectToTeachersValidator,
+    assignSpecificSubjectToTeachers
+  );
+router
+  .route("/assignTeacherToClassSubject/:classSubjectID")
+  .post(assignTeacherToClassSubject);
 router
   .route("/getTeachersFromSpecificSubject/:subjectID")
   .get(getTeachersFromSpecificSubject);
@@ -76,31 +85,49 @@ router.route("/deleteClass").delete(deleteClassValidator, deleteClass);
 router.route("/deleteLevel").delete(deleteLevel);
 router.route("/getSpecificStudent/:identity_number").get(getSpecificStudent);
 router.route("/getSpecificTeacher/:identity_number").get(getSpecificTeacher);
-router.route("/getSpecificClass/:level_number/:class_number").get(getSpecificClass)
+router
+  .route("/getSpecificClass/:level_number/:class_number")
+  .get(getSpecificClass);
 router.route("/students").get(getStudents);
 router.route("/teachers").get(getTeachers);
 router.route("/getMyData").get(getMyData);
-router.route('/addMaterial').post(addMaterial)
-router.route('/getMaterials/:classId').get(getMaterials)
-router.route('/deleteMaterials').delete(deleteMaterials)
-router.route('/addRecordedLecture').post(addRecordedLecture)
-router.route('/getRecordedLectures/:classId').get(getRecordedLectures)
-router.route('/deleteRecordedLectures').delete(deleteRecordedLectures)
+router.route("/addMaterial").post(addMaterial);
+router.route("/getMaterials/:classId").get(getMaterials);
+router.route("/deleteMaterials").delete(deleteMaterials);
+router.route("/addRecordedLecture").post(addRecordedLecture);
+router.route("/getRecordedLectures/:classId").get(getRecordedLectures);
+router.route("/deleteRecordedLectures").delete(deleteRecordedLectures);
 router.route("/updateMaterial/:materialId").put(updateMaterial);
-router.route("/updateRecordedLecture/:recordedLecturesIds").put(updateRecordedLecture);
-router.route('/getRecordedLectureById/:recordedLectureId').get(getRecordedLectureById)
-router.route('/addRecordedLectureComment').post(addRecordedLectureComment)
-router.route('/getRecordedLectureComments/:recorded_lecture_id').get(getRecordedLectureComments)
-router.route('/updateRecordedLectureComment/:comment_id').put(updateRecordedLectureComment)
-router.route('/deleteRecordedLectureComment/:comment_id').delete(deleteRecordedLectureComment)
-router.route('/addReplyToComment').post(addReplyToComment)
-router.route('/getCommentReplies/:comment_id').get(getCommentReplies)
-router.route('/updateReply/:reply_id').put(updateReply)
-router.route('/deleteReply/:reply_id').delete(deleteReply)
-router.route('/getClassStudents/:class_id').get(getClassStudents)
-router.route('/assignStudentsToSpecificClass').post(assignStudentsToSpecificClass)
-router.route('/getLevelStudents/:level_number').get(getLevelStudents)
-
-
+router
+  .route("/updateRecordedLecture/:recordedLecturesIds")
+  .put(updateRecordedLecture);
+router
+  .route("/getRecordedLectureById/:recordedLectureId")
+  .get(getRecordedLectureById);
+router.route("/addRecordedLectureComment").post(addRecordedLectureComment);
+router
+  .route("/getRecordedLectureComments/:recorded_lecture_id")
+  .get(getRecordedLectureComments);
+router
+  .route("/updateRecordedLectureComment/:comment_id")
+  .put(updateRecordedLectureComment);
+router
+  .route("/deleteRecordedLectureComment/:comment_id")
+  .delete(deleteRecordedLectureComment);
+router.route("/addReplyToComment").post(addReplyToComment);
+router.route("/getCommentReplies/:comment_id").get(getCommentReplies);
+router.route("/updateReply/:reply_id").put(updateReply);
+router.route("/deleteReply/:reply_id").delete(deleteReply);
+router.route("/getClassStudents/:class_id").get(getClassStudents);
+router
+  .route("/assignStudentsToSpecificClass")
+  .post(assignStudentsToSpecificClass);
+router.route("/getLevelStudents/:level_number").get(getLevelStudents);
+router.route("/addAnnouncement").post(addAnnouncement);
+router
+  .route("/getClassSubjectAnnouncements/:classSubject_id")
+  .get(getClassSubjectAnnouncements);
+router.route("/updateAnnouncement/:announcement_id").put(updateAnnouncement);
+router.route("/deleteAnnouncement/:announcement_id").delete(deleteAnnouncement);
 
 module.exports = router;

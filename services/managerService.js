@@ -13,7 +13,7 @@ const Material = require("../models/materialModel");
 const RecordedLecture = require("../models/recordedLectureModel");
 const RecordedLectureComments = require("../models/recordedLectureCommentModel");
 const RecordedLectureReplies = require("../models/recordedLectureReplieModel");
-
+const Announcement = require("../models/announcementModel");
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
     !req.files ||
@@ -94,7 +94,6 @@ exports.addNewClass = asyncHandler(async (req, res, next) => {
   });
   res.status(201).json({ message: "تم اضافة هذا الصف بنجاح", data: classData });
 });
-
 
 exports.disActiveUser = asyncHandler(async (req, res, next) => {
   const user = await User.find({ identity_number: req.body.identity_number });
@@ -262,7 +261,6 @@ exports.deleteLevel = asyncHandler(async (req, res, next) => {
   res.status(204).json();
 });
 
-
 exports.getSpecificClass = asyncHandler(async (req, res, next) => {
   // البحث عن الصف
   const classExists = await Class.findOne({
@@ -314,7 +312,6 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
     available_subjects: availableSubjects,
   });
 });
-
 
 exports.assignTeacherToClassSubject = asyncHandler(async (req, res, next) => {
   const classSubject = await ClassSubject.findById(req.params.classSubjectID);
@@ -420,7 +417,9 @@ exports.addRecordedLecture = asyncHandler(async (req, res, next) => {
     rating: req.body.rating,
     uploaded_by: req.user._id,
   });
-  res.status(201).send({ message: "تم رفع محاضرة جديدة", data: recordedLecture});
+  res
+    .status(201)
+    .send({ message: "تم رفع محاضرة جديدة", data: recordedLecture });
 });
 
 exports.getRecordedLectures = asyncHandler(async (req, res, next) => {
@@ -567,7 +566,6 @@ exports.getRecordedLectureComments = asyncHandler(async (req, res, next) => {
   res.status(200).json(commentsWithUserData);
 });
 
-
 exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
   const recordedLectureComment =
     await RecordedLectureComments.findByIdAndUpdate(
@@ -582,12 +580,10 @@ exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
     return next(new ApiError("التعليق غير موجود", 404));
   }
 
-  res
-    .status(200)
-    .json({
-      message: "تم تحديث بيانات التعليق بنجاح",
-      data: recordedLectureComment,
-    });
+  res.status(200).json({
+    message: "تم تحديث بيانات التعليق بنجاح",
+    data: recordedLectureComment,
+  });
 });
 
 exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
@@ -657,9 +653,7 @@ exports.deleteReply = asyncHandler(async (req, res, next) => {
   res.status(204).json();
 });
 
-exports.getClassStudents = asyncHandler(async (req, res, next) => {
-  const students = await Student.find({ class_id: req.params.class_id });
-});
+
 
 exports.getClassStudents = asyncHandler(async (req, res, next) => {
   const students = await Student.find({ class_id: req.params.class_id });
@@ -670,44 +664,77 @@ exports.getClassStudents = asyncHandler(async (req, res, next) => {
   res.status(200).json(users);
 });
 
-
-
 exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
-    const { class_id, student_identity_numbers } = req.body;
+  const { class_id, student_identity_numbers } = req.body;
 
-    if (!class_id || !student_identity_numbers) {
-      return res.status(400).json({ success: false, message: "Invalid data" });
-    }
+  if (!class_id || !student_identity_numbers) {
+    return res.status(400).json({ success: false, message: "Invalid data" });
+  }
 
-    const studentIdsArray = Array.isArray(student_identity_numbers) ? student_identity_numbers : [student_identity_numbers];
+  const studentIdsArray = Array.isArray(student_identity_numbers)
+    ? student_identity_numbers
+    : [student_identity_numbers];
 
-    const result = await Student.updateMany(
-      { user_identity_number: { $in: studentIdsArray } },
-      { $set: { class_id } }
-    );
+  const result = await Student.updateMany(
+    { user_identity_number: { $in: studentIdsArray } },
+    { $set: { class_id } }
+  );
 
-    if (result.modifiedCount === 0) {
-      return res.status(404).json({ success: false, message: "No students were updated. Check the identity numbers." });
-    }
+  if (result.modifiedCount === 0) {
+      return next(new ApiError("لم يتم تحديث اي طالب.. يرجى مراجعة البيانات", 404));
+  }
 
-    res.status(200).json({
-      message: `تم تعيين الطلاب الى هذا الصف بنجاح`
-    });
+  res.status(200).json({
+    message: `تم تعيين الطلاب الى هذا الصف بنجاح`,
+  });
 });
-
-
 
 exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   const classes = await Class.find({ level_number: req.params.level_number });
   if (classes.length === 0) {
-      return res.status(404).json({ message: "لا يوجد صفوف لهذه المرحلة" });
+    return next(new ApiError("لا يوجد صفوف لهذه المرحلة", 404));
   }
-  const classesIds = classes.map(classObj => classObj._id);
+  const classesIds = classes.map((classObj) => classObj._id);
   const students = await Student.find({ class_id: { $in: classesIds } });
   if (students.length === 0) {
-      return res.status(404).json({ message: "لا يوجد طلاب في هذه المرحلة" });
+    return next(new ApiError("لا يوجد طلاب في هذه المرحلة", 404));
+
   }
-  const identity_numbers = students.map(student => student.user_identity_number);
+  const identity_numbers = students.map(
+    (student) => student.user_identity_number
+  );
   const users = await User.find({ identity_number: { $in: identity_numbers } });
   res.status(200).json(users);
+});
+
+exports.addAnnouncement = asyncHandler(async (req, res, next) => {
+  const announcement = await Announcement.create({
+    content: req.body.content,
+    classSubject_id: req.body.classSubject_id,
+    user_id: req.user._id,
+  });
+  res.status(201).send({ message: "تم انشاء اعلان جديد", data: announcement });
+});
+
+exports.getClassSubjectAnnouncements = asyncHandler(async (req, res, next) => {
+  const announcements = await Announcement.find({classSubject_id: req.params.classSubject_id})
+  if(!announcements) {
+    return next(new ApiError("لا يوجد اعلانات", 404));
+  }
+  res.status(200).json(announcements)
+})
+
+exports.updateAnnouncement = asyncHandler(async (req, res, next) => {
+  const announcement = await Announcement.findByIdAndUpdate(req.params.announcement_id, {
+    content: req.body.content
+  }, {new: true})
+  if(!announcement) {
+    return next(new ApiError("هذا الاعلان غير موجود",404))
+  }
+  res.status(200).json({message: "تم تحديث البيانات بنجاح", data: announcement})
+})
+
+exports.deleteAnnouncement = asyncHandler(async (req, res, next) => {
+  await Announcement.findByIdAndDelete(req.params.announcement_id);
+  res.status(204).json();
 });

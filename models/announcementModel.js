@@ -3,17 +3,13 @@ const mongoose = require("mongoose");
 const announcementSchema = new mongoose.Schema(
   {
     content: String,
-    class_id: {
+    classSubject_id: {
       type: mongoose.Schema.ObjectId,
-      ref: "Class",
+      ref: "ClassSubject",
     },
-    subject_id: {
+    user_id: {
       type: mongoose.Schema.ObjectId,
-      ref: "Subject",
-    },
-    user_identity_number: {
-        type: String,
-        ref: 'Teacher'
+      ref: "User",
     },
   },
   { timestamps: true }
