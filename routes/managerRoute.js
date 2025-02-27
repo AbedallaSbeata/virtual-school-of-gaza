@@ -112,7 +112,7 @@ router
   .route("/updateRecordedLectureComment/:comment_id")
   .put(updateRecordedLectureComment);
 router
-  .route("/deleteRecordedLectureComment/:comment_id")
+  .route("/deleteRecordedLectureComment")
   .delete(deleteRecordedLectureComment);
 router.route("/addReplyToComment").post(addReplyToComment);
 router.route("/getCommentReplies/:comment_id").get(getCommentReplies);
