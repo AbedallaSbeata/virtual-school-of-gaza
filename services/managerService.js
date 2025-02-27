@@ -589,6 +589,7 @@ exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
 
 
 exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
+  console.log("Incoming Request Body:", req.body); 
   if (
     !req.body.commentsIds ||
     !Array.isArray(req.body.commentsIds) ||
