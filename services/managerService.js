@@ -770,14 +770,39 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
 
   console.log("Classes found in level:", classIds);
 
-  // **Step 2: Find students who belong to these classes OR have no assigned class**
-  const students = await Student.find({
-    $or: [{ class_id: { $in: classIds } }, { class_id: null }],
-  }).populate({
-    path: "user_identity_number",
-    model: "User",
-    select: "first_name second_name third_name last_name _id",
-  });
+  // **Step 2: Use `$lookup` to manually join `User` data**
+  const students = await Student.aggregate([
+    {
+      $match: {
+        $or: [{ class_id: { $in: classIds } }, { class_id: null }],
+      },
+    },
+    {
+      $lookup: {
+        from: "users", // User collection
+        localField: "user_identity_number", // Field in Student model
+        foreignField: "identity_number", // Matching field in User model
+        as: "userData",
+      },
+    },
+    {
+      $unwind: {
+        path: "$userData",
+        preserveNullAndEmptyArrays: true, // Keeps students even if userData is missing
+      },
+    },
+    {
+      $project: {
+        _id: "$userData._id", // ✅ User ID
+        identity_number: "$user_identity_number", // ✅ Student Identity Number
+        first_name: "$userData.first_name",
+        second_name: "$userData.second_name",
+        third_name: "$userData.third_name",
+        last_name: "$userData.last_name",
+        class_id: 1, // ✅ Student's assigned class (nullable)
+      },
+    },
+  ]);
 
   if (!students || students.length === 0) {
     return next(new ApiError("لا يوجد طلاب في هذه المرحلة", 404));
@@ -785,19 +810,10 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
 
   console.log("Total Students Found:", students.length);
 
-  // **Step 3: Format Response**
-  const formattedStudents = students.map((student) => ({
-    _id: student.user_identity_number?._id, // User ID
-    identity_number: student.user_identity_number?.identity_number,
-    first_name: student.user_identity_number?.first_name,
-    second_name: student.user_identity_number?.second_name,
-    third_name: student.user_identity_number?.third_name,
-    last_name: student.user_identity_number?.last_name,
-    class_id: student.class_id,
-  }));
-
-  res.status(200).json({ data: formattedStudents });
+  // **Return full student details**
+  res.status(200).json({ data: students });
 });
+
 
 
 
