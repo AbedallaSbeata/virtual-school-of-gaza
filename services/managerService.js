@@ -758,13 +758,24 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
 
 
 
+
 exports.getLevelStudents = asyncHandler(async (req, res, next) => {
-  const level_number = req.params.level_number;
+  const levelNumber = req.params.level_number;
 
-  console.log("Fetching students for level:", level_number);
+  console.log("Fetching students for level:", levelNumber);
 
-  // Fetch all students where `level_number` matches (including those with no class_id)
-  const students = await Student.find({ level_number });
+  // **Step 1: Find all class IDs in this level**
+  const classes = await Class.find({ level_number: levelNumber });
+
+  // Extract class IDs from the found classes
+  const classIds = classes.map((classObj) => classObj._id);
+
+  console.log("Classes found in level:", classIds);
+
+  // **Step 2: Find students who belong to these classes OR have no assigned class**
+  const students = await Student.find({
+    $or: [{ class_id: { $in: classIds } }, { class_id: null }],
+  });
 
   if (!students || students.length === 0) {
     return next(new ApiError("لا يوجد طلاب في هذه المرحلة", 404));
@@ -772,9 +783,10 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
 
   console.log("Total Students Found:", students.length);
 
-  // Return full student details
+  // **Return full student details**
   res.status(200).json({ data: students });
 });
+
 
 
 
