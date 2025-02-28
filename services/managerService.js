@@ -759,9 +759,9 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
 
 
 exports.getLevelStudents = asyncHandler(async (req, res, next) => {
-  const levelNumber = req.params.level_number;
+  const level_number = req.params.level_number;
 
-  console.log("Fetching students for level:", levelNumber);
+  console.log("Fetching students for level:", level_number);
 
   // Fetch all students where `level_number` matches (including those with no class_id)
   const students = await Student.find({ level_number });
