@@ -757,8 +757,6 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
 
 
 
-
-
 exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   const levelNumber = req.params.level_number;
 
@@ -775,6 +773,10 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   // **Step 2: Find students who belong to these classes OR have no assigned class**
   const students = await Student.find({
     $or: [{ class_id: { $in: classIds } }, { class_id: null }],
+  }).populate({
+    path: "user_identity_number",
+    model: "User",
+    select: "first_name second_name third_name last_name _id",
   });
 
   if (!students || students.length === 0) {
@@ -783,8 +785,18 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
 
   console.log("Total Students Found:", students.length);
 
-  // **Return full student details**
-  res.status(200).json({ data: students });
+  // **Step 3: Format Response**
+  const formattedStudents = students.map((student) => ({
+    _id: student.user_identity_number?._id, // User ID
+    identity_number: student.user_identity_number?.identity_number,
+    first_name: student.user_identity_number?.first_name,
+    second_name: student.user_identity_number?.second_name,
+    third_name: student.user_identity_number?.third_name,
+    last_name: student.user_identity_number?.last_name,
+    class_id: student.class_id,
+  }));
+
+  res.status(200).json({ data: formattedStudents });
 });
 
 
