@@ -696,27 +696,62 @@ exports.getClassStudents = asyncHandler(async (req, res, next) => {
 exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
   const { class_id, student_identity_numbers } = req.body;
 
-  if (!class_id || !student_identity_numbers) {
-    return res.status(400).json({ success: false, message: "Invalid data" });
+  console.log("Incoming Request:", { class_id, student_identity_numbers });
+
+  if (!class_id || !student_identity_numbers || student_identity_numbers.length === 0) {
+    return res.status(400).json({ success: false, message: "يجب إرسال معرفات الطلاب ورقم الصف" });
   }
 
-  const studentIdsArray = Array.isArray(student_identity_numbers)
-    ? student_identity_numbers
-    : [student_identity_numbers];
+  // Ensure student_identity_numbers is always an array
+  const studentIdsArray = Array.isArray(student_identity_numbers) ? student_identity_numbers : [student_identity_numbers];
 
-  const result = await Student.updateMany(
-    { user_identity_number: { $in: studentIdsArray } },
+  console.log("Student IDs to Update:", studentIdsArray);
+
+  // Check if students exist before updating
+  const existingStudents = await Student.find({ user_identity_number: { $in: studentIdsArray } });
+
+  if (existingStudents.length === 0) {
+    return next(new ApiError("لم يتم العثور على أي طلاب بهذه المعرفات.", 404));
+  }
+
+  console.log("Matching Students Found in Database:", existingStudents.length);
+
+  // Get students who are already assigned to this class
+  const alreadyAssignedStudents = existingStudents.filter(student => student.class_id?.toString() === class_id);
+
+  // Get students who need to be updated
+  const studentsToUpdate = existingStudents.filter(student => student.class_id?.toString() !== class_id);
+
+  if (studentsToUpdate.length === 0) {
+    return res.status(200).json({ message: "لم يتم إجراء أي تغييرات، جميع الطلاب موجودون بالفعل في هذا الصف" });
+  }
+
+  // Update only students who are not already in this class
+  const updateResult = await Student.updateMany(
+    { user_identity_number: { $in: studentsToUpdate.map(student => student.user_identity_number) } },
     { $set: { class_id } }
   );
 
-  if (result.modifiedCount === 0) {
-      return next(new ApiError("لم يتم تحديث اي طالب.. يرجى مراجعة البيانات", 404));
+  console.log("Update Result:", updateResult);
+
+  if (updateResult.modifiedCount === 0) {
+    return next(new ApiError("لم يتم تحديث أي طالب، تأكد من صحة البيانات", 400));
   }
 
   res.status(200).json({
-    message: `تم تعيين الطلاب الى هذا الصف بنجاح`,
+    message: `تم تعيين ${updateResult.modifiedCount} طالب(ة) إلى هذا الصف بنجاح`,
+    updatedStudents: studentsToUpdate.map(student => ({
+      identity_number: student.user_identity_number,
+      full_name: `${student.first_name} ${student.last_name}`,
+    })),
+    alreadyAssignedStudents: alreadyAssignedStudents.map(student => ({
+      identity_number: student.user_identity_number,
+      full_name: `${student.first_name} ${student.last_name}`,
+    })),
   });
 });
+
+
 
 exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   const classes = await Class.find({ level_number: req.params.level_number });
