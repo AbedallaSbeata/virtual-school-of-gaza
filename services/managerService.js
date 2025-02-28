@@ -698,58 +698,63 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
 
   console.log("Incoming Request:", { class_id, student_identity_numbers });
 
-  if (!class_id || !student_identity_numbers || student_identity_numbers.length === 0) {
+  if (!class_id || !student_identity_numbers) {
     return res.status(400).json({ success: false, message: "يجب إرسال معرفات الطلاب ورقم الصف" });
   }
 
   // Ensure student_identity_numbers is always an array
-  const studentIdsArray = Array.isArray(student_identity_numbers) ? student_identity_numbers : [student_identity_numbers];
+  const studentIdsArray = Array.isArray(student_identity_numbers)
+    ? student_identity_numbers
+    : [student_identity_numbers];
 
   console.log("Student IDs to Update:", studentIdsArray);
 
-  // Check if students exist before updating
-  const existingStudents = await Student.find({ user_identity_number: { $in: studentIdsArray } });
+  // Fetch all students currently assigned to this class
+  const currentlyAssignedStudents = await Student.find({ class_id });
 
-  if (existingStudents.length === 0) {
-    return next(new ApiError("لم يتم العثور على أي طلاب بهذه المعرفات.", 404));
-  }
-
-  console.log("Matching Students Found in Database:", existingStudents.length);
-
-  // Get students who are already assigned to this class
-  const alreadyAssignedStudents = existingStudents.filter(student => student.class_id?.toString() === class_id);
-
-  // Get students who need to be updated
-  const studentsToUpdate = existingStudents.filter(student => student.class_id?.toString() !== class_id);
-
-  if (studentsToUpdate.length === 0) {
-    return res.status(200).json({ message: "لم يتم إجراء أي تغييرات، جميع الطلاب موجودون بالفعل في هذا الصف" });
-  }
-
-  // Update only students who are not already in this class
-  const updateResult = await Student.updateMany(
-    { user_identity_number: { $in: studentsToUpdate.map(student => student.user_identity_number) } },
-    { $set: { class_id } }
+  // Identify students to be **removed** (students in the class but not in the selected list)
+  const studentsToRemove = currentlyAssignedStudents.filter(
+    (student) => !studentIdsArray.includes(student.user_identity_number)
   );
 
-  console.log("Update Result:", updateResult);
+  // Identify students to be **added** (students selected but not already in the class)
+  const studentsToAdd = await Student.find({
+    user_identity_number: { $in: studentIdsArray },
+    class_id: { $ne: class_id }, // Only update if student is not already assigned
+  });
 
-  if (updateResult.modifiedCount === 0) {
-    return next(new ApiError("لم يتم تحديث أي طالب، تأكد من صحة البيانات", 400));
+  console.log("Students to Add:", studentsToAdd.map((s) => s.user_identity_number));
+  console.log("Students to Remove:", studentsToRemove.map((s) => s.user_identity_number));
+
+  // **Remove students from class** (set `class_id` to null)
+  if (studentsToRemove.length > 0) {
+    await Student.updateMany(
+      { user_identity_number: { $in: studentsToRemove.map((s) => s.user_identity_number) } },
+      { $unset: { class_id: "" } } // ✅ Removes the `class_id`
+    );
+  }
+
+  // **Add selected students to the class**
+  if (studentsToAdd.length > 0) {
+    await Student.updateMany(
+      { user_identity_number: { $in: studentsToAdd.map((s) => s.user_identity_number) } },
+      { $set: { class_id } }
+    );
   }
 
   res.status(200).json({
-    message: `تم تعيين ${updateResult.modifiedCount} طالب(ة) إلى هذا الصف بنجاح`,
-    updatedStudents: studentsToUpdate.map(student => ({
+    message: `تم تحديث طلاب الصف بنجاح`,
+    addedStudents: studentsToAdd.map((student) => ({
       identity_number: student.user_identity_number,
       full_name: `${student.first_name} ${student.last_name}`,
     })),
-    alreadyAssignedStudents: alreadyAssignedStudents.map(student => ({
+    removedStudents: studentsToRemove.map((student) => ({
       identity_number: student.user_identity_number,
       full_name: `${student.first_name} ${student.last_name}`,
     })),
   });
 });
+
 
 
 
