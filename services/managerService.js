@@ -826,29 +826,29 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   res.status(200).json({ data: students });
 });
 
-// // ✅ 1. Add Class-Wide Announcement
-// exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
-//   const { content, class_id, user_id, file_url } = req.body;
+// ✅ 1. Add Class-Wide Announcement
+exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
+  const { content, class_id, user_id, file_url } = req.body;
 
-//   // Fetch all classSubjects related to this class
-//   const classSubjects = await ClassSubject.find({ class_id });
+  // Fetch all classSubjects related to this class
+  const classSubjects = await ClassSubject.find({ class_id });
 
-//   if (classSubjects.length === 0) {
-//     return next(new ApiError("No subjects found for this class", 404));
-//   }
+  if (classSubjects.length === 0) {
+    return next(new ApiError("No subjects found for this class", 404));
+  }
 
-//   // Create an announcement for each classSubject
-//   for (const classSubject of classSubjects) {
-//     await Announcement.create({
-//       content,
-//       classSubject_id: classSubject._id,
-//       user_id,
-//       file_url,
-//     });
-//   }
+  // Create an announcement for each classSubject
+  for (const classSubject of classSubjects) {
+    await Announcement.create({
+      content,
+      classSubject_id: classSubject._id,
+      user_id,
+      file_url,
+    });
+  }
 
-//   res.status(201).json({ success: true });
-// });
+  res.status(201).json({ success: true });
+});
 
 // // ✅ 2. Add Class Subject-Specific Announcement
 // exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
