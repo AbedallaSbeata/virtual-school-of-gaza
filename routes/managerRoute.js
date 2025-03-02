@@ -43,10 +43,12 @@ const {
   getClassStudents,
   assignStudentsToSpecificClass,
   getLevelStudents,
-  addAnnouncement,
-  getClassSubjectAnnouncements,
+  deleteAnnouncements,
   updateAnnouncement,
-  deleteAnnouncement,
+  getClassAnnouncements,
+  getTeacherAnnouncements,
+  addClassSubjectAnnouncement,
+  addClassAnnouncement
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -123,11 +125,13 @@ router
   .route("/assignStudentsToSpecificClass")
   .post(assignStudentsToSpecificClass);
 router.route("/getLevelStudents/:level_number").get(getLevelStudents);
-router.route("/addAnnouncement").post(addAnnouncement);
+router.route("/addClassAnnouncement").post(addClassAnnouncement);
+router.route("/addClassSubjectAnnouncement").post(addClassSubjectAnnouncement);
+router.route("/getTeacherAnnouncements").get(getTeacherAnnouncements);
 router
-  .route("/getClassSubjectAnnouncements/:classSubject_id")
-  .get(getClassSubjectAnnouncements);
+  .route("/getClassAnnouncements/:class_id")
+  .get(getClassAnnouncements);
 router.route("/updateAnnouncement/:announcement_id").put(updateAnnouncement);
-router.route("/deleteAnnouncement/:announcement_id").delete(deleteAnnouncement);
+router.route("/deleteAnnouncements").delete(deleteAnnouncements);
 
 module.exports = router;
