@@ -864,26 +864,26 @@ exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
 
 
 
-// // ✅ 2. Add Class Subject-Specific Announcement
-// exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
-//   const { content, classSubject_id, user_id, file_url } = req.body;
+// ✅ 2. Add Class Subject-Specific Announcement
+exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
+  const { content, classSubject_id, user_id, file_url } = req.body;
 
-//   // Validate classSubject exists
-//   const classSubject = await ClassSubject.findById(classSubject_id);
-//   if (!classSubject) {
-//     return next(new ApiError("Class subject not found", 404));
-//   }
+  // Validate classSubject exists
+  const classSubject = await ClassSubject.findById(classSubject_id);
+  if (!classSubject) {
+    return next(new ApiError("Class subject not found", 404));
+  }
 
-//   // Create the announcement
-//   await Announcement.create({
-//     content,
-//     classSubject_id,
-//     user_id,
-//     file_url,
-//   });
+  // Create the announcement
+  await Announcement.create({
+    content,
+    classSubject_id,
+    user_id,
+    file_url,
+  });
 
-//   res.status(201).json({ success: true });
-// });
+  res.status(201).json({ success: true });
+});
 
 // ✅ 3. Get Class Announcements (Sorted by Latest First)
 exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
