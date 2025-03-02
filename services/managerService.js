@@ -830,25 +830,39 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
 exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
   const { content, class_id, user_id, file_url } = req.body;
 
+  // Validate required fields
+  if (!content || !class_id || !user_id) {
+    return next(new ApiError("Missing required fields: content, class_id, user_id", 400));
+  }
+
   // Fetch all classSubjects related to this class
   const classSubjects = await ClassSubject.find({ class_id });
 
   if (classSubjects.length === 0) {
-    return next(new ApiError("No subjects found for this class", 404));
+    // If no classSubjects exist, create a general announcement for the class
+    await Announcement.create({
+      content,
+      classSubject_id: null, // No specific subject
+      user_id,
+      file_url: file_url || null, // Ensure null if file_url is missing
+    });
+    return res.status(201).json({ success: true, message: "Announcement created without class subjects." });
   }
 
-  // Create an announcement for each classSubject
+  // Create announcements for each classSubject
   for (const classSubject of classSubjects) {
     await Announcement.create({
       content,
       classSubject_id: classSubject._id,
       user_id,
-      file_url,
+      file_url: file_url || null, // Ensure null if file_url is missing
     });
   }
 
-  res.status(201).json({ success: true });
+  res.status(201).json({ success: true, message: "Announcements created successfully." });
 });
+
+
 
 // // ✅ 2. Add Class Subject-Specific Announcement
 // exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
