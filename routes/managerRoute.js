@@ -48,7 +48,7 @@ const {
   // updateAnnouncement,
   getClassAnnouncements,
   // addClassSubjectAnnouncement,
-  // addClassAnnouncement,
+  addClassAnnouncement,
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -126,7 +126,7 @@ router
   .post(assignStudentsToSpecificClass);
 router.route("/getLevelStudents/:level_number").get(getLevelStudents);
 // router.route("/getTeacherAnnouncements").get(getTeacherAnnouncements);
-// router.route("/addClassAnnouncement").post(addClassAnnouncement);
+router.route("/addClassAnnouncement").post(addClassAnnouncement);
 // router.route("/addClassSubjectAnnouncement").post(addClassSubjectAnnouncement);
 router.route("/getClassAnnouncements/:class_id").get(getClassAnnouncements);
 // router.route("/updateAnnouncement/:announcement_id").put(updateAnnouncement);
