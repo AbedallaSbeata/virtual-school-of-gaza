@@ -955,23 +955,36 @@ exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
 //   res.status(200).json(formattedAnnouncements);
 // });
 
-// // ✅ 5. Update an Announcement
-// exports.updateAnnouncement = asyncHandler(async (req, res, next) => {
-//   const { announcement_id } = req.params;
-//   const { content, file_url } = req.body;
+// ✅ 5. Update an Announcement
+exports.updateAnnouncement = asyncHandler(async (req, res, next) => {
+  const { announcement_id } = req.params;
+  const { content, file_url } = req.body;
 
-//   const updatedAnnouncement = await Announcement.findByIdAndUpdate(
-//     announcement_id,
-//     { content, file_url },
-//     { new: true }
-//   );
+  // Validate announcement_id
+  if (!announcement_id) {
+    return next(new ApiError("Announcement ID is required", 400));
+  }
 
-//   if (!updatedAnnouncement) {
-//     return next(new ApiError("Announcement not found", 404));
-//   }
+  // Ensure at least one field is provided
+  if (!content && !file_url) {
+    return next(new ApiError("At least one field (content or file_url) must be provided", 400));
+  }
 
-//   res.status(200).json({ success: true });
-// });
+  // Update the announcement
+  const updatedAnnouncement = await Announcement.findByIdAndUpdate(
+    announcement_id,
+    { $set: { content, file_url } },
+    { new: true, runValidators: true }
+  );
+
+  // If announcement is not found
+  if (!updatedAnnouncement) {
+    return next(new ApiError("Announcement not found", 404));
+  }
+
+  res.status(200).json({ success: true, data: updatedAnnouncement });
+});
+
 
 exports.deleteAnnouncements = asyncHandler(async (req, res, next) => {
   const { announcements_ids } = req.body;
