@@ -831,8 +831,8 @@ exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
   const { content, class_id, file_url } = req.body;
 
   // Validate required fields
-  if (!content || !class_id || !user_id) {
-    return next(new ApiError("Missing required fields: content, class_id, user_id", 400));
+  if (!content || !class_id ) {
+    return next(new ApiError("Missing required fields: content, class_id", 400));
   }
 
   // Fetch all classSubjects related to this class
