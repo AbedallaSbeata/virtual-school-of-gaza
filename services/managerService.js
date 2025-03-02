@@ -928,39 +928,51 @@ exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
 
 // ✅ 4. Get Teacher Announcements
 exports.getTeacherAnnouncements = asyncHandler(async (req, res, next) => {
-  const { user_id } = req.params; // Get user_id from request params
+  const { user_id } = req.params; // Extract user_id from request params
 
   // Validate user_id
   if (!user_id) {
     return next(new ApiError("User ID is required", 400));
   }
 
-  // Fetch announcements posted by the given teacher
-  const announcements = await Announcement.find({ user_id })
-    .sort({ createdAt: -1 }) // Sort by latest first
-    .populate("user_id", "first_name last_name") // Fetch user details
-    .populate({
-      path: "classSubject_id",
-      populate: { path: "subject_id", select: "subject_name" }, // Fetch subject name
-    });
+  // Check if user exists
+  const userExists = await User.findById(user_id);
+  if (!userExists) {
+    return next(new ApiError("User not found", 404));
+  }
 
-  // Format response
-  const formattedAnnouncements = announcements.map((announcement) => ({
-    _id: announcement._id,
-    user_id: announcement.user_id?._id,
-    user_full_name: `${announcement.user_id?.first_name || "غير معروف"} ${
-      announcement.user_id?.last_name || "غير معروف"
-    }`,
-    classSubject_id: announcement.classSubject_id?._id || null,
-    classSubject_name: announcement.classSubject_id?.subject_id?.subject_name || "عام",
-    content: announcement.content,
-    file_url: announcement.file_url,
-    createdAt: announcement.createdAt,
-    updatedAt: announcement.updatedAt,
-  }));
+  try {
+    // Fetch announcements posted by the given teacher
+    const announcements = await Announcement.find({ user_id })
+      .sort({ createdAt: -1 }) // Sort by latest first
+      .populate("user_id", "first_name last_name") // Fetch user details
+      .populate({
+        path: "classSubject_id",
+        populate: { path: "subject_id", select: "subject_name" }, // Fetch subject name
+      });
 
-  res.status(200).json(formattedAnnouncements);
+    // Format response
+    const formattedAnnouncements = announcements.map((announcement) => ({
+      _id: announcement._id,
+      user_id: announcement.user_id?._id || null,
+      user_full_name: `${announcement.user_id?.first_name || "غير معروف"} ${
+        announcement.user_id?.last_name || "غير معروف"
+      }`,
+      classSubject_id: announcement.classSubject_id?._id || null,
+      classSubject_name: announcement.classSubject_id?.subject_id?.subject_name || "عام",
+      content: announcement.content,
+      file_url: announcement.file_url || null,
+      createdAt: announcement.createdAt,
+      updatedAt: announcement.updatedAt,
+    }));
+
+    res.status(200).json(formattedAnnouncements);
+  } catch (error) {
+    console.error("Error fetching teacher announcements:", error);
+    return next(new ApiError("Internal Server Error", 500));
+  }
 });
+
 
 
 
