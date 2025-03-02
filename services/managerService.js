@@ -828,7 +828,7 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
 
 // ✅ 1. Add Class-Wide Announcement
 exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
-  const { content, class_id, user_id, file_url } = req.body;
+  const { content, class_id, file_url } = req.body;
 
   // Validate required fields
   if (!content || !class_id || !user_id) {
@@ -843,7 +843,7 @@ exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
     await Announcement.create({
       content,
       classSubject_id: null, // No specific subject
-      user_id,
+      user_id:req.user._id,
       file_url: file_url || null, // Ensure null if file_url is missing
     });
     return res.status(201).json({ success: true, message: "Announcement created without class subjects." });
@@ -854,7 +854,7 @@ exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
     await Announcement.create({
       content,
       classSubject_id: classSubject._id,
-      user_id,
+      user_id: req.user._id,
       file_url: file_url || null, // Ensure null if file_url is missing
     });
   }
