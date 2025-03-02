@@ -14,6 +14,8 @@ const RecordedLecture = require("../models/recordedLectureModel");
 const RecordedLectureComments = require("../models/recordedLectureCommentModel");
 const RecordedLectureReplies = require("../models/recordedLectureReplieModel");
 const Announcement = require("../models/announcementModel");
+
+
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
     !req.files ||
@@ -814,38 +816,158 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   res.status(200).json({ data: students });
 });
 
+// ✅ 1. Add Class-Wide Announcement
+exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
+  const { content, class_id, user_id, file_url } = req.body;
 
+  // Fetch all classSubjects related to this class
+  const classSubjects = await ClassSubject.find({ class_id });
 
+  if (classSubjects.length === 0) {
+    return next(new ApiError("No subjects found for this class", 404));
+  }
 
+  // Create an announcement for each classSubject
+  for (const classSubject of classSubjects) {
+    await Announcement.create({
+      content,
+      classSubject_id: classSubject._id,
+      user_id,
+      file_url,
+    });
+  }
 
-exports.addAnnouncement = asyncHandler(async (req, res, next) => {
-  const announcement = await Announcement.create({
-    content: req.body.content,
-    classSubject_id: req.body.classSubject_id,
-    user_id: req.user._id,
+  res.status(201).json({ success: true });
+});
+
+// ✅ 2. Add Class Subject-Specific Announcement
+exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
+  const { content, classSubject_id, user_id, file_url } = req.body;
+
+  // Validate classSubject exists
+  const classSubject = await ClassSubject.findById(classSubject_id);
+  if (!classSubject) {
+    return next(new ApiError("Class subject not found", 404));
+  }
+
+  // Create the announcement
+  await Announcement.create({
+    content,
+    classSubject_id,
+    user_id,
+    file_url,
   });
-  res.status(201).send({ message: "تم انشاء اعلان جديد", data: announcement });
+
+  res.status(201).json({ success: true });
 });
 
-exports.getClassSubjectAnnouncements = asyncHandler(async (req, res, next) => {
-  const announcements = await Announcement.find({classSubject_id: req.params.classSubject_id})
-  if(!announcements) {
-    return next(new ApiError("لا يوجد اعلانات", 404));
-  }
-  res.status(200).json(announcements)
-})
+// ✅ 3. Get Class Announcements (Sorted by Latest First)
+exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
+  const { class_id } = req.params;
 
+  // Get all classSubjects for this class
+  const classSubjects = await ClassSubject.find({ class_id });
+
+  if (classSubjects.length === 0) {
+    return next(new ApiError("No subjects found for this class", 404));
+  }
+
+  // Extract IDs of classSubjects
+  const classSubjectIds = classSubjects.map((subject) => subject._id);
+
+  // Fetch announcements related to those classSubjects
+  const announcements = await Announcement.find({
+    classSubject_id: { $in: classSubjectIds },
+  })
+    .sort({ createdAt: -1 }) // Sort by latest first
+    .populate("user_id", "first_name last_name") // Fetch user details
+    .populate({
+      path: "classSubject_id",
+      populate: { path: "subject_id", select: "subject_name" }, // Fetch subject name
+    });
+
+  // Format response
+  const formattedAnnouncements = announcements.map((announcement) => ({
+    _id: announcement._id,
+    user_id: announcement.user_id._id,
+    user_full_name: `${announcement.user_id.first_name} ${announcement.user_id.last_name}`,
+    classSubject_id: announcement.classSubject_id._id,
+    classSubject_name: announcement.classSubject_id.subject_id.subject_name,
+    content: announcement.content,
+    file_url: announcement.file_url,
+    createdAt: announcement.createdAt,
+    updatedAt: announcement.updatedAt,
+  }));
+
+  res.status(200).json(formattedAnnouncements);
+});
+
+// ✅ 4. Get Teacher Announcements
+exports.getTeacherAnnouncements = asyncHandler(async (req, res, next) => {
+  const { user_id } = req.params; // Use user_id from request params
+  
+  // Fetch announcements posted by the given teacher
+  const announcements = await Announcement.find({ user_id })
+    .sort({ createdAt: -1 }) // Sort by latest first
+    .populate("user_id", "first_name last_name") // Fetch user details
+    .populate({
+      path: "classSubject_id",
+      populate: { path: "subject_id", select: "subject_name" }, // Fetch subject name
+    });
+
+  // Format response
+  const formattedAnnouncements = announcements.map((announcement) => ({
+    _id: announcement._id,
+    user_id: announcement.user_id._id,
+    user_full_name: `${announcement.user_id.first_name} ${announcement.user_id.last_name}`,
+    classSubject_id: announcement.classSubject_id._id,
+    classSubject_name: announcement.classSubject_id.subject_id.subject_name,
+    content: announcement.content,
+    file_url: announcement.file_url,
+    createdAt: announcement.createdAt,
+    updatedAt: announcement.updatedAt,
+  }));
+
+  res.status(200).json(formattedAnnouncements);
+});
+
+// ✅ 5. Update an Announcement
 exports.updateAnnouncement = asyncHandler(async (req, res, next) => {
-  const announcement = await Announcement.findByIdAndUpdate(req.params.announcement_id, {
-    content: req.body.content
-  }, {new: true})
-  if(!announcement) {
-    return next(new ApiError("هذا الاعلان غير موجود",404))
-  }
-  res.status(200).json({message: "تم تحديث البيانات بنجاح", data: announcement})
-})
+  const { announcement_id } = req.params;
+  const { content, file_url } = req.body;
 
-exports.deleteAnnouncement = asyncHandler(async (req, res, next) => {
-  await Announcement.findByIdAndDelete(req.params.announcement_id);
-  res.status(204).json();
+  const updatedAnnouncement = await Announcement.findByIdAndUpdate(
+    announcement_id,
+    { content, file_url },
+    { new: true }
+  );
+
+  if (!updatedAnnouncement) {
+    return next(new ApiError("Announcement not found", 404));
+  }
+
+  res.status(200).json({ success: true });
 });
+
+// ✅ 6. Delete Multiple Announcements
+// Find existing announcements
+const existingAnnouncements = await Announcement.find({
+  _id: { $in: announcements_ids },
+});
+
+// Extract valid IDs
+const existingIds = existingAnnouncements.map((ann) => ann._id.toString());
+const missingIds = announcements_ids.filter((id) => !existingIds.includes(id));
+
+// Delete only valid IDs
+if (existingIds.length > 0) {
+  await Announcement.deleteMany({ _id: { $in: existingIds } });
+}
+
+res.status(200).json({
+  success: true,
+  deletedCount: existingIds.length,
+  missingIds: missingIds.length > 0 ? missingIds : null,
+  message: missingIds.length > 0 ? "Some announcements were not found." : "All announcements deleted successfully.",
+});
+
