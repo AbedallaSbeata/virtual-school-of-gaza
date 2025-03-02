@@ -43,7 +43,7 @@ const {
   getClassStudents,
   assignStudentsToSpecificClass,
   getLevelStudents,
-  // getTeacherAnnouncements,
+  getTeacherAnnouncements,
   deleteAnnouncements,
   updateAnnouncement,
   getClassAnnouncements,
@@ -125,7 +125,7 @@ router
   .route("/assignStudentsToSpecificClass")
   .post(assignStudentsToSpecificClass);
 router.route("/getLevelStudents/:level_number").get(getLevelStudents);
-// router.route("/getTeacherAnnouncements").get(getTeacherAnnouncements);
+router.route("/getTeacherAnnouncements").get(getTeacherAnnouncements);
 router.route("/addClassAnnouncement").post(addClassAnnouncement);
 router.route("/addClassSubjectAnnouncement").post(addClassSubjectAnnouncement);
 router.route("/getClassAnnouncements/:class_id").get(getClassAnnouncements);
