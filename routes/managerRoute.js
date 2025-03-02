@@ -44,7 +44,7 @@ const {
   assignStudentsToSpecificClass,
   getLevelStudents,
   // getTeacherAnnouncements,
-  // deleteAnnouncements,
+  deleteAnnouncements,
   // updateAnnouncement,
   getClassAnnouncements,
   addClassSubjectAnnouncement,
@@ -130,6 +130,6 @@ router.route("/addClassAnnouncement").post(addClassAnnouncement);
 router.route("/addClassSubjectAnnouncement").post(addClassSubjectAnnouncement);
 router.route("/getClassAnnouncements/:class_id").get(getClassAnnouncements);
 // router.route("/updateAnnouncement/:announcement_id").put(updateAnnouncement);
-// router.route("/deleteAnnouncements").delete(deleteAnnouncements);
+router.route("/deleteAnnouncements").delete(deleteAnnouncements);
 
 module.exports = router;
