@@ -973,24 +973,35 @@ exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
 //   res.status(200).json({ success: true });
 // });
 
-// // ✅ 6. Delete Multiple Announcements
-// // Find existing announcements
-// const existingAnnouncements = await Announcement.find({
-//   _id: { $in: announcements_ids },
-// });
+exports.deleteAnnouncements = asyncHandler(async (req, res, next) => {
+  const { announcements_ids } = req.body;
 
-// // Extract valid IDs
-// const existingIds = existingAnnouncements.map((ann) => ann._id.toString());
-// const missingIds = announcements_ids.filter((id) => !existingIds.includes(id));
+  // Validate request body
+  if (!announcements_ids || !Array.isArray(announcements_ids) || announcements_ids.length === 0) {
+    return next(new ApiError("Invalid request: announcements_ids must be a non-empty array", 400));
+  }
 
-// // Delete only valid IDs
-// if (existingIds.length > 0) {
-//   await Announcement.deleteMany({ _id: { $in: existingIds } });
-// }
+  // Find existing announcements
+  const existingAnnouncements = await Announcement.find({
+    _id: { $in: announcements_ids },
+  });
 
-// res.status(200).json({
-//   success: true,
-//   deletedCount: existingIds.length,
-//   missingIds: missingIds.length > 0 ? missingIds : null,
-//   message: missingIds.length > 0 ? "Some announcements were not found." : "All announcements deleted successfully.",
-// });
+  // Extract valid IDs
+  const existingIds = existingAnnouncements.map((ann) => ann._id.toString());
+  const missingIds = announcements_ids.filter((id) => !existingIds.includes(id));
+
+  // Delete only valid IDs
+  if (existingIds.length > 0) {
+    await Announcement.deleteMany({ _id: { $in: existingIds } });
+  }
+
+  res.status(200).json({
+    success: true,
+    deletedCount: existingIds.length,
+    missingIds: missingIds.length > 0 ? missingIds : null,
+    message: missingIds.length > 0
+      ? "Some announcements were not found and were not deleted."
+      : "All selected announcements deleted successfully.",
+  });
+});
+
