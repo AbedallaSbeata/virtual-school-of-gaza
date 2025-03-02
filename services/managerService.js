@@ -885,23 +885,23 @@ exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
   res.status(201).json({ success: true });
 });
 
-// ✅ 3. Get Class Announcements (Sorted by Latest First)
 exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
   const { class_id } = req.params;
 
-  console.log(class_id);
+  console.log("Requested class_id:", class_id);
+
   // Get all classSubjects for this class
   const classSubjects = await ClassSubject.find({ class_id });
 
-  if (classSubjects.length === 0) {
+  if (!classSubjects || classSubjects.length === 0) {
     return next(new ApiError("No subjects found for this class", 404));
   }
-  console.log(classSubjects);
-  
-  
+
+  console.log("Class subjects found:", classSubjects);
+
   // Extract IDs of classSubjects
   const classSubjectIds = classSubjects.map((subject) => subject._id);
-  console.log(classSubjectsIds);
+  console.log("Class Subject IDs:", classSubjectIds);
 
   // Fetch announcements related to those classSubjects
   const announcements = await Announcement.find({
@@ -914,22 +914,25 @@ exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
       populate: { path: "subject_id", select: "subject_name" }, // Fetch subject name
     });
 
-  conole.log(announcements);
+  console.log("Fetched Announcements:", announcements);
+
   // Format response
   const formattedAnnouncements = announcements.map((announcement) => ({
     _id: announcement._id,
-    user_id: announcement.user_id._id,
-    user_full_name: `${announcement.user_id.first_name} ${announcement.user_id.last_name}`,
-    classSubject_id: announcement.classSubject_id._id,
-    classSubject_name: announcement.classSubject_id.subject_id.subject_name,
+    user_id: announcement.user_id?._id || null,
+    user_full_name: `${announcement.user_id?.first_name || "غير معروف"} ${announcement.user_id?.last_name || "غير معروف"}`,
+    classSubject_id: announcement.classSubject_id?._id || null,
+    classSubject_name: announcement.classSubject_id?.subject_id?.subject_name || "عام",
     content: announcement.content,
-    file_url: announcement.file_url,
+    file_url: announcement.file_url || null,
     createdAt: announcement.createdAt,
     updatedAt: announcement.updatedAt,
   }));
 
   res.status(200).json(formattedAnnouncements);
 });
+
+
 
 // ✅ 4. Get Teacher Announcements
 exports.getTeacherAnnouncements = asyncHandler(async (req, res, next) => {
