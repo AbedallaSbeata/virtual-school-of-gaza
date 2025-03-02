@@ -47,7 +47,7 @@ const {
   // deleteAnnouncements,
   // updateAnnouncement,
   getClassAnnouncements,
-  // addClassSubjectAnnouncement,
+  addClassSubjectAnnouncement,
   addClassAnnouncement,
 } = require("../services/managerService");
 const {
@@ -127,7 +127,7 @@ router
 router.route("/getLevelStudents/:level_number").get(getLevelStudents);
 // router.route("/getTeacherAnnouncements").get(getTeacherAnnouncements);
 router.route("/addClassAnnouncement").post(addClassAnnouncement);
-// router.route("/addClassSubjectAnnouncement").post(addClassSubjectAnnouncement);
+router.route("/addClassSubjectAnnouncement").post(addClassSubjectAnnouncement);
 router.route("/getClassAnnouncements/:class_id").get(getClassAnnouncements);
 // router.route("/updateAnnouncement/:announcement_id").put(updateAnnouncement);
 // router.route("/deleteAnnouncements").delete(deleteAnnouncements);
