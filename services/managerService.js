@@ -15,7 +15,6 @@ const RecordedLectureComments = require("../models/recordedLectureCommentModel")
 const RecordedLectureReplies = require("../models/recordedLectureReplieModel");
 const Announcement = require("../models/announcementModel");
 
-
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
     !req.files ||
@@ -588,10 +587,8 @@ exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
   });
 });
 
-
-
 exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
-  console.log("Incoming Request Body:", req.body); 
+  console.log("Incoming Request Body:", req.body);
   if (
     !req.body.commentsIds ||
     !Array.isArray(req.body.commentsIds) ||
@@ -606,7 +603,9 @@ exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
   });
 
   if (existingComments.length === 0) {
-    return res.status(404).json({ message: "لم يتم العثور على التعليقات المحددة" });
+    return res
+      .status(404)
+      .json({ message: "لم يتم العثور على التعليقات المحددة" });
   }
 
   // Delete comments
@@ -620,7 +619,6 @@ exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({ message: `تم حذف ${result.deletedCount} تعليق(ات)` });
 });
-
 
 exports.addReplyToComment = asyncHandler(async (req, res, next) => {
   const reply = await RecordedLectureReplies.create({
@@ -684,8 +682,6 @@ exports.deleteReply = asyncHandler(async (req, res, next) => {
   res.status(204).json();
 });
 
-
-
 exports.getClassStudents = asyncHandler(async (req, res, next) => {
   const students = await Student.find({ class_id: req.params.class_id });
   const identityNumbers = students.map(
@@ -701,7 +697,9 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
   console.log("Incoming Request:", { class_id, student_identity_numbers });
 
   if (!class_id || !student_identity_numbers) {
-    return res.status(400).json({ success: false, message: "يجب إرسال معرفات الطلاب ورقم الصف" });
+    return res
+      .status(400)
+      .json({ success: false, message: "يجب إرسال معرفات الطلاب ورقم الصف" });
   }
 
   // Ensure student_identity_numbers is always an array
@@ -725,13 +723,23 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
     class_id: { $ne: class_id }, // Only update if student is not already assigned
   });
 
-  console.log("Students to Add:", studentsToAdd.map((s) => s.user_identity_number));
-  console.log("Students to Remove:", studentsToRemove.map((s) => s.user_identity_number));
+  console.log(
+    "Students to Add:",
+    studentsToAdd.map((s) => s.user_identity_number)
+  );
+  console.log(
+    "Students to Remove:",
+    studentsToRemove.map((s) => s.user_identity_number)
+  );
 
   // **Remove students from class** (set `class_id` to null)
   if (studentsToRemove.length > 0) {
     await Student.updateMany(
-      { user_identity_number: { $in: studentsToRemove.map((s) => s.user_identity_number) } },
+      {
+        user_identity_number: {
+          $in: studentsToRemove.map((s) => s.user_identity_number),
+        },
+      },
       { $unset: { class_id: "" } } // ✅ Removes the `class_id`
     );
   }
@@ -739,7 +747,11 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
   // **Add selected students to the class**
   if (studentsToAdd.length > 0) {
     await Student.updateMany(
-      { user_identity_number: { $in: studentsToAdd.map((s) => s.user_identity_number) } },
+      {
+        user_identity_number: {
+          $in: studentsToAdd.map((s) => s.user_identity_number),
+        },
+      },
       { $set: { class_id } }
     );
   }
@@ -756,8 +768,6 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
     })),
   });
 });
-
-
 
 exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   const levelNumber = req.params.level_number;
@@ -816,50 +826,50 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   res.status(200).json({ data: students });
 });
 
-// ✅ 1. Add Class-Wide Announcement
-exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
-  const { content, class_id, user_id, file_url } = req.body;
+// // ✅ 1. Add Class-Wide Announcement
+// exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
+//   const { content, class_id, user_id, file_url } = req.body;
 
-  // Fetch all classSubjects related to this class
-  const classSubjects = await ClassSubject.find({ class_id });
+//   // Fetch all classSubjects related to this class
+//   const classSubjects = await ClassSubject.find({ class_id });
 
-  if (classSubjects.length === 0) {
-    return next(new ApiError("No subjects found for this class", 404));
-  }
+//   if (classSubjects.length === 0) {
+//     return next(new ApiError("No subjects found for this class", 404));
+//   }
 
-  // Create an announcement for each classSubject
-  for (const classSubject of classSubjects) {
-    await Announcement.create({
-      content,
-      classSubject_id: classSubject._id,
-      user_id,
-      file_url,
-    });
-  }
+//   // Create an announcement for each classSubject
+//   for (const classSubject of classSubjects) {
+//     await Announcement.create({
+//       content,
+//       classSubject_id: classSubject._id,
+//       user_id,
+//       file_url,
+//     });
+//   }
 
-  res.status(201).json({ success: true });
-});
+//   res.status(201).json({ success: true });
+// });
 
-// ✅ 2. Add Class Subject-Specific Announcement
-exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
-  const { content, classSubject_id, user_id, file_url } = req.body;
+// // ✅ 2. Add Class Subject-Specific Announcement
+// exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
+//   const { content, classSubject_id, user_id, file_url } = req.body;
 
-  // Validate classSubject exists
-  const classSubject = await ClassSubject.findById(classSubject_id);
-  if (!classSubject) {
-    return next(new ApiError("Class subject not found", 404));
-  }
+//   // Validate classSubject exists
+//   const classSubject = await ClassSubject.findById(classSubject_id);
+//   if (!classSubject) {
+//     return next(new ApiError("Class subject not found", 404));
+//   }
 
-  // Create the announcement
-  await Announcement.create({
-    content,
-    classSubject_id,
-    user_id,
-    file_url,
-  });
+//   // Create the announcement
+//   await Announcement.create({
+//     content,
+//     classSubject_id,
+//     user_id,
+//     file_url,
+//   });
 
-  res.status(201).json({ success: true });
-});
+//   res.status(201).json({ success: true });
+// });
 
 // ✅ 3. Get Class Announcements (Sorted by Latest First)
 exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
@@ -902,72 +912,71 @@ exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
   res.status(200).json(formattedAnnouncements);
 });
 
-// ✅ 4. Get Teacher Announcements
-exports.getTeacherAnnouncements = asyncHandler(async (req, res, next) => {
-  const { user_id } = req.params; // Use user_id from request params
-  
-  // Fetch announcements posted by the given teacher
-  const announcements = await Announcement.find({ user_id })
-    .sort({ createdAt: -1 }) // Sort by latest first
-    .populate("user_id", "first_name last_name") // Fetch user details
-    .populate({
-      path: "classSubject_id",
-      populate: { path: "subject_id", select: "subject_name" }, // Fetch subject name
-    });
+// // ✅ 4. Get Teacher Announcements
+// exports.getTeacherAnnouncements = asyncHandler(async (req, res, next) => {
+//   const { user_id } = req.params; // Use user_id from request params
 
-  // Format response
-  const formattedAnnouncements = announcements.map((announcement) => ({
-    _id: announcement._id,
-    user_id: announcement.user_id._id,
-    user_full_name: `${announcement.user_id.first_name} ${announcement.user_id.last_name}`,
-    classSubject_id: announcement.classSubject_id._id,
-    classSubject_name: announcement.classSubject_id.subject_id.subject_name,
-    content: announcement.content,
-    file_url: announcement.file_url,
-    createdAt: announcement.createdAt,
-    updatedAt: announcement.updatedAt,
-  }));
+//   // Fetch announcements posted by the given teacher
+//   const announcements = await Announcement.find({ user_id })
+//     .sort({ createdAt: -1 }) // Sort by latest first
+//     .populate("user_id", "first_name last_name") // Fetch user details
+//     .populate({
+//       path: "classSubject_id",
+//       populate: { path: "subject_id", select: "subject_name" }, // Fetch subject name
+//     });
 
-  res.status(200).json(formattedAnnouncements);
-});
+//   // Format response
+//   const formattedAnnouncements = announcements.map((announcement) => ({
+//     _id: announcement._id,
+//     user_id: announcement.user_id._id,
+//     user_full_name: `${announcement.user_id.first_name} ${announcement.user_id.last_name}`,
+//     classSubject_id: announcement.classSubject_id._id,
+//     classSubject_name: announcement.classSubject_id.subject_id.subject_name,
+//     content: announcement.content,
+//     file_url: announcement.file_url,
+//     createdAt: announcement.createdAt,
+//     updatedAt: announcement.updatedAt,
+//   }));
 
-// ✅ 5. Update an Announcement
-exports.updateAnnouncement = asyncHandler(async (req, res, next) => {
-  const { announcement_id } = req.params;
-  const { content, file_url } = req.body;
+//   res.status(200).json(formattedAnnouncements);
+// });
 
-  const updatedAnnouncement = await Announcement.findByIdAndUpdate(
-    announcement_id,
-    { content, file_url },
-    { new: true }
-  );
+// // ✅ 5. Update an Announcement
+// exports.updateAnnouncement = asyncHandler(async (req, res, next) => {
+//   const { announcement_id } = req.params;
+//   const { content, file_url } = req.body;
 
-  if (!updatedAnnouncement) {
-    return next(new ApiError("Announcement not found", 404));
-  }
+//   const updatedAnnouncement = await Announcement.findByIdAndUpdate(
+//     announcement_id,
+//     { content, file_url },
+//     { new: true }
+//   );
 
-  res.status(200).json({ success: true });
-});
+//   if (!updatedAnnouncement) {
+//     return next(new ApiError("Announcement not found", 404));
+//   }
 
-// ✅ 6. Delete Multiple Announcements
-// Find existing announcements
-const existingAnnouncements = await Announcement.find({
-  _id: { $in: announcements_ids },
-});
+//   res.status(200).json({ success: true });
+// });
 
-// Extract valid IDs
-const existingIds = existingAnnouncements.map((ann) => ann._id.toString());
-const missingIds = announcements_ids.filter((id) => !existingIds.includes(id));
+// // ✅ 6. Delete Multiple Announcements
+// // Find existing announcements
+// const existingAnnouncements = await Announcement.find({
+//   _id: { $in: announcements_ids },
+// });
 
-// Delete only valid IDs
-if (existingIds.length > 0) {
-  await Announcement.deleteMany({ _id: { $in: existingIds } });
-}
+// // Extract valid IDs
+// const existingIds = existingAnnouncements.map((ann) => ann._id.toString());
+// const missingIds = announcements_ids.filter((id) => !existingIds.includes(id));
 
-res.status(200).json({
-  success: true,
-  deletedCount: existingIds.length,
-  missingIds: missingIds.length > 0 ? missingIds : null,
-  message: missingIds.length > 0 ? "Some announcements were not found." : "All announcements deleted successfully.",
-});
+// // Delete only valid IDs
+// if (existingIds.length > 0) {
+//   await Announcement.deleteMany({ _id: { $in: existingIds } });
+// }
 
+// res.status(200).json({
+//   success: true,
+//   deletedCount: existingIds.length,
+//   missingIds: missingIds.length > 0 ? missingIds : null,
+//   message: missingIds.length > 0 ? "Some announcements were not found." : "All announcements deleted successfully.",
+// });
