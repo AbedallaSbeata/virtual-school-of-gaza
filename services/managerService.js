@@ -866,7 +866,7 @@ exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
 
 // ✅ 2. Add Class Subject-Specific Announcement
 exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
-  const { content, classSubject_id, user_id, file_url } = req.body;
+  const { content, classSubject_id, file_url } = req.body;
 
   // Validate classSubject exists
   const classSubject = await ClassSubject.findById(classSubject_id);
@@ -878,7 +878,7 @@ exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
   await Announcement.create({
     content,
     classSubject_id,
-    user_id,
+    user_id:req.user._id,
     file_url,
   });
 
