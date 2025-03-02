@@ -889,19 +889,19 @@ exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
 exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
   const { class_id } = req.params;
 
-  conole.log(class_id);
+  console.log(class_id);
   // Get all classSubjects for this class
   const classSubjects = await ClassSubject.find({ class_id });
 
   if (classSubjects.length === 0) {
     return next(new ApiError("No subjects found for this class", 404));
   }
-  conole.log(classSubjects);
+  console.log(classSubjects);
   
   
   // Extract IDs of classSubjects
   const classSubjectIds = classSubjects.map((subject) => subject._id);
-  conole.log(classSubjectsIds);
+  console.log(classSubjectsIds);
 
   // Fetch announcements related to those classSubjects
   const announcements = await Announcement.find({
