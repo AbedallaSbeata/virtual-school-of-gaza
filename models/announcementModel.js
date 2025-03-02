@@ -11,6 +11,10 @@ const announcementSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "User",
     },
+    attachedFileUrl: {
+      type: String,
+      default: null, // Allows announcements without attachments
+    },
   },
   { timestamps: true }
 );
