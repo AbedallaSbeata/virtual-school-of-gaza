@@ -11,7 +11,7 @@ const announcementSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "User",
     },
-    attachedFileUrl: {
+    file_url: {
       type: String,
       default: null, // Allows announcements without attachments
     },
