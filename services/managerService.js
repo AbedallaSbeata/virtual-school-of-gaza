@@ -926,34 +926,43 @@ exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
   res.status(200).json(formattedAnnouncements);
 });
 
-// // ✅ 4. Get Teacher Announcements
-// exports.getTeacherAnnouncements = asyncHandler(async (req, res, next) => {
-//   const { user_id } = req.params; // Use user_id from request params
+// ✅ 4. Get Teacher Announcements
+exports.getTeacherAnnouncements = asyncHandler(async (req, res, next) => {
+  const { user_id } = req.params; // Get user_id from request params
 
-//   // Fetch announcements posted by the given teacher
-//   const announcements = await Announcement.find({ user_id })
-//     .sort({ createdAt: -1 }) // Sort by latest first
-//     .populate("user_id", "first_name last_name") // Fetch user details
-//     .populate({
-//       path: "classSubject_id",
-//       populate: { path: "subject_id", select: "subject_name" }, // Fetch subject name
-//     });
+  // Validate user_id
+  if (!user_id) {
+    return next(new ApiError("User ID is required", 400));
+  }
 
-//   // Format response
-//   const formattedAnnouncements = announcements.map((announcement) => ({
-//     _id: announcement._id,
-//     user_id: announcement.user_id._id,
-//     user_full_name: `${announcement.user_id.first_name} ${announcement.user_id.last_name}`,
-//     classSubject_id: announcement.classSubject_id._id,
-//     classSubject_name: announcement.classSubject_id.subject_id.subject_name,
-//     content: announcement.content,
-//     file_url: announcement.file_url,
-//     createdAt: announcement.createdAt,
-//     updatedAt: announcement.updatedAt,
-//   }));
+  // Fetch announcements posted by the given teacher
+  const announcements = await Announcement.find({ user_id })
+    .sort({ createdAt: -1 }) // Sort by latest first
+    .populate("user_id", "first_name last_name") // Fetch user details
+    .populate({
+      path: "classSubject_id",
+      populate: { path: "subject_id", select: "subject_name" }, // Fetch subject name
+    });
 
-//   res.status(200).json(formattedAnnouncements);
-// });
+  // Format response
+  const formattedAnnouncements = announcements.map((announcement) => ({
+    _id: announcement._id,
+    user_id: announcement.user_id?._id,
+    user_full_name: `${announcement.user_id?.first_name || "غير معروف"} ${
+      announcement.user_id?.last_name || "غير معروف"
+    }`,
+    classSubject_id: announcement.classSubject_id?._id || null,
+    classSubject_name: announcement.classSubject_id?.subject_id?.subject_name || "عام",
+    content: announcement.content,
+    file_url: announcement.file_url,
+    createdAt: announcement.createdAt,
+    updatedAt: announcement.updatedAt,
+  }));
+
+  res.status(200).json(formattedAnnouncements);
+});
+
+
 
 // ✅ 5. Update an Announcement
 exports.updateAnnouncement = asyncHandler(async (req, res, next) => {
