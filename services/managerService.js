@@ -1071,50 +1071,63 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
   res.status(200).json(studentsWithLevel);
 });
 
+
+
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
   try {
     // Fetch all users except students
     const staff = await User.find({ role: { $ne: "student" } }).lean();
 
-    // Extract teachers' identity numbers
+    // Extract teacher identity numbers
     const teacherIds = staff
       .filter(user => user.role === "teacher")
       .map(teacher => teacher.identity_number);
 
-    // Fetch teachers' details
+    // Fetch teachers and populate their assigned classes
     const teachers = await Teacher.find({ user_identity_number: { $in: teacherIds } })
-      .populate("classes_ids", "class_number level_number")
+      .populate({
+        path: "classes_ids",
+        select: "class_number level_number", // Fetch class number and level
+        populate: { path: "level_number", select: "level_name" } // Fetch level name
+      })
       .lean();
 
-    // Fetch class subjects to link subjects to each teacher
+    // Fetch all class subjects related to these teachers
     const classSubjects = await ClassSubject.find({ teacher_id: { $in: teachers.map(t => t._id) } })
-      .populate("subject_id", "subject_name")
-      .populate("class_id", "class_number level_number")
+      .populate("subject_id", "subject_name") // Populate subject name
+      .populate({
+        path: "class_id",
+        select: "class_number level_number",
+        populate: { path: "level_number", select: "level_name" }
+      })
       .lean();
 
-    // Fetch levels for mapping level numbers to names
-    const levels = await Level.find().lean();
-    const levelMap = Object.fromEntries(levels.map(level => [level.level_number, level.level_name]));
-
-    // Process teachers' data
+    // Map teachers' data properly
     const teachersData = teachers.map(teacher => {
-      const teacherClasses = teacher.classes_ids.map(classObj => ({
-        classNumber: classObj.class_number,
-        levelNumber: classObj.level_number,
-        levelName: levelMap[classObj.level_number] || "Unknown Level",
-        subjects: classSubjects
-          .filter(cs => cs.class_id.class_number === classObj.class_number && cs.class_id.level_number === classObj.level_number)
-          .map(cs => cs.subject_id.subject_name),
-      }));
+      const teacherClasses = teacher.classes_ids.map(classObj => {
+        const relatedSubjects = classSubjects.filter(cs => 
+          cs.class_id._id.toString() === classObj._id.toString()
+        ).map(cs => cs.subject_id.subject_name);
+
+        return {
+          classNumber: classObj.class_number,
+          levelNumber: classObj.level_number.level_number, // Ensure we get level number
+          levelName: classObj.level_number.level_name, // Ensure we get level name
+          subjects: relatedSubjects,
+        };
+      });
 
       return {
         userData: staff.find(user => user.identity_number === teacher.user_identity_number),
-        enrolledLevels: [...new Set(teacherClasses.map(tc => ({ levelNumber: tc.levelNumber, levelName: tc.levelName })))],
+        enrolledLevels: [...new Set(teacherClasses.map(tc => ({
+          levelNumber: tc.levelNumber,
+          levelName: tc.levelName
+        })))],
         enrolledClasses: teacherClasses,
       };
     });
 
-    // Other staff members (managers, assistants, etc.)
+    // Fetch other staff members (non-teachers)
     const otherStaff = staff.filter(user => user.role !== "teacher");
 
     res.status(200).json({
@@ -1125,5 +1138,3 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-
-
