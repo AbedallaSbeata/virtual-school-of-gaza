@@ -49,8 +49,7 @@ const {
   getClassAnnouncements,
   addClassSubjectAnnouncement,
   addClassAnnouncement,
-  getSchoolStudents,
-  getSchoolStaff
+  getSchoolStudents
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -134,7 +133,6 @@ router.route("/getClassAnnouncements/:class_id").get(getClassAnnouncements);
 router.route("/updateAnnouncement/:announcement_id").put(updateAnnouncement);
 router.route("/deleteAnnouncements").delete(deleteAnnouncements);
 router.route('/getSchoolStudents').get(getSchoolStudents)
-router.route('/getSchoolStaff').get(getSchoolStaff)
 
 
 module.exports = router;
