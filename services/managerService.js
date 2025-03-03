@@ -1049,14 +1049,12 @@ exports.deleteAnnouncements = asyncHandler(async (req, res, next) => {
 
 
 exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
-  // جلب جميع الطلاب مع level_number المرتبط بالفئة (class)
   const students = await Student.find()
     .populate({
       path: 'class_id',  // ربط حقل class_id بـ Class للحصول على level_number
       select: 'level_number'  // نحدد فقط جلب level_number من جدول الـ Class
     });
 
-  // إذا لم يتم العثور على طلاب
   if (!students || students.length === 0) {
     return res.status(404).json({ message: 'No students found' });
   }
@@ -1066,7 +1064,7 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
     _id: student._id,
     user_identity_number: student.user_identity_number,  // رقم هوية الطالب
     class_id: student.class_id,  // بيانات الفئة (Class) التي ينتمي إليها الطالب
-    level_number: student.class_id ? student.class_id.level_number : null  // إضافة level_number من الـ Class
+    // level_number: student.class_id ? student.class_id.level_number : null  // إضافة level_number من الـ Class
   }));
 
   // إرجاع النتيجة
