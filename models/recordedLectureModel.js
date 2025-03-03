@@ -23,8 +23,17 @@ const recordedLectureSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const recordedLectureModel = mongoose.model(
-  "RecordedLecture",
-  recordedLectureSchema
-);
+recordedLectureSchema.pre('remove', async function(next) {
+  try {
+    await mongoose.model('RecordedLectureComment').deleteMany({
+      recorded_lecture_id: this._id
+    });
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+const recordedLectureModel = mongoose.model("RecordedLecture", recordedLectureSchema);
 module.exports = recordedLectureModel;
