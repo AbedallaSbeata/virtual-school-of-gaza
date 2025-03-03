@@ -1075,29 +1075,34 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
   try {
-    // Fetch all users except students
-    const staff = await User.find({ role: { $ne: "student" } }).lean();
-    
-    // Extract teacher identity numbers
-    const teacherIds = staff.filter(user => user.role === "teacher").map(user => user.identity_number);
+    // ✅ جلب جميع المستخدمين الذين هم "معلم" أو "مساعد مدير"
+    const staff = await User.find({ role: { $in: ["teacher", "manager assistant"] } }).lean();
 
-    // Fetch teachers and populate their assigned classes
-    const teachers = await Teacher.find({ user_identity_number: { $in: teacherIds } })
-      .populate("classes_ids")
+    // ✅ استخراج أرقام الهويات الخاصة بالمعلمين أو مساعدي المدير
+    const staffIds = staff.map(user => user.identity_number);
+
+    // ✅ جلب بيانات المعلمين وربطها بالصفوف التي يدرسونها
+    const teachers = await Teacher.find({ user_identity_number: { $in: staffIds } })
+      .populate({
+        path: "classes_ids",
+        select: "class_number level_number",
+        populate: { path: "level_number", select: "level_name level_number" }
+      })
       .lean();
 
-    // Fetch all levels to map level numbers to level names
-    const levels = await Level.find().lean();
-    const levelMap = Object.fromEntries(levels.map(level => [level.level_number, level.level_name]));
-
-    // Fetch class subjects to link subjects to each teacher
+    // ✅ جلب المواد التي يدرسها كل معلم داخل كل صف
     const classSubjects = await ClassSubject.find({ teacher_id: { $in: teachers.map(t => t._id) } })
       .populate("subject_id", "subject_name")
-      .populate("class_id", "class_number level_number")
+      .populate({
+        path: "class_id",
+        select: "class_number level_number",
+        populate: { path: "level_number", select: "level_name level_number" }
+      })
       .lean();
 
-    // Process teachers' data
-    const teachersData = teachers.map(teacher => {
+    // ✅ تجهيز بيانات المعلمين مع تفاصيل الصفوف والمواد
+    const staffData = teachers.map(teacher => {
+      // استخراج تفاصيل الصفوف التي يُدرّس فيها المعلم
       const teacherClasses = teacher.classes_ids.map(classObj => {
         const relatedSubjects = classSubjects.filter(cs => 
           cs.class_id && cs.class_id._id.toString() === classObj._id.toString()
@@ -1105,9 +1110,9 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
 
         return {
           classNumber: classObj.class_number,
-          levelNumber: classObj.level_number,
-          levelName: levelMap[classObj.level_number] || "Unknown Level",
-          subjects: relatedSubjects,
+          levelNumber: classObj.level_number.level_number, // رقم المستوى
+          levelName: classObj.level_number.level_name, // اسم المستوى
+          subjects: relatedSubjects, // المواد التي يدرسها المعلم في هذا الصف
         };
       });
 
@@ -1116,22 +1121,16 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
         enrolledLevels: [...new Set(teacherClasses.map(tc => ({
           levelNumber: tc.levelNumber,
           levelName: tc.levelName
-        })))],
-        enrolledClasses: teacherClasses,
+        })))], // إرجاع المستويات التي يُدرّس فيها المعلم بدون تكرار
+        enrolledClasses: teacherClasses, // تفاصيل الصفوف والمواد
       };
     });
 
-    // Other staff members (managers, assistants, etc.)
-    const otherStaff = staff.filter(user => user.role !== "teacher");
-
     res.status(200).json({
-      teachers: teachersData,
-      otherStaff,
+      staff: staffData
     });
   } catch (error) {
     console.error("Error in getSchoolStaff:", error);
     next(error);
   }
 });
-
-
