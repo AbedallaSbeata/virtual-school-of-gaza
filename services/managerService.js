@@ -1073,7 +1073,7 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
     const classSubjects = await ClassSubject.find({
       teacher_id: { $in: staffIds },
     })
-      .populate("class_id", "class_number level_number")
+      .populate("class_id", "class_number", "level_number")
       .populate("subject_id", "subject_name")
       .lean();
 
