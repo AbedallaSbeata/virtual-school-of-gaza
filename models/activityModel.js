@@ -4,29 +4,22 @@ const mongoose = require("mongoose");
 const activitySchema = new mongoose.Schema({
   title: String,
   description: String,
-  class_id: {
+  classSubject_id: {
     type: mongoose.Schema.ObjectId,
-    ref: 'Class'
+    ref: 'ClassSubject'
   },
-  subject_id: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Subject'
-  },
-  typeActivity: {
+  activity_type: {
     type: String,
+    enum: ["Exam", "Assignment"]
   },
   full_grade: Number,
-  file_url: String, // الملف الذي يرفعه المعلم (إن وجد)
+  file_url: String, 
   available_at: Date,
   deadline: Date,
   posted_by: {
     type: String,
-    ref: 'Teacher'
+    ref: 'User'
   },
-  submissions: [{
-    type: mongoose.Schema.ObjectId,
-    ref: 'Submission'
-  }]
 }, { timestamps: true });
 
 const activityModel = mongoose.model("Activity", activitySchema);

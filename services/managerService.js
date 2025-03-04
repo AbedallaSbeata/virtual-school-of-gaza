@@ -13,6 +13,7 @@ const RecordedLecture = require("../models/recordedLectureModel");
 const RecordedLectureComments = require("../models/recordedLectureCommentModel");
 const RecordedLectureReplies = require("../models/recordedLectureReplieModel");
 const Announcement = require("../models/announcementModel");
+const Activity = require('../models/activityModel')
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -55,7 +56,7 @@ exports.addUser = asyncHandler(async (req, res, next) => {
     profile_image: profileImageUrl,
   });
   const token = createToken(user._id);
-  res.send({ data: user, token });
+  res.json({ data: user, token });
 });
 
 exports.addLevel = asyncHandler(async (req, res, next) => {
@@ -146,7 +147,7 @@ exports.getTeachersFromSpecificSubject = asyncHandler(
       let teacher = await User.find({ identity_number: teachers[i] });
       teachersData.push(teacher[0]);
     }
-    res.status(200).send({ data: teachersData });
+    res.status(200).json({ data: teachersData });
   }
 );
 
@@ -166,7 +167,7 @@ exports.assignSpecificSubjectToTeachers = asyncHandler(
     }
     subjectID.teachersIDs = req.body.teachersIDs;
     await subjectID.save();
-    res.status(200).send({ message: "تم اضافة المعلمين الى هذه المادة" });
+    res.status(200).json({ message: "تم اضافة المعلمين الى هذه المادة" });
   }
 );
 
@@ -212,7 +213,7 @@ exports.getSpecificTeacher = asyncHandler(async (req, res, next) => {
   const teacher = await User.find({
     identity_number: teacherExists[0].user_identity_number,
   });
-  res.status(200).send({ data: teacher });
+  res.status(200).json({ data: teacher });
 });
 
 exports.getSpecificStudent = asyncHandler(async (req, res, next) => {
@@ -225,17 +226,17 @@ exports.getSpecificStudent = asyncHandler(async (req, res, next) => {
   const student = await User.find({
     identity_number: studentExists[0].user_identity_number,
   });
-  res.status(200).send({ data: student });
+  res.status(200).json({ data: student });
 });
 
 exports.getTeachers = asyncHandler(async (req, res, next) => {
   const teachers = await User.find().where({ role: "teacher" });
-  res.status(200).send({ data: teachers });
+  res.status(200).json({ data: teachers });
 });
 
 exports.getStudents = asyncHandler(async (req, res, next) => {
   const students = await User.find().where({ role: "student" });
-  res.status(200).send({ data: students });
+  res.status(200).json({ data: students });
 });
 
 exports.getMyData = asyncHandler(async (req, res, next) => {
@@ -347,7 +348,7 @@ exports.addMaterial = asyncHandler(async (req, res, next) => {
     name: req.body.name,
     uploaded_by: req.user._id,
   });
-  res.status(201).send({ message: "تم رفع ملف جديد" });
+  res.status(201).json({ message: "تم رفع ملف جديد" });
 });
 
 exports.getMaterials = asyncHandler(async (req, res, next) => {
@@ -358,7 +359,7 @@ exports.getMaterials = asyncHandler(async (req, res, next) => {
   const materials = await Material.find({
     classSubject_id: { $in: classSubjects_ids },
   }).sort({ createdAt: -1 });
-  res.status(200).send(materials);
+  res.status(200).json(materials);
 });
 
 exports.deleteMaterials = asyncHandler(async (req, res, next) => {
@@ -420,7 +421,7 @@ exports.addRecordedLecture = asyncHandler(async (req, res, next) => {
   });
   res
     .status(201)
-    .send({ message: "تم رفع محاضرة جديدة", data: recordedLecture });
+    .json({ message: "تم رفع محاضرة جديدة", data: recordedLecture });
 });
 
 exports.getRecordedLectures = asyncHandler(async (req, res, next) => {
@@ -431,7 +432,7 @@ exports.getRecordedLectures = asyncHandler(async (req, res, next) => {
   const recordedLectures = await RecordedLecture.find({
     classSubject_id: { $in: classSubjects_ids },
   }).sort({ createdAt: -1 });
-  res.status(200).send(recordedLectures);
+  res.status(200).json(recordedLectures);
 });
 
 exports.deleteRecordedLectures = asyncHandler(async (req, res, next) => {
@@ -1165,3 +1166,48 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
       .json({ status: "error", message: "Internal server error!" });
   }
 });
+
+
+
+
+exports.addActivity = asyncHandler(async (req,res,next) => {
+  const activity = await Activity.create({
+    classSubject_id: req.body.classSubject_id,
+    available_at: req.body.available_at,
+    deadline: req.body.deadline,
+    description: req.body.description,
+    file_url: req.body.file_url,
+    full_grade: req.body.full_grade,
+    title: req.body.title,
+    activity_type: req.body.activity_type,
+    posted_by: req.user._id
+  })
+  res.status(201).json(activity)
+})
+
+exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
+  const classSubject = await ClassSubject.find({class_id: req.params.class_id})
+  const activities = await Activity.find({classSubject_id: classSubject[0]._id})
+  if(activities.length == 0) {
+    return next(new ApiError("لا يوجد أنشطة لهذا الصف",404))
+  }
+  res.status(200).json(activities)
+})
+
+exports.updateActivity = asyncHandler(async (req, res, next) => {
+  const active = await Activity.findByIdAndUpdate(req.params.activity_id, {
+    title: req.body.title,
+    description: req.body.description,
+    file_url: req.body.file_url,
+    available_at: req.body.available_at,
+    deadline: req.body.deadline,
+    full_grade: req.body.full_grade,
+    activity_type: req.body.activity_type
+  }, {new: true})
+
+  res.status(200).json(active)
+})
+exports.deleteActivity = asyncHandler(async (req,res,next) => {
+  await Activity.findByIdAndDelete(req.params.activity_id)
+  res.status(204).json()
+})
