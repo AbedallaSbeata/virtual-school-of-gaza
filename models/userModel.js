@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const Teacher = require('./teacherModel')
 const Student = require('./studentModel')
 const StudentStatus = require('./studentStatusModel')
 const bcrypt = require("bcrypt");
@@ -49,9 +48,8 @@ const userSchema = new mongoose.Schema({
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
     this.password = await bcrypt.hash(this.password, 12);
-  if(this.role == 'teacher') {
-    await Teacher.create({user_identity_number: this.identity_number})
-  } else if(this.role == 'student') {
+ 
+ if(this.role == 'student') {
     await Student.create({user_identity_number: this.identity_number})
     await StudentStatus.create({user_identity_number: this.identity_number})
   }

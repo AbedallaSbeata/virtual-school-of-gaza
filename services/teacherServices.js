@@ -1,7 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const ApiError = require("../utils/apiError");
 const RecordedLecture = require('../models/recordedLectureModel');
-const Teacher = require('../models/teacherModel')
 const Class = require('../models/classModel')
 const User = require('../models/userModel')
 const Announcement = require('../models/announcementModel')
