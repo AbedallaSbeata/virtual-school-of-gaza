@@ -1056,7 +1056,6 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 });
 
 
-
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
   try {
     // ✅ 1. Fetch all staff members (teachers & manager assistants)
@@ -1065,10 +1064,13 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
     }).lean();
 
     if (!users.length) {
-      return res.status(404).json({ status: "error", message: "No staff members found!" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "No staff members found!" });
     }
 
-    const staffIds = users.map(user => user._id);
+    const staffIds = users.map((user) => user._id);
+    const staffIdentityNumbers = users.map((user) => user.identity_number); // Needed for Subject matching
 
     // ✅ 2. Fetch ClassSubjects (teaching assignments)
     const classSubjects = await ClassSubject.find({
@@ -1078,17 +1080,38 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
       .populate("subject_id", "subject_name")
       .lean();
 
-    if (!classSubjects.length) {
-      return res.status(200).json({ status: "success", staff: users.map(user => ({ userData: user, teachingData: {} })) });
+    // ✅ 3. Fetch Subjects where teacher identity is listed in `teachersIDs`
+    const subjects = await Subject.find({
+      teachersIDs: { $in: staffIdentityNumbers }, // Match teachers based on identity_number
+    })
+      .select("subject_name teachersIDs")
+      .lean();
+
+    if (!classSubjects.length && !subjects.length) {
+      return res
+        .status(200)
+        .json({
+          status: "success",
+          staff: users.map((user) => ({ userData: user, teachingData: {} })),
+        });
     }
 
-    // ✅ 3. Organize Data into Required Format
-    const staffData = users.map(user => {
-      const userClassSubjects = classSubjects.filter(cs => cs.teacher_id.toString() === user._id.toString());
+    // ✅ 4. Organize Data into Required Format
+    const staffData = users.map((user) => {
+      const userClassSubjects = classSubjects.filter(
+        (cs) => cs.teacher_id.toString() === user._id.toString()
+      );
 
-      const teachingData = {};
+      // Extract subjects that the teacher is associated with
+      const teacherSubjects = subjects
+        .filter((subject) => subject.teachersIDs.includes(user.identity_number))
+        .map((subject) => subject.subject_name);
 
-      userClassSubjects.forEach(cs => {
+      const teachingData = {
+        subjects: teacherSubjects, // Add list of subjects assigned to the teacher
+      };
+
+      userClassSubjects.forEach((cs) => {
         if (!cs.class_id || !cs.subject_id) return; // Skip null values
 
         const levelNumber = cs.class_id.level_number;
@@ -1121,6 +1144,8 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
     res.status(200).json({ status: "success", staff: staffData });
   } catch (error) {
     console.error("❌ Error in getSchoolStaff:", error);
-    res.status(500).json({ status: "error", message: "Internal server error!" });
+    res
+      .status(500)
+      .json({ status: "error", message: "Internal server error!" });
   }
 });
