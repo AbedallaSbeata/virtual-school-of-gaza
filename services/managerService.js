@@ -582,7 +582,6 @@ exports.updateRecordedLectureComment = asyncHandler(async (req, res, next) => {
 });
 
 exports.deleteRecordedLectureComment = asyncHandler(async (req, res, next) => {
-  console.log("Incoming Request Body:", req.body);
   if (
     !req.body.commentsIds ||
     !Array.isArray(req.body.commentsIds) ||
@@ -688,7 +687,6 @@ exports.getClassStudents = asyncHandler(async (req, res, next) => {
 exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
   const { class_id, student_identity_numbers } = req.body;
 
-  console.log("Incoming Request:", { class_id, student_identity_numbers });
 
   if (!class_id || !student_identity_numbers) {
     return res
@@ -701,7 +699,6 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
     ? student_identity_numbers
     : [student_identity_numbers];
 
-  console.log("Student IDs to Update:", studentIdsArray);
 
   // Fetch all students currently assigned to this class
   const currentlyAssignedStudents = await Student.find({ class_id });
@@ -717,14 +714,6 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
     class_id: { $ne: class_id }, // Only update if student is not already assigned
   });
 
-  console.log(
-    "Students to Add:",
-    studentsToAdd.map((s) => s.user_identity_number)
-  );
-  console.log(
-    "Students to Remove:",
-    studentsToRemove.map((s) => s.user_identity_number)
-  );
 
   // **Remove students from class** (set `class_id` to null)
   if (studentsToRemove.length > 0) {
@@ -766,7 +755,6 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
 exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   const levelNumber = req.params.level_number;
 
-  console.log("Fetching students for level:", levelNumber);
 
   // **Step 1: Find all class IDs in this level**
   const classes = await Class.find({ level_number: levelNumber });
@@ -774,7 +762,6 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
   // Extract class IDs from the found classes
   const classIds = classes.map((classObj) => classObj._id);
 
-  console.log("Classes found in level:", classIds);
 
   // **Step 2: Use `$lookup` to manually join `User` data**
   const students = await Student.aggregate([
@@ -814,7 +801,6 @@ exports.getLevelStudents = asyncHandler(async (req, res, next) => {
     return next(new ApiError("لا يوجد طلاب في هذه المرحلة", 404));
   }
 
-  console.log("Total Students Found:", students.length);
 
   // **Return full student details**
   res.status(200).json({ data: students });
@@ -882,7 +868,6 @@ exports.addClassSubjectAnnouncement = asyncHandler(async (req, res, next) => {
 exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
   const { class_id } = req.params;
 
-  console.log("Requested class_id:", class_id);
 
   // Get all classSubjects for this class
   const classSubjects = await ClassSubject.find({ class_id });
@@ -891,11 +876,9 @@ exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
     return next(new ApiError("No subjects found for this class", 404));
   }
 
-  console.log("Class subjects found:", classSubjects);
 
   // Extract IDs of classSubjects
   const classSubjectIds = classSubjects.map((subject) => subject._id);
-  console.log("Class Subject IDs:", classSubjectIds);
 
   // Fetch announcements related to those classSubjects
   const announcements = await Announcement.find({
@@ -908,7 +891,6 @@ exports.getClassAnnouncements = asyncHandler(async (req, res, next) => {
       populate: { path: "subject_id", select: "subject_name" }, // Fetch subject name
     });
 
-  console.log("Fetched Announcements:", announcements);
 
   // Format response
   const formattedAnnouncements = announcements.map((announcement) => ({
@@ -1066,85 +1048,26 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 });
 
 
-
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
-  try {
-    // ✅ جلب جميع المستخدمين (المعلمين ومساعدي المدير)
-    const staff = await User.find({ role: { $in: ["teacher", "manager assistant"] } }).lean();
-    if (!Array.isArray(staff) || staff.length === 0) {
-      return res.status(404).json({ status: "error", message: "لا يوجد معلمون أو مساعدين مسجلين!" });
-    }
-
-    console.log("📌 بيانات staff:", staff);
-
-    // ✅ استخراج أرقام الهويات الخاصة بالمعلمين أو مساعدي المدير
-    const staffIds = staff.map(user => user.identity_number);
-
-    // ✅ جلب بيانات المعلمين وربطها بالصفوف التي يدرسونها
-    const teachers = await Teacher.find({ user_identity_number: { $in: staffIds } })
-      .populate({
-        path: "classes_ids",
-        model: "Class",
-        select: "class_number level_number",
-        populate: { path: "level_number", model: "Level", select: "level_name level_number" }
-      })
-      .lean();
-
-    if (!Array.isArray(teachers) || teachers.length === 0) {
-      return res.status(404).json({ status: "error", message: "المعلمين غير مرتبطين بأي صفوف!" });
-    }
-
-    console.log("📌 بيانات teachers:", teachers);
-
-    // ✅ جلب جميع المواد التي يدرسها كل معلم داخل الصفوف
-    const classSubjects = await ClassSubject.find({ teacher_id: { $in: teachers.map(t => t._id) } })
-      .populate("subject_id", "subject_name")
-      .populate({
-        path: "class_id",
-        model: "Class",
-        select: "class_number level_number",
-        populate: { path: "level_number", model: "Level", select: "level_name level_number" }
-      })
-      .lean();
-
-    if (!Array.isArray(classSubjects)) {
-      return res.status(500).json({ status: "error", message: "خطأ في جلب بيانات المواد، تحقق من ClassSubject!" });
-    }
-
-    console.log("📌 بيانات classSubjects:", classSubjects);
-
-    // ✅ تجهيز بيانات المعلمين مع تفاصيل الصفوف والمواد
-    const staffData = teachers.map(teacher => {
-      const teacherClasses = (teacher.classes_ids || []).map(classObj => {
-        const relatedSubjects = (classSubjects || []).filter(cs => 
-          cs.class_id && cs.class_id._id.toString() === classObj._id.toString()
-        ).map(cs => cs.subject_id.subject_name);
-
-        return {
-          classNumber: classObj.class_number,
-          levelNumber: classObj.level_number ? classObj.level_number.level_number : "غير متاح",
-          levelName: classObj.level_number ? classObj.level_number.level_name : "غير متاح",
-          subjects: relatedSubjects.length > 0 ? relatedSubjects : ["غير معروف"],
-        };
-      });
+    const users = await User.find({ role: "teacher" });
+    const usersIds = users.map(user => user.identity_number);
+    const teachers = await Teacher.find({ user_identity_number: { $in: usersIds } });
+    const classesIds = teachers.flatMap(teacher => teacher.classes_ids); // تحويلها لمصفوفة واحدة
+    const classes = await Class.find({ _id: { $in: classesIds } }, "level_number class_number");
+    const teachersData = teachers.map(teacher => {
+      const teacherLevels = classes
+        .filter(cls => teacher.classes_ids.includes(cls._id.toString()))
+        .map(cls => cls.level_number); 
 
       return {
-        userData: staff.find(user => user.identity_number === teacher.user_identity_number) || {},
-        enrolledLevels: [...new Set(teacherClasses.map(tc => ({
-          levelNumber: tc.levelNumber,
-          levelName: tc.levelName
-        })))], // إرجاع المستويات بدون تكرار
-        enrolledClasses: teacherClasses, // تفاصيل الصفوف والمواد
+        user_identity_number: teacher.user_identity_number,
+        levels: [...new Set(teacherLevels)], 
       };
     });
 
-    res.status(200).json({
-      status: "success",
-      staff: staffData
-    });
-  } catch (error) {
-    console.error("❌ Error in getSchoolStaff:", error);
-    res.status(500).json({ status: "error", message: "خطأ داخلي في السيرفر!" });
-  }
+    res.status(200).json(
+      teachersData
+    );
 });
+
 
