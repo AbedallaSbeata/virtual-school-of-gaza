@@ -23,21 +23,27 @@ const recordedLectureSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// استخدام pre('deleteOne') بدلاً من pre('remove') عند استخدام delete
-recordedLectureSchema.pre('deleteOne', async function(next) {
+recordedLectureSchema.pre('deleteOne', { document: false, query: true }, async function(next) {
   try {
-    const doc = await this.model.findOne(this.getQuery()); // الحصول على المحاضرة التي سيتم حذفها
+    const doc = await this.model.findOne(this.getFilter()); // جلب بيانات المحاضرة قبل الحذف
 
     if (!doc) {
       return next(new Error("Lecture not found"));
     }
 
-    // حذف الكومنتات المرتبطة بالمحاضرة
-    await mongoose.model('RecordedLectureComment').deleteMany({
-      recorded_lecture_id: doc._id
-    });
+    const recordedLectureId = doc._id;
 
-    console.log(`Comments deleted for lecture with ID: ${doc._id}`);
+    const comments = await mongoose.model('RecordedLectureComment').find({ recorded_lecture_id: recordedLectureId });
+
+    const commentIds = comments.map(comment => comment._id);
+
+    // حذف الردود المرتبطة بهذه التعليقات
+    await mongoose.model('RecordedLectureReplie').deleteMany({ comment_id: { $in: commentIds } });
+
+    // حذف التعليقات نفسها
+    await mongoose.model('RecordedLectureComment').deleteMany({ recorded_lecture_id: recordedLectureId });
+
+    console.log(`Deleted comments and replies for lecture ID: ${recordedLectureId}`);
     next();
   } catch (error) {
     next(error);
