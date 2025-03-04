@@ -437,23 +437,27 @@ exports.getRecordedLectures = asyncHandler(async (req, res, next) => {
 
 exports.deleteRecordedLectures = asyncHandler(async (req, res, next) => {
   if (!req.body.recordedLecturesIds || !Array.isArray(req.body.recordedLecturesIds) || req.body.recordedLecturesIds.length === 0) {
-    return next(new ApiError("يجب إرسال معرفات المواد للحذف", 400));
+    return next(new ApiError("يجب إرسال معرفات المحاضرات للحذف", 400));
   }
 
   const existingRecordedLectures = await RecordedLecture.find({
     _id: { $in: req.body.recordedLecturesIds },
   });
 
-  if (existingRecordedLectures.length === 0) {
-    return next(new ApiError("لم يتم العثور على المحاضرات المحددة", 404));
+  if (!existingRecordedLectures || existingRecordedLectures.length === 0) {
+    return res.status(200).json({ message: "لم يتم العثور على أي محاضرات للحذف" });
   }
 
+  // حذف المحاضرات الموجودة
   for (const lecture of existingRecordedLectures) {
-    await RecordedLecture.deleteOne({ _id: lecture._id }); // تأكد من استخدام deleteOne بدلاً من findByIdAndDelete
+    await RecordedLecture.deleteOne({ _id: lecture._id });
   }
 
   res.status(200).json({ message: `تم حذف ${existingRecordedLectures.length} محاضرة بنجاح مع التعليقات والردود` });
 });
+
+
+
 
 exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
   const recordedLecture = await RecordedLecture.findByIdAndUpdate(
