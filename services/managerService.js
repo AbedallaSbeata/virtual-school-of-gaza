@@ -1067,64 +1067,69 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 
 
 
-// exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
-//   try {
-//     // ✅ جلب جميع المستخدمين الذين هم "معلم" أو "مساعد مدير"
-//     const staff = await User.find({ role: { $in: ["teacher", "manager assistant"] } }).lean();
+exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
+  try {
+    // ✅ جلب جميع المستخدمين (المعلمين ومساعدي المدير)
+    const staff = await User.find({ role: { $in: ["teacher", "manager assistant"] } }).lean();
+    if (staff.length === 0) return res.status(404).json({ message: "لا يوجد معلمون أو مساعدين مسجلين!" });
 
-//     // ✅ استخراج أرقام الهويات الخاصة بالمعلمين أو مساعدي المدير
-//     const staffIds = staff.map(user => user.identity_number);
+    // ✅ استخراج أرقام الهويات الخاصة بالمعلمين أو مساعدي المدير
+    const staffIds = staff.map(user => user.identity_number);
 
-//     // ✅ جلب بيانات المعلمين وربطها بالصفوف التي يدرسونها
-//     const teachers = await Teacher.find({ user_identity_number: { $in: staffIds } })
-//       .populate({
-//         path: "classes_ids",
-//         select: "class_number level_number",
-//         populate: { path: "level_number", select: "level_name level_number" }
-//       })
-//       .lean();
+    // ✅ جلب بيانات المعلمين وربطها بالصفوف التي يدرسونها
+    const teachers = await Teacher.find({ user_identity_number: { $in: staffIds } })
+      .populate({
+        path: "classes_ids",
+        model: "Class",
+        select: "class_number level_number",
+        populate: { path: "level_number", model: "Level", select: "level_name level_number" }
+      })
+      .lean();
 
-//     // ✅ جلب المواد التي يدرسها كل معلم داخل كل صف
-//     const classSubjects = await ClassSubject.find({ teacher_id: { $in: teachers.map(t => t._id) } })
-//       .populate("subject_id", "subject_name")
-//       .populate({
-//         path: "class_id",
-//         select: "class_number level_number",
-//         populate: { path: "level_number", select: "level_name level_number" }
-//       })
-//       .lean();
+    if (teachers.length === 0) return res.status(404).json({ message: "المعلمين غير مرتبطين بأي صفوف!" });
 
-//     // ✅ تجهيز بيانات المعلمين مع تفاصيل الصفوف والمواد
-//     const staffData = teachers.map(teacher => {
-//       // استخراج تفاصيل الصفوف التي يُدرّس فيها المعلم
-//       const teacherClasses = teacher.classes_ids.map(classObj => {
-//         const relatedSubjects = classSubjects.filter(cs => 
-//           cs.class_id && cs.class_id._id.toString() === classObj._id.toString()
-//         ).map(cs => cs.subject_id.subject_name);
+    // ✅ جلب جميع المواد التي يدرسها كل معلم داخل الصفوف
+    const classSubjects = await ClassSubject.find({ teacher_id: { $in: teachers.map(t => t._id) } })
+      .populate("subject_id", "subject_name")
+      .populate({
+        path: "class_id",
+        model: "Class",
+        select: "class_number level_number",
+        populate: { path: "level_number", model: "Level", select: "level_name level_number" }
+      })
+      .lean();
 
-//         return {
-//           classNumber: classObj.class_number,
-//           levelNumber: classObj.level_number.level_number, // رقم المستوى
-//           levelName: classObj.level_number.level_name, // اسم المستوى
-//           subjects: relatedSubjects, // المواد التي يدرسها المعلم في هذا الصف
-//         };
-//       });
+    // ✅ تجهيز بيانات المعلمين مع تفاصيل الصفوف والمواد
+    const staffData = teachers.map(teacher => {
+      // استخراج تفاصيل الصفوف التي يُدرّس فيها المعلم
+      const teacherClasses = teacher.classes_ids.map(classObj => {
+        const relatedSubjects = classSubjects.filter(cs => 
+          cs.class_id && cs.class_id._id.toString() === classObj._id.toString()
+        ).map(cs => cs.subject_id.subject_name);
 
-//       return {
-//         userData: staff.find(user => user.identity_number === teacher.user_identity_number),
-//         enrolledLevels: [...new Set(teacherClasses.map(tc => ({
-//           levelNumber: tc.levelNumber,
-//           levelName: tc.levelName
-//         })))], // إرجاع المستويات التي يُدرّس فيها المعلم بدون تكرار
-//         enrolledClasses: teacherClasses, // تفاصيل الصفوف والمواد
-//       };
-//     });
+        return {
+          classNumber: classObj.class_number,
+          levelNumber: classObj.level_number.level_number, // رقم المستوى
+          levelName: classObj.level_number.level_name, // اسم المستوى
+          subjects: relatedSubjects.length > 0 ? relatedSubjects : ["غير معروف"], // تفادي القيم الفارغة
+        };
+      });
 
-//     res.status(200).json({
-//       staff: staffData
-//     });
-//   } catch (error) {
-//     console.error("Error in getSchoolStaff:", error);
-//     next(error);
-//   }
-// });
+      return {
+        userData: staff.find(user => user.identity_number === teacher.user_identity_number),
+        enrolledLevels: [...new Set(teacherClasses.map(tc => ({
+          levelNumber: tc.levelNumber,
+          levelName: tc.levelName
+        })))], // إرجاع المستويات التي يُدرّس فيها المعلم بدون تكرار
+        enrolledClasses: teacherClasses, // تفاصيل الصفوف والمواد
+      };
+    });
+
+    res.status(200).json({
+      staff: staffData
+    });
+  } catch (error) {
+    console.error("❌ Error in getSchoolStaff:", error);
+    next(error);
+  }
+});
