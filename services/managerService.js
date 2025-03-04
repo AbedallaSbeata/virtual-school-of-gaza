@@ -1045,12 +1045,17 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 
 
 
+
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
+    // ✅ 1. جلب جميع المعلمين ومساعدي المدير
     const staff = await User.find({ role: { $in: ["teacher", "manager assistant"] } }).lean();
     if (!Array.isArray(staff) || staff.length === 0) {
       return res.status(404).json({ status: "error", message: "لا يوجد معلمون أو مساعدين مسجلين!" });
     }
+
     const staffIds = staff.map(user => user.identity_number);
+
+    // ✅ 2. جلب بيانات المعلمين وربطهم بالصفوف
     const teachers = await Teacher.find({ user_identity_number: { $in: staffIds } })
       .populate({
         path: "classes_ids",
@@ -1060,10 +1065,12 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
       })
       .lean();
 
+
     if (!Array.isArray(teachers) || teachers.length === 0) {
       return res.status(404).json({ status: "error", message: "المعلمين غير مرتبطين بأي صفوف!" });
     }
 
+    // ✅ 3. جلب جميع المواد التي يدرسها المعلمون
     const classSubjects = await ClassSubject.find({ teacher_id: { $in: teachers.map(t => t._id) } })
       .populate("subject_id", "subject_name")
       .populate({
@@ -1074,10 +1081,12 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
       })
       .lean();
 
+
     if (!Array.isArray(classSubjects)) {
       return res.status(500).json({ status: "error", message: "خطأ في جلب بيانات المواد، تحقق من ClassSubject!" });
     }
 
+    // ✅ 4. تجهيز بيانات المعلمين
     const staffData = teachers.map(teacher => {
       const teacherClasses = (teacher.classes_ids || []).map(classObj => {
         const relatedSubjects = (classSubjects || []).filter(cs => 
@@ -1102,9 +1111,6 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
       };
     });
 
-    res.status(200).json(
-      staffData
-    );
+    res.status(200).json(staffData);
 });
-
 
