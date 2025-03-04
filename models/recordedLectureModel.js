@@ -23,9 +23,10 @@ const recordedLectureSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-recordedLectureSchema.pre('deleteOne', { document: false, query: true }, async function(next) {
+// تنفيذ الإجراءات قبل حذف المحاضرة
+recordedLectureSchema.pre("deleteOne", { document: false, query: true }, async function (next) {
   try {
-    const doc = await this.model.findOne(this.getFilter()); // جلب بيانات المحاضرة قبل الحذف
+    const doc = await this.model.findOne(this.getFilter());
 
     if (!doc) {
       return next(new Error("Lecture not found"));
@@ -33,19 +34,28 @@ recordedLectureSchema.pre('deleteOne', { document: false, query: true }, async f
 
     const recordedLectureId = doc._id;
 
-    const comments = await mongoose.model('RecordedLectureComment').find({ recorded_lecture_id: recordedLectureId });
+    console.log(`Deleting comments and replies for lecture ID: ${recordedLectureId}`);
 
-    const commentIds = comments.map(comment => comment._id);
+    // حذف جميع التعليقات المرتبطة بالمحاضرة
+    const comments = await mongoose.model("RecordedLectureComment").find({ recorded_lecture_id: recordedLectureId });
 
-    // حذف الردود المرتبطة بهذه التعليقات
-    await mongoose.model('RecordedLectureReplie').deleteMany({ comment_id: { $in: commentIds } });
+    if (comments.length > 0) {
+      const commentIds = comments.map((comment) => comment._id);
 
-    // حذف التعليقات نفسها
-    await mongoose.model('RecordedLectureComment').deleteMany({ recorded_lecture_id: recordedLectureId });
+      // حذف جميع الردود المرتبطة بهذه التعليقات
+      await mongoose.model("RecordedLectureReplie").deleteMany({ comment_id: { $in: commentIds } });
 
-    console.log(`Deleted comments and replies for lecture ID: ${recordedLectureId}`);
+      // حذف جميع التعليقات المرتبطة بالمحاضرة
+      await mongoose.model("RecordedLectureComment").deleteMany({ recorded_lecture_id: recordedLectureId });
+
+      console.log(`Deleted ${comments.length} comments and their replies.`);
+    } else {
+      console.log("No comments found for this lecture.");
+    }
+
     next();
   } catch (error) {
+    console.error("Error deleting comments and replies:", error);
     next(error);
   }
 });
