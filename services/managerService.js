@@ -925,7 +925,7 @@ exports.getTeacherAnnouncements = asyncHandler(async (req, res, next) => {
     return next(new ApiError("User not found", 404));
   }
 
-  try {
+  
     // Fetch announcements posted by the given teacher
     const announcements = await Announcement.find({ user_id })
       .sort({ createdAt: -1 }) // Sort by latest first
@@ -951,10 +951,6 @@ exports.getTeacherAnnouncements = asyncHandler(async (req, res, next) => {
     }));
 
     res.status(200).json(formattedAnnouncements);
-  } catch (error) {
-    console.error("Error fetching teacher announcements:", error);
-    return next(new ApiError("Internal Server Error", 500));
-  }
 });
 
 
@@ -1048,25 +1044,66 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 });
 
 
+
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
-    const users = await User.find({ role: "teacher" });
-    const usersIds = users.map(user => user.identity_number);
-    const teachers = await Teacher.find({ user_identity_number: { $in: usersIds } });
-    const classesIds = teachers.flatMap(teacher => teacher.classes_ids); // تحويلها لمصفوفة واحدة
-    const classes = await Class.find({ _id: { $in: classesIds } }, "level_number class_number");
-    const teachersData = teachers.map(teacher => {
-      const teacherLevels = classes
-        .filter(cls => teacher.classes_ids.includes(cls._id.toString()))
-        .map(cls => cls.level_number); 
+    const staff = await User.find({ role: { $in: ["teacher", "manager assistant"] } }).lean();
+    if (!Array.isArray(staff) || staff.length === 0) {
+      return res.status(404).json({ status: "error", message: "لا يوجد معلمون أو مساعدين مسجلين!" });
+    }
+    const staffIds = staff.map(user => user.identity_number);
+    const teachers = await Teacher.find({ user_identity_number: { $in: staffIds } })
+      .populate({
+        path: "classes_ids",
+        model: "Class",
+        select: "class_number level_number",
+        populate: { path: "level_number", model: "Level", select: "level_name level_number" }
+      })
+      .lean();
+
+    if (!Array.isArray(teachers) || teachers.length === 0) {
+      return res.status(404).json({ status: "error", message: "المعلمين غير مرتبطين بأي صفوف!" });
+    }
+
+    const classSubjects = await ClassSubject.find({ teacher_id: { $in: teachers.map(t => t._id) } })
+      .populate("subject_id", "subject_name")
+      .populate({
+        path: "class_id",
+        model: "Class",
+        select: "class_number level_number",
+        populate: { path: "level_number", model: "Level", select: "level_name level_number" }
+      })
+      .lean();
+
+    if (!Array.isArray(classSubjects)) {
+      return res.status(500).json({ status: "error", message: "خطأ في جلب بيانات المواد، تحقق من ClassSubject!" });
+    }
+
+    const staffData = teachers.map(teacher => {
+      const teacherClasses = (teacher.classes_ids || []).map(classObj => {
+        const relatedSubjects = (classSubjects || []).filter(cs => 
+          cs.class_id && cs.class_id._id.toString() === classObj._id.toString()
+        ).map(cs => cs.subject_id.subject_name);
+
+        return {
+          classNumber: classObj.class_number,
+          levelNumber: classObj.level_number ? classObj.level_number.level_number : "غير متاح",
+          levelName: classObj.level_number ? classObj.level_number.level_name : "غير متاح",
+          subjects: relatedSubjects.length > 0 ? relatedSubjects : ["غير معروف"],
+        };
+      });
 
       return {
-        user_identity_number: teacher.user_identity_number,
-        levels: [...new Set(teacherLevels)], 
+        userData: staff.find(user => user.identity_number === teacher.user_identity_number) || {},
+        enrolledLevels: [...new Set(teacherClasses.map(tc => ({
+          levelNumber: tc.levelNumber,
+          levelName: tc.levelName
+        })))], 
+        enrolledClasses: teacherClasses, 
       };
     });
 
     res.status(200).json(
-      teachersData
+      staffData
     );
 });
 
