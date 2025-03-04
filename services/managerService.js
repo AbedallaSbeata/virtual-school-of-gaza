@@ -1058,6 +1058,7 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 
 
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
+  try {
     // ✅ 1. Fetch all staff members (teachers & manager assistants)
     const users = await User.find({
       role: { $in: ["teacher", "manager assistant"] },
@@ -1073,7 +1074,7 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
     const classSubjects = await ClassSubject.find({
       teacher_id: { $in: staffIds },
     })
-      .populate("class_id", "class_number", "level_number")
+      .populate("class_id", "class_number level_number")
       .populate("subject_id", "subject_name")
       .lean();
 
@@ -1083,13 +1084,13 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
 
     // ✅ 3. Organize Data into Required Format
     const staffData = users.map(user => {
-      // Extract class subjects assigned to this user
       const userClassSubjects = classSubjects.filter(cs => cs.teacher_id.toString() === user._id.toString());
 
-      // Organizing data into required structure
       const teachingData = {};
 
       userClassSubjects.forEach(cs => {
+        if (!cs.class_id || !cs.subject_id) return; // Skip null values
+
         const levelNumber = cs.class_id.level_number;
         const classNumber = cs.class_id.class_number;
         const subjectData = {
@@ -1117,5 +1118,9 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
       };
     });
 
-    res.status(200).json({ staffData });
+    res.status(200).json({ status: "success", staff: staffData });
+  } catch (error) {
+    console.error("❌ Error in getSchoolStaff:", error);
+    res.status(500).json({ status: "error", message: "Internal server error!" });
+  }
 });
