@@ -1033,27 +1033,43 @@ exports.deleteAnnouncements = asyncHandler(async (req, res, next) => {
   });
 });
 
+
 exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
-  const students = await Student.find().populate({
-    path: "class_id", // ربط حقل class_id بـ Class للحصول على level_number
-    select: "level_number", // نحدد فقط جلب level_number من جدول الـ Class
-  });
+  try {
+    // ✅ 1. Fetch all students and populate class details
+    const students = await Student.find()
+      .populate({
+        path: "class_id", 
+        select: "class_number level_number", // Fetch class_number and level_number
+      })
+      .lean();
 
-  if (!students || students.length === 0) {
-    return res.status(404).json({ message: "No students found" });
+    if (!students.length) {
+      return res.status(404).json({ message: "No students found" });
+    }
+
+    // ✅ 2. Fetch user data for students
+    const studentIdentityNumbers = students.map(student => student.user_identity_number);
+    const users = await User.find({ identity_number: { $in: studentIdentityNumbers } }).lean();
+
+    // ✅ 3. Organize Data into Required Format
+    const studentsData = students.map(student => {
+      const userData = users.find(user => user.identity_number === student.user_identity_number) || {};
+      
+      return {
+        userData,
+        level_number: student.class_id?.level_number || null,
+        class_number: student.class_id?.class_number || null,
+      };
+    });
+
+    res.status(200).json({ status: "success", students: studentsData });
+  } catch (error) {
+    console.error("❌ Error in getSchoolStudents:", error);
+    res.status(500).json({ status: "error", message: "Internal server error!" });
   }
-
-  // بناء النتيجة الخاصة بالطلاب مع level_number
-  const studentsWithLevel = students.map((student) => ({
-    _id: student._id,
-    user_identity_number: student.user_identity_number, // رقم هوية الطالب
-    class_id: student.class_id, // بيانات الفئة (Class) التي ينتمي إليها الطالب
-    // level_number: student.class_id ? student.class_id.level_number : null  // إضافة level_number من الـ Class
-  }));
-
-  // إرجاع النتيجة
-  res.status(200).json(studentsWithLevel);
 });
+
 
 
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
