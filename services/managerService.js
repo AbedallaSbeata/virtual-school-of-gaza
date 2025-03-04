@@ -434,12 +434,9 @@ exports.getRecordedLectures = asyncHandler(async (req, res, next) => {
   res.status(200).send(recordedLectures);
 });
 
+
 exports.deleteRecordedLectures = asyncHandler(async (req, res, next) => {
-  if (
-    !req.body.recordedLecturesIds ||
-    !Array.isArray(req.body.recordedLecturesIds) ||
-    req.body.recordedLecturesIds.length === 0
-  ) {
+  if (!req.body.recordedLecturesIds || !Array.isArray(req.body.recordedLecturesIds) || req.body.recordedLecturesIds.length === 0) {
     return next(new ApiError("يجب إرسال معرفات المواد للحذف", 400));
   }
 
@@ -447,22 +444,15 @@ exports.deleteRecordedLectures = asyncHandler(async (req, res, next) => {
     _id: { $in: req.body.recordedLecturesIds },
   });
 
-  const existingIds = existingRecordedLectures.map((recordedLecture) =>
-    recordedLecture._id.toString()
-  );
-  const nonExistentIds = req.body.recordedLecturesIds.filter(
-    (id) => !existingIds.includes(id)
-  );
-
-  if (nonExistentIds.length > 0) {
-    return next(new ApiError(`هنالك ايدي على الاقل غير موجود!`, 404));
+  if (existingRecordedLectures.length === 0) {
+    return next(new ApiError("لم يتم العثور على المحاضرات المحددة", 404));
   }
 
-  await RecordedLecture.deleteMany({
-    _id: { $in: req.body.recordedLecturesIds },
-  });
+  for (const lecture of existingRecordedLectures) {
+    await RecordedLecture.deleteOne({ _id: lecture._id }); // تأكد من استخدام deleteOne بدلاً من findByIdAndDelete
+  }
 
-  res.status(204).json();
+  res.status(200).json({ message: `تم حذف ${existingRecordedLectures.length} محاضرة بنجاح مع التعليقات والردود` });
 });
 
 exports.updateRecordedLecture = asyncHandler(async (req, res, next) => {
