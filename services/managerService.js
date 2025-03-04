@@ -1044,14 +1044,19 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 });
 
 
+
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
+  try {
     // ✅ 1. جلب جميع المعلمين ومساعدي المدير
     const staff = await User.find({ role: { $in: ["teacher", "manager assistant"] } }).lean();
+    console.log("📌 staff:", staff);
+
     if (!Array.isArray(staff) || staff.length === 0) {
       return res.status(404).json({ status: "error", message: "لا يوجد معلمون أو مساعدين مسجلين!" });
     }
 
     const staffIds = staff.map(user => user.identity_number);
+    console.log("📌 staffIds:", staffIds);
 
     // ✅ 2. جلب بيانات المعلمين وربطهم بالصفوف
     const teachers = await Teacher.find({ user_identity_number: { $in: staffIds } })
@@ -1061,18 +1066,18 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
         select: "class_number level_number"
       })
       .lean();
-
-    console.log("📌 بيانات المعلمين بعد populate:", JSON.stringify(teachers, null, 2));
+    console.log("📌 teachers:", teachers);
 
     if (!Array.isArray(teachers) || teachers.length === 0) {
       return res.status(404).json({ status: "error", message: "المعلمين غير مرتبطين بأي صفوف!" });
     }
 
-    // ✅ 3. جلب جميع المستويات باستخدام `level_number` بدلاً من `ObjectId`
-    const levelNumbers = [...new Set(teachers.flatMap(teacher => teacher.classes_ids.map(cls => cls.level_number)))];
-    const levels = await Level.find({ level_number: { $in: levelNumbers } }, "level_number level_name").lean();
+    // ✅ 3. جلب جميع المستويات باستخدام `level_number`
+    const levelNumbers = [...new Set(teachers.flatMap(teacher => teacher.classes_ids?.map(cls => cls.level_number) || []))];
+    console.log("📌 levelNumbers:", levelNumbers);
 
-    console.log("📌 بيانات المستويات:", JSON.stringify(levels, null, 2));
+    const levels = await Level.find({ level_number: { $in: levelNumbers } }, "level_number level_name").lean();
+    console.log("📌 levels:", levels);
 
     // ✅ 4. جلب جميع المواد التي يدرسها المعلمون
     const classSubjects = await ClassSubject.find({ teacher_id: { $in: teachers.map(t => t._id) } })
@@ -1083,8 +1088,7 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
         select: "class_number level_number"
       })
       .lean();
-
-    console.log("📌 بيانات المواد المرتبطة بالمعلمين:", JSON.stringify(classSubjects, null, 2));
+    console.log("📌 classSubjects:", classSubjects);
 
     if (!Array.isArray(classSubjects)) {
       return res.status(500).json({ status: "error", message: "خطأ في جلب بيانات المواد، تحقق من ClassSubject!" });
@@ -1118,5 +1122,10 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
     });
 
     res.status(200).json(staffData);
+  } catch (error) {
+    console.error("❌ Error in getSchoolStaff:", error);
+    res.status(500).json({ status: "error", message: "خطأ داخلي في السيرفر!" });
+  }
 });
+
 
