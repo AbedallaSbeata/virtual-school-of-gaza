@@ -1058,7 +1058,6 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 
 
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
-  try {
     // ✅ 1. Fetch all staff members (teachers & manager assistants)
     const users = await User.find({
       role: { $in: ["teacher", "manager assistant"] },
@@ -1119,8 +1118,4 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
     });
 
     res.status(200).json({ staffData });
-  } catch (error) {
-    console.error("❌ Error in getSchoolStaff:", error);
-    res.status(500).json({ status: "error", message: "Internal server error!" });
-  }
 });
