@@ -1044,8 +1044,6 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 });
 
 
-
-
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
     // ✅ 1. جلب جميع المعلمين ومساعدي المدير
     const staff = await User.find({ role: { $in: ["teacher", "manager assistant"] } }).lean();
@@ -1060,43 +1058,51 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
       .populate({
         path: "classes_ids",
         model: "Class",
-        select: "class_number level_number",
-        populate: { path: "level_number", model: "Level", select: "level_name level_number" }
+        select: "class_number level_number"
       })
       .lean();
 
+    console.log("📌 بيانات المعلمين بعد populate:", JSON.stringify(teachers, null, 2));
 
     if (!Array.isArray(teachers) || teachers.length === 0) {
       return res.status(404).json({ status: "error", message: "المعلمين غير مرتبطين بأي صفوف!" });
     }
 
-    // ✅ 3. جلب جميع المواد التي يدرسها المعلمون
+    // ✅ 3. جلب جميع المستويات باستخدام `level_number` بدلاً من `ObjectId`
+    const levelNumbers = [...new Set(teachers.flatMap(teacher => teacher.classes_ids.map(cls => cls.level_number)))];
+    const levels = await Level.find({ level_number: { $in: levelNumbers } }, "level_number level_name").lean();
+
+    console.log("📌 بيانات المستويات:", JSON.stringify(levels, null, 2));
+
+    // ✅ 4. جلب جميع المواد التي يدرسها المعلمون
     const classSubjects = await ClassSubject.find({ teacher_id: { $in: teachers.map(t => t._id) } })
       .populate("subject_id", "subject_name")
       .populate({
         path: "class_id",
         model: "Class",
-        select: "class_number level_number",
-        populate: { path: "level_number", model: "Level", select: "level_name level_number" }
+        select: "class_number level_number"
       })
       .lean();
 
+    console.log("📌 بيانات المواد المرتبطة بالمعلمين:", JSON.stringify(classSubjects, null, 2));
 
     if (!Array.isArray(classSubjects)) {
       return res.status(500).json({ status: "error", message: "خطأ في جلب بيانات المواد، تحقق من ClassSubject!" });
     }
 
-    // ✅ 4. تجهيز بيانات المعلمين
+    // ✅ 5. تجهيز بيانات المعلمين
     const staffData = teachers.map(teacher => {
       const teacherClasses = (teacher.classes_ids || []).map(classObj => {
         const relatedSubjects = (classSubjects || []).filter(cs => 
           cs.class_id && cs.class_id._id.toString() === classObj._id.toString()
         ).map(cs => cs.subject_id.subject_name);
 
+        const levelInfo = levels.find(lvl => lvl.level_number === classObj.level_number);
+
         return {
           classNumber: classObj.class_number,
-          levelNumber: classObj.level_number ? classObj.level_number.level_number : "غير متاح",
-          levelName: classObj.level_number ? classObj.level_number.level_name : "غير متاح",
+          levelNumber: classObj.level_number || "غير متاح",
+          levelName: levelInfo ? levelInfo.level_name : "غير متاح",
           subjects: relatedSubjects.length > 0 ? relatedSubjects : ["غير معروف"],
         };
       });
