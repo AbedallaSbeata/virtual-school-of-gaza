@@ -1071,7 +1071,11 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
   try {
     // ✅ جلب جميع المستخدمين (المعلمين ومساعدي المدير)
     const staff = await User.find({ role: { $in: ["teacher", "manager assistant"] } }).lean();
-    if (staff.length === 0) return res.status(404).json({ message: "لا يوجد معلمون أو مساعدين مسجلين!" });
+    if (!Array.isArray(staff) || staff.length === 0) {
+      return res.status(404).json({ status: "error", message: "لا يوجد معلمون أو مساعدين مسجلين!" });
+    }
+
+    console.log("📌 بيانات staff:", staff);
 
     // ✅ استخراج أرقام الهويات الخاصة بالمعلمين أو مساعدي المدير
     const staffIds = staff.map(user => user.identity_number);
@@ -1086,7 +1090,11 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
       })
       .lean();
 
-    if (teachers.length === 0) return res.status(404).json({ message: "المعلمين غير مرتبطين بأي صفوف!" });
+    if (!Array.isArray(teachers) || teachers.length === 0) {
+      return res.status(404).json({ status: "error", message: "المعلمين غير مرتبطين بأي صفوف!" });
+    }
+
+    console.log("📌 بيانات teachers:", teachers);
 
     // ✅ جلب جميع المواد التي يدرسها كل معلم داخل الصفوف
     const classSubjects = await ClassSubject.find({ teacher_id: { $in: teachers.map(t => t._id) } })
@@ -1099,37 +1107,44 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
       })
       .lean();
 
+    if (!Array.isArray(classSubjects)) {
+      return res.status(500).json({ status: "error", message: "خطأ في جلب بيانات المواد، تحقق من ClassSubject!" });
+    }
+
+    console.log("📌 بيانات classSubjects:", classSubjects);
+
     // ✅ تجهيز بيانات المعلمين مع تفاصيل الصفوف والمواد
     const staffData = teachers.map(teacher => {
-      // استخراج تفاصيل الصفوف التي يُدرّس فيها المعلم
-      const teacherClasses = teacher.classes_ids.map(classObj => {
-        const relatedSubjects = classSubjects.filter(cs => 
+      const teacherClasses = (teacher.classes_ids || []).map(classObj => {
+        const relatedSubjects = (classSubjects || []).filter(cs => 
           cs.class_id && cs.class_id._id.toString() === classObj._id.toString()
         ).map(cs => cs.subject_id.subject_name);
 
         return {
           classNumber: classObj.class_number,
-          levelNumber: classObj.level_number.level_number, // رقم المستوى
-          levelName: classObj.level_number.level_name, // اسم المستوى
-          subjects: relatedSubjects.length > 0 ? relatedSubjects : ["غير معروف"], // تفادي القيم الفارغة
+          levelNumber: classObj.level_number ? classObj.level_number.level_number : "غير متاح",
+          levelName: classObj.level_number ? classObj.level_number.level_name : "غير متاح",
+          subjects: relatedSubjects.length > 0 ? relatedSubjects : ["غير معروف"],
         };
       });
 
       return {
-        userData: staff.find(user => user.identity_number === teacher.user_identity_number),
+        userData: staff.find(user => user.identity_number === teacher.user_identity_number) || {},
         enrolledLevels: [...new Set(teacherClasses.map(tc => ({
           levelNumber: tc.levelNumber,
           levelName: tc.levelName
-        })))], // إرجاع المستويات التي يُدرّس فيها المعلم بدون تكرار
+        })))], // إرجاع المستويات بدون تكرار
         enrolledClasses: teacherClasses, // تفاصيل الصفوف والمواد
       };
     });
 
     res.status(200).json({
+      status: "success",
       staff: staffData
     });
   } catch (error) {
     console.error("❌ Error in getSchoolStaff:", error);
-    next(error);
+    res.status(500).json({ status: "error", message: "خطأ داخلي في السيرفر!" });
   }
 });
+
