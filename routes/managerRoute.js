@@ -52,7 +52,7 @@ const {
   getSchoolStudents,
   getSchoolStaff,
   addActivity,
-  getActivitiesByClass,
+  getActivitiesByClassSubject,
   updateActivity,
   deleteActivity
 } = require("../services/managerService");
@@ -140,7 +140,7 @@ router.route("/deleteAnnouncements").delete(deleteAnnouncements);
 router.route('/getSchoolStudents').get(getSchoolStudents)
 router.route('/getSchoolStaff').get(getSchoolStaff)
 router.route("/addActivity").post(addActivity);
-router.route('/getActivityByClass/:class_id').get(getActivitiesByClass)
+router.route('/getActivitiesByClassSubject/:classSubject_id').get(getActivitiesByClassSubject)
 router.route("/updateActivity/:activity_id").put(updateActivity)
 router.route("/deleteActivity/:activity_id").delete(deleteActivity);
 
