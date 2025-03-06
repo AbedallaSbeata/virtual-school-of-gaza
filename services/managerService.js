@@ -176,47 +176,46 @@ exports.getSubjects = asyncHandler(async (req, res, next) => {
   res.status(200).json({ data: subjects });
 });
 
-// exports.deleteClass = asyncHandler(async (req, res, next) => {
-//   const classExists = await Class.find({
-//     level_number: req.body.level_number,
-//     class_number: req.body.class_number,
-//   });
-//   if (classExists.length == 0) {
-//     return next(new ApiError("هذا الصف غير موجود"));
-//   }
-//   const levelEXists = await Level.find({
-//     level_number: classExists[0].level_number,
-//   });
-//   const numOfTeac = classExists[0].numberOfTeachers;
-//   const numOfStu = classExists[0].numberOfStudents;
-//   const classes = levelEXists[0].classes;
-//   const index = classes.indexOf(classExists[0].class_number);
-//   classes.splice(index, 1);
-//   await Level.findByIdAndUpdate(levelEXists[0]._id, {
-//     numberOfClasses: levelEXists[0].numberOfClasses - 1,
-//     numberOfTeachers: levelEXists[0].numberOfTeachers - numOfTeac,
-//     numberOfStudents: levelEXists[0].numberOfStudents - numOfStu,
-//     classes: classes,
-//   });
-//   await Class.findByIdAndDelete(classExists[0]._id);
-//   res.status(204).json();
-// });
-
 exports.deleteClass = asyncHandler(async (req, res, next) => {
-  const classExists = await Class.findOne({
+  const classExists = await Class.find({
     level_number: req.body.level_number,
     class_number: req.body.class_number,
   });
-
-  if (!classExists) {
+  if (classExists.length == 0) {
     return next(new ApiError("هذا الصف غير موجود"));
   }
-
-  // حذف الصف مع تنفيذ الـ middleware لحذف الكلاس سبجكت
-  await Class.findOneAndDelete({ _id: classExists._id });
-
+  const levelEXists = await Level.find({
+    level_number: classExists[0].level_number,
+  });
+  const numOfTeac = classExists[0].numberOfTeachers;
+  const numOfStu = classExists[0].numberOfStudents;
+  const classes = levelEXists[0].classes;
+  const index = classes.indexOf(classExists[0].class_number);
+  classes.splice(index, 1);
+  await Level.findByIdAndUpdate(levelEXists[0]._id, {
+    numberOfClasses: levelEXists[0].numberOfClasses - 1,
+    numberOfTeachers: levelEXists[0].numberOfTeachers - numOfTeac,
+    numberOfStudents: levelEXists[0].numberOfStudents - numOfStu,
+    classes: classes,
+  });
+  await Class.findByIdAndDelete(classExists[0]._id);
   res.status(204).json();
 });
+
+// exports.deleteClass = asyncHandler(async (req, res, next) => {
+//   const classExists = await Class.findOne({
+//     level_number: req.body.level_number,
+//     class_number: req.body.class_number,
+//   });
+
+//   if (!classExists) {
+//     return next(new ApiError("هذا الصف غير موجود"));
+//   }
+
+//   await Class.findOneAndDelete({ _id: classExists._id });
+
+//   res.status(204).json();
+// });
 
 exports.getSpecificTeacher = asyncHandler(async (req, res, next) => {
   const teacherExists = await User.find({
