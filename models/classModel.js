@@ -23,19 +23,24 @@ const classSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// بعد الحفظ: إنشاء ClassSubject لكل مادة مرتبطة بالمستوى
 classSchema.post("save", async function () {
-  // جلب المواد الخاصة بهذا المستوى
   const subjects = await Subject.find({ levels: this.level_number });
 
-  // إنشاء ClassSubject لكل مادة
   for (const subject of subjects) {
-    await ClassSubject.create({
+    const exists = await ClassSubject.findOne({
       class_id: this._id,
       subject_id: subject._id,
     });
+
+    if (!exists) {
+      await ClassSubject.create({
+        class_id: this._id,
+        subject_id: subject._id,
+      });
+    }
   }
 });
+
 
 const classModel = mongoose.model("Class", classSchema);
 module.exports = classModel;
