@@ -1194,13 +1194,19 @@ exports.addActivity = asyncHandler(async (req,res,next) => {
   res.status(201).json(activity)
 })
 
-exports.getActivitiesByClassSubject = asyncHandler(async (req, res, next) => {
-  const activities = await Activity.find({classSubject_id: req.params.classSubject_id})
-  if(activities.length == 0) {
-    return next(new ApiError("لا يوجد أنشطة لهذا الصف",404))
+exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
+  const classSubjects = await ClassSubject.find({ class_id: req.params.class_id });
+  if (classSubjects.length === 0) {
+    return next(new ApiError("لا يوجد مواد دراسية لهذا الصف", 404));
   }
-  res.status(200).json(activities)
-})
+  const classSubjectIds = classSubjects.map(subject => subject._id);
+  const activities = await Activity.find({ classSubject_id: { $in: classSubjectIds } });
+
+  if (activities.length === 0) {
+    return next(new ApiError("لا يوجد أنشطة لهذا الصف", 404));
+  }
+  res.status(200).json(activities);
+});
 
 exports.updateActivity = asyncHandler(async (req, res, next) => {
   const active = await Activity.findByIdAndUpdate(req.params.activity_id, {

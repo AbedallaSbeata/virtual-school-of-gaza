@@ -47,7 +47,7 @@ const {
   getSchoolStudents,
   getSchoolStaff,
   addActivity,
-  getActivitiesByClassSubject,
+  getActivitiesByClass,
   updateActivity,
   deleteActivity,
   addGradeToSubmission,
@@ -138,7 +138,7 @@ router.route("/deleteAnnouncements").delete(deleteAnnouncements);
 router.route('/getSchoolStudents').get(getSchoolStudents)
 router.route('/getSchoolStaff').get(getSchoolStaff)
 router.route("/addActivity").post(addActivity);
-router.route('/getActivitiesByClassSubject/:classSubject_id').get(getActivitiesByClassSubject)
+router.route('/getActivitiesByClass/:class_id').get(getActivitiesByClass)
 router.route("/updateActivity/:activity_id").put(updateActivity)
 router.route("/deleteActivity/:activity_id").delete(deleteActivity);
 router.route('/addSubmissionToActivity').post(addSubmissionToActivity)
