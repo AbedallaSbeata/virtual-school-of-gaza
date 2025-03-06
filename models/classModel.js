@@ -41,6 +41,7 @@ classSchema.post("save", async function () {
   }
 });
 
+
 classSchema.pre("findOneAndDelete", async function (next) {
   const classId = this.getQuery()._id;
 
