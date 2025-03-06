@@ -1172,19 +1172,68 @@ exports.addActivity = asyncHandler(async (req,res,next) => {
   res.status(201).json(activity)
 })
 
+
 exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
   const classSubjects = await ClassSubject.find({ class_id: req.params.class_id });
+
   if (classSubjects.length === 0) {
     return next(new ApiError("لا يوجد مواد دراسية لهذا الصف", 404));
   }
+
   const classSubjectIds = classSubjects.map(subject => subject._id);
   const activities = await Activity.find({ classSubject_id: { $in: classSubjectIds } });
 
   if (activities.length === 0) {
     return next(new ApiError("لا يوجد أنشطة لهذا الصف", 404));
   }
-  res.status(200).json(activities);
+
+  // Fetch related subject names
+  const subjectIds = classSubjects.map(cs => cs.subject_id);
+  const subjects = await Subject.find({ _id: { $in: subjectIds } });
+
+  // Map subject IDs to their names
+  const subjectMap = {};
+  subjects.forEach(subject => {
+    subjectMap[subject._id] = subject.subject_name;
+  });
+
+  // Fetch submissions count for each activity
+  const activityIds = activities.map(activity => activity._id);
+  const submissions = await Submission.aggregate([
+    { $match: { activity_id: { $in: activityIds } } },
+    { $group: { _id: "$activity_id", count: { $sum: 1 } } }
+  ]);
+
+  // Map activity IDs to their submission count
+  const submissionMap = {};
+  submissions.forEach(sub => {
+    submissionMap[sub._id] = sub.count;
+  });
+
+  // Calculate activity status and prepare the response
+  const currentTime = new Date();
+  const response = activities.map(activity => {
+    let status;
+    if (currentTime < activity.available_at) {
+      status = "upcoming";
+    } else if (currentTime >= activity.available_at && currentTime <= activity.deadline) {
+      status = "active";
+    } else {
+      status = "finished";
+    }
+
+    return {
+      ...activity._doc,
+      activity_status: status,
+      classSubject_name: subjectMap[classSubjects.find(cs => cs._id.equals(activity.classSubject_id))?.subject_id] || "غير معروف",
+      submissions_count: submissionMap[activity._id] || 0,
+    };
+  });
+
+  res.status(200).json(response);
 });
+
+
 
 exports.updateActivity = asyncHandler(async (req, res, next) => {
   const active = await Activity.findByIdAndUpdate(req.params.activity_id, {
