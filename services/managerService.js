@@ -1264,6 +1264,9 @@ exports.updateSubmission = asyncHandler(async (req, res, next) => {
   if(!submission) {
     return next(new ApiError('هذا التسليم غير موجود', 404))
   }
+  if(submission.grade) {
+    return next(new ApiError('لا يمكن تعديل التسليم الان', 404))
+  }
   const newSubmission = await Submission.findByIdAndUpdate(submission._id, {
     file_url: req.body.file_url,
     content: req.body.content,
@@ -1288,7 +1291,6 @@ exports.deleteSubmission = asyncHandler(async (req,res,next)=> {
   if(!submission) {
     return next(new ApiError('هذا التسليم غير موجود', 404))
   }
-  console.log(submission.grade)
   if(submission.grade) {
     return next(new ApiError('لا يمكن حذف التسليم الان', 404))
   }
