@@ -1,6 +1,4 @@
-const mongoose = require("mongoose");
-const Subject = require("./subjectModel");
-const Class = require("./classModel");
+const mongoose = require('mongoose')
 
 const levelSchema = new mongoose.Schema(
   {
@@ -38,13 +36,29 @@ levelSchema.pre("save", async function (next) {
   next();
 });
 
-// ✅ بعد الحفظ: إنشاء الصفوف فقط، وعدم إنشاء ClassSubject هنا
+// ✅ بعد الحفظ: إنشاء الفصول ثم إنشاء ClassSubject لكل كلاس
 levelSchema.post("save", async function () {
+  const createdClasses = [];
+
   for (let i = 0; i < this.classes.length; i++) {
-    await Class.create({
+    const newClass = await Class.create({
       class_number: this.classes[i],
       level_number: this.level_number,
     });
+
+    createdClasses.push(newClass._id);
+  }
+
+  // ✅ بعد إنشاء جميع الكلاسات، قم بإنشاء ClassSubject لكل مادة في كل كلاس
+  for (const classId of createdClasses) {
+    const subjects = await Subject.find({ levels: this.level_number });
+
+    for (const subject of subjects) {
+      await ClassSubject.create({
+        class_id: classId,
+        subject_id: subject._id,
+      });
+    }
   }
 });
 
