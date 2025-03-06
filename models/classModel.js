@@ -23,6 +23,7 @@ const classSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// ✅ بعد الحفظ: إنشاء ClassSubject فقط إذا لم يكن موجودًا مسبقًا
 classSchema.post("save", async function () {
   const subjects = await Subject.find({ levels: this.level_number });
 
@@ -41,7 +42,7 @@ classSchema.post("save", async function () {
   }
 });
 
-
+// ✅ قبل حذف الصف: حذف جميع ClassSubject المرتبطة به
 classSchema.pre("findOneAndDelete", async function (next) {
   const classId = this.getQuery()._id;
 
