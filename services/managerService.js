@@ -1185,9 +1185,8 @@ exports.addActivity = asyncHandler(async (req,res,next) => {
   res.status(201).json(activity)
 })
 
-exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
-  const classSubject = await ClassSubject.find({class_id: req.params.class_id})
-  const activities = await Activity.find({classSubject_id: classSubject[0]._id})
+exports.getActivitiesByClassSubject = asyncHandler(async (req, res, next) => {
+  const activities = await Activity.find({classSubject_id: req.params.classSubject_id})
   if(activities.length == 0) {
     return next(new ApiError("لا يوجد أنشطة لهذا الصف",404))
   }
