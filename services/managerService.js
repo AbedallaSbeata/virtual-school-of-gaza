@@ -1232,17 +1232,24 @@ exports.addSubmissionToActivity = asyncHandler(async (req,res,next) => {
 })
 
 exports.addGradeToSubmission = asyncHandler(async (req, res, next) => {
-  const submission = await Submission.findById(req.params.submission_id)
-  if(!submission) {
-    return next(new ApiError('هذا التسليم غير موجود', 404))
+  const submission = await Submission.findById(req.params.submission_id);
+
+  if (!submission) {
+    return next(new ApiError("هذا التسليم غير موجود", 404));
   }
-  const submittionWithGrade = await Submission.findByIdAndUpdate(submission._id, {
-    grade: req.body.grade,
-    feedback: req.body.feedback,
-    graded_by: req.user._id
-  }, {new:true})
-  res.status(200).json(submittionWithGrade)
-})
+
+  const submissionWithGrade = await Submission.findByIdAndUpdate(
+    submission._id,
+    {
+      grade: req.body.grade,
+      feedback: req.body.feedback,
+      graded_by: req.user._id,
+    },
+    { new: true }
+  );
+
+  res.status(200).json(submissionWithGrade);
+});
 
 exports.getSubmissionsByActivity = asyncHandler(async (req,res,next) => {
   const submissions = await Submission.find({activity_id: req.params.activity_id})
