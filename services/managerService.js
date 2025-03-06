@@ -1174,7 +1174,9 @@ exports.addActivity = asyncHandler(async (req,res,next) => {
 
 
 exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
-  const classSubjects = await ClassSubject.find({ class_id: req.params.class_id });
+  const { class_id } = req.params;
+
+  const classSubjects = await ClassSubject.find({ class_id });
 
   if (classSubjects.length === 0) {
     return next(new ApiError("لا يوجد مواد دراسية لهذا الصف", 404));
@@ -1186,6 +1188,9 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
   if (activities.length === 0) {
     return next(new ApiError("لا يوجد أنشطة لهذا الصف", 404));
   }
+
+  // Fetch the number of students in the class from the Student collection
+  const studentsCount = await Student.countDocuments({ class_id });
 
   // Fetch related subject names
   const subjectIds = classSubjects.map(cs => cs.subject_id);
@@ -1227,6 +1232,7 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
       activity_status: status,
       classSubject_name: subjectMap[classSubjects.find(cs => cs._id.equals(activity.classSubject_id))?.subject_id] || "غير معروف",
       submissions_count: submissionMap[activity._id] || 0,
+      students_count: studentsCount, // Added class students count here
     };
   });
 
