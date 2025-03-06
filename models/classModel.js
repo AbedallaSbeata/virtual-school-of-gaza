@@ -27,11 +27,29 @@ classSchema.post("save", async function () {
   const subjects = await Subject.find({ levels: this.level_number });
 
   for (const subject of subjects) {
-    await ClassSubject.create({
+    const exists = await ClassSubject.findOne({
       class_id: this._id,
       subject_id: subject._id,
     });
+
+    if (!exists) {
+      await ClassSubject.create({
+        class_id: this._id,
+        subject_id: subject._id,
+      });
+    }
   }
+});
+
+
+classSchema.pre("findOneAndDelete", async function (next) {
+  const classId = this.getQuery()._id;
+
+  if (classId) {
+    await ClassSubject.deleteMany({ class_id: classId });
+  }
+
+  next();
 });
 
 const classModel = mongoose.model("Class", classSchema);
