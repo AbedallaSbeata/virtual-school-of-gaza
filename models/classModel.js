@@ -41,6 +41,16 @@ classSchema.post("save", async function () {
   }
 });
 
+classSchema.pre("findOneAndDelete", async function (next) {
+  const classId = this.getQuery()._id;
+
+  if (classId) {
+    await ClassSubject.deleteMany({ class_id: classId });
+  }
+
+  next();
+});
+
 
 const classModel = mongoose.model("Class", classSchema);
 module.exports = classModel;
