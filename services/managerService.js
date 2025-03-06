@@ -1289,7 +1289,7 @@ exports.deleteSubmission = asyncHandler(async (req,res,next)=> {
     return next(new ApiError('هذا التسليم غير موجود', 404))
   }
   console.log(submission.grade)
-  if(submission.grade !== null) {
+  if(submission.grade) {
     return next(new ApiError('لا يمكن حذف التسليم الان', 404))
   }
   
