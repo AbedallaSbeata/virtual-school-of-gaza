@@ -1288,9 +1288,11 @@ exports.deleteSubmission = asyncHandler(async (req,res,next)=> {
   if(!submission) {
     return next(new ApiError('هذا التسليم غير موجود', 404))
   }
+  console.log(submission.grade)
   if(submission.grade !== null) {
     return next(new ApiError('لا يمكن حذف التسليم الان', 404))
   }
+  
   await submission.deleteOne()
   res.status(204).json()
 })
