@@ -54,7 +54,13 @@ const {
   addActivity,
   getActivitiesByClassSubject,
   updateActivity,
-  deleteActivity
+  deleteActivity,
+  addGradeToSubmission,
+  addSubmissionToActivity,
+  deleteSubmission,
+  getSubmissionsByActivity,
+  updateSubmission, 
+  updateSubmissionGradeOrFeedback
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -143,9 +149,12 @@ router.route("/addActivity").post(addActivity);
 router.route('/getActivitiesByClassSubject/:classSubject_id').get(getActivitiesByClassSubject)
 router.route("/updateActivity/:activity_id").put(updateActivity)
 router.route("/deleteActivity/:activity_id").delete(deleteActivity);
-
-
-
+router.route('/addSubmissionToActivity').post(addSubmissionToActivity)
+router.route('/addGradeToSubmission/:submission_id').put(addGradeToSubmission)
+router.route('/getSubmissionsByActivity/:activity_id').get(getSubmissionsByActivity)
+router.route('/updateSubmission/:submission_id').put(updateSubmission)
+router.route('/updateSubmissionGradeOrFeedback/:submission_id').put(updateSubmissionGradeOrFeedback)
+router.route('/deleteSubmission/:submission_id').delete(deleteSubmission)
 
 
 module.exports = router;

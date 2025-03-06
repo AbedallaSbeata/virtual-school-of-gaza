@@ -14,6 +14,7 @@ const RecordedLectureComments = require("../models/recordedLectureCommentModel")
 const RecordedLectureReplies = require("../models/recordedLectureReplieModel");
 const Announcement = require("../models/announcementModel");
 const Activity = require('../models/activityModel')
+const Submission = require('../models/submissionModel')
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -1223,5 +1224,73 @@ exports.updateActivity = asyncHandler(async (req, res, next) => {
 })
 exports.deleteActivity = asyncHandler(async (req,res,next) => {
   await Activity.findByIdAndDelete(req.params.activity_id)
+  res.status(204).json()
+})
+
+
+exports.addSubmissionToActivity = asyncHandler(async (req,res,next) => {
+  const submission = await Submission.create({
+   activity_id: req.body.activity_id,
+   content: req.body.content,
+   file_url: req.body.file_url,
+   user_id: req.user._id   
+  })
+  res.status(201).json(submission)
+})
+
+exports.addGradeToSubmission = asyncHandler(async (req, res, next) => {
+  const submission = await Submission.findById(req.params.submission_id)
+  if(!submission) {
+    return next(new ApiError('هذا التسليم غير موجود', 404))
+  }
+  const submittionWithGrade = await Submission.findByIdAndUpdate(submission._id, {
+    grade: req.body.grade,
+    feedback: req.body.feedback,
+    graded_by: req.user._id
+  }, {new:true})
+  res.status(200).json(submittionWithGrade)
+})
+
+exports.getSubmissionsByActivity = asyncHandler(async (req,res,next) => {
+  const submissions = await Submission.find({activity_id: req.params.activity_id})
+  if(!submissions) {
+    return next(new ApiError('لا يوجد تسليمات حاليا', 404))
+  }
+  res.status(200).json(submissions)
+})
+
+exports.updateSubmission = asyncHandler(async (req, res, next) => {
+  const submission = await Submission.findById(req.params.submission_id)
+  if(!submission) {
+    return next(new ApiError('هذا التسليم غير موجود', 404))
+  }
+  const newSubmission = await Submission.findByIdAndUpdate(submission._id, {
+    file_url: req.body.file_url,
+    content: req.body.content,
+  }, {new:true})
+  res.status(200).json(newSubmission)
+})
+
+exports.updateSubmissionGradeOrFeedback = asyncHandler(async (req, res, next) => {
+  const submission = await Submission.findById(req.params.submission_id)
+  if(!submission) {
+    return next(new ApiError('هذا التسليم غير موجود', 404))
+  }
+  const submittionWithGrade = await Submission.findByIdAndUpdate(submission._id, {
+    grade: req.body.grade,
+    feedback: req.body.feedback,
+  }, {new:true})
+  res.status(200).json(submittionWithGrade)
+})
+
+exports.deleteSubmission = asyncHandler(async (req,res,next)=> {
+  const submission = await Submission.findById(req.params.submission_id)
+  if(!submission) {
+    return next(new ApiError('هذا التسليم غير موجود', 404))
+  }
+  if(submission.grade !== null) {
+    return next(new ApiError('لا يمكن حذف التسليم الان', 404))
+  }
+  await submission.deleteOne()
   res.status(204).json()
 })
