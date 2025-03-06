@@ -764,55 +764,33 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
 });
 
 exports.getLevelStudents = asyncHandler(async (req, res, next) => {
-  const levelNumber = req.params.level_number;
+  const students = await Student.find({ level_number: req.params.level_number });
 
-  // **Step 1: Find all class IDs in this level**
-  const classes = await Class.find({ level_number: levelNumber });
-
-  // Extract class IDs from the found classes
-  const classIds = classes.map((classObj) => classObj._id);
-
-  // **Step 2: Use `$lookup` to manually join `User` data**
-  const students = await Student.aggregate([
-    {
-      $match: {
-        $or: [{ class_id: { $in: classIds } }, { class_id: null }],
-      },
-    },
-    {
-      $lookup: {
-        from: "users", // User collection
-        localField: "user_identity_number", // Field in Student model
-        foreignField: "identity_number", // Matching field in User model
-        as: "userData",
-      },
-    },
-    {
-      $unwind: {
-        path: "$userData",
-        preserveNullAndEmptyArrays: true, // Keeps students even if userData is missing
-      },
-    },
-    {
-      $project: {
-        _id: "$userData._id", // ✅ User ID
-        identity_number: "$user_identity_number", // ✅ Student Identity Number
-        first_name: "$userData.first_name",
-        second_name: "$userData.second_name",
-        third_name: "$userData.third_name",
-        last_name: "$userData.last_name",
-        class_id: 1, // ✅ Student's assigned class (nullable)
-      },
-    },
-  ]);
-
-  if (!students || students.length === 0) {
+  if (students.length === 0) {
     return next(new ApiError("لا يوجد طلاب في هذه المرحلة", 404));
   }
 
-  // **Return full student details**
-  res.status(200).json({ data: students });
+  const identityNumbers = students.map(student => student.user_identity_number);
+  const users = await User.find({ identity_number: { $in: identityNumbers } }).select(
+    "_id identity_number first_name second_name third_name last_name"
+  );
+
+  const studentsWithUserData = students.map(student => {
+    const userData = users.find(user => user.identity_number === student.user_identity_number);
+    return {
+      class_id: student.class_id || null, 
+      _id: userData?._id || null, 
+      identity_number: student.user_identity_number,
+      first_name: userData?.first_name || null,
+      second_name: userData?.second_name || null,
+      third_name: userData?.third_name || null,
+      last_name: userData?.last_name || null
+    };
+  });
+  res.status(200).json(studentsWithUserData);
 });
+
+
 
 // ✅ 1. Add Class-Wide Announcement
 exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {

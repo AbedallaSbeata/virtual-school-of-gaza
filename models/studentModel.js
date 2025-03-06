@@ -8,7 +8,8 @@ const studentSchema = new mongoose.Schema({
   class_id: {
     type: mongoose.Schema.ObjectId,
     ref: 'Class'
-  }
+  },
+  level_number: Number
 });
 
 const studentModel = mongoose.model("Student", studentSchema);
