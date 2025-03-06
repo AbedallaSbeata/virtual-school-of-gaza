@@ -218,42 +218,35 @@ exports.deleteClass = asyncHandler(async (req, res, next) => {
 //   res.status(204).json();
 // });
 
-exports.getSpecificTeacher = asyncHandler(async (req, res, next) => {
-  const teacherExists = await User.find({
-    identity_number: req.params.identity_number,
-    role: "teacher",
-  });
-  if (teacherExists.length == 0) {
-    return next(new ApiError("هذا المعلم غير موجود"));
-  }
-  const teacher = await User.find({
-    identity_number: teacherExists[0].user_identity_number,
-  });
-  res.status(200).json({ data: teacher });
-});
+// exports.getSpecificTeacher = asyncHandler(async (req, res, next) => {
+//   const teacherExists = await User.find({
+//     identity_number: req.params.identity_number,
+//     role: "teacher",
+//   });
+//   if (teacherExists.length == 0) {
+//     return next(new ApiError("هذا المعلم غير موجود"));
+//   }
+//   const teacher = await User.find({
+//     identity_number: teacherExists[0].user_identity_number,
+//   });
+//   res.status(200).json({ data: teacher });
+// });
 
-exports.getSpecificStudent = asyncHandler(async (req, res, next) => {
-  const studentExists = await Student.find({
-    user_identity_number: req.params.identity_number,
-  });
-  if (studentExists.length == 0) {
-    return next(new ApiError("هذا الطالب غير موجود"));
-  }
-  const student = await User.find({
-    identity_number: studentExists[0].user_identity_number,
-  });
-  res.status(200).json({ data: student });
-});
+// exports.getSpecificStudent = asyncHandler(async (req, res, next) => {
+//   const studentExists = await Student.find({
+//     user_identity_number: req.params.identity_number,
+//   });
+//   if (studentExists.length == 0) {
+//     return next(new ApiError("هذا الطالب غير موجود"));
+//   }
+//   const student = await User.find({
+//     identity_number: studentExists[0].user_identity_number,
+//   });
+//   res.status(200).json({ data: student });
+// });
 
-exports.getTeachers = asyncHandler(async (req, res, next) => {
-  const teachers = await User.find().where({ role: "teacher" });
-  res.status(200).json({ data: teachers });
-});
 
-exports.getStudents = asyncHandler(async (req, res, next) => {
-  const students = await User.find().where({ role: "student" });
-  res.status(200).json({ data: students });
-});
+
 
 exports.getMyData = asyncHandler(async (req, res, next) => {
   const myData = await User.findById(req.user._id);

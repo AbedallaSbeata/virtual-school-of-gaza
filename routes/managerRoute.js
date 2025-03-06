@@ -14,13 +14,8 @@ const {
   getSubjects,
   getTeachersFromSpecificSubject,
   disActiveUser,
-  getSpecificStudent,
-  getSpecificTeacher,
-  getStudents,
-  getTeachers,
   getMyData,
   deleteLevel,
-  getSpecificClass,
   assignSpecificSubjectToTeachers,
   assignTeacherToClassSubject,
   addMaterial,
@@ -60,7 +55,8 @@ const {
   deleteSubmission,
   getSubmissionsByActivity,
   updateSubmission, 
-  updateSubmissionGradeOrFeedback
+  updateSubmissionGradeOrFeedback,
+  getSpecificClass
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -97,13 +93,9 @@ router.route("/subjects").get(getSubjects);
 router.route("/disActiveUser").put(disActiveUserValidator, disActiveUser);
 router.route("/deleteClass").delete(deleteClassValidator, deleteClass);
 router.route("/deleteLevel").delete(deleteLevel);
-router.route("/getSpecificStudent/:identity_number").get(getSpecificStudent);
-router.route("/getSpecificTeacher/:identity_number").get(getSpecificTeacher);
 router
   .route("/getSpecificClass/:level_number/:class_number")
   .get(getSpecificClass);
-router.route("/students").get(getStudents);
-router.route("/teachers").get(getTeachers);
 router.route("/getMyData").get(getMyData);
 router.route("/addMaterial").post(addMaterial);
 router.route("/getMaterials/:classId").get(getMaterials);
