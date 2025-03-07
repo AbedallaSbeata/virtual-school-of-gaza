@@ -1388,11 +1388,6 @@ exports.addGradeToSubmission = asyncHandler(async (req, res, next) => {
 });
 
 
-const asyncHandler = require("express-async-handler");
-const Submission = require("../models/submissionModel");
-const User = require("../models/userModel");
-const ApiError = require("../utils/apiError");
-
 exports.getSubmissionsByActivity = asyncHandler(async (req, res, next) => {
   const { activity_id } = req.params;
 
