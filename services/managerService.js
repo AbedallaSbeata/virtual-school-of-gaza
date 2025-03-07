@@ -1387,13 +1387,56 @@ exports.addGradeToSubmission = asyncHandler(async (req, res, next) => {
   res.status(200).json(submissionWithGrade);
 });
 
-exports.getSubmissionsByActivity = asyncHandler(async (req,res,next) => {
-  const submissions = await Submission.find({activity_id: req.params.activity_id})
-  if(!submissions) {
-    return next(new ApiError('لا يوجد تسليمات حاليا', 404))
+
+const asyncHandler = require("express-async-handler");
+const Submission = require("../models/submissionModel");
+const User = require("../models/userModel");
+const ApiError = require("../utils/apiError");
+
+exports.getSubmissionsByActivity = asyncHandler(async (req, res, next) => {
+  const { activity_id } = req.params;
+
+  // Fetch submissions
+  const submissions = await Submission.find({ activity_id });
+  if (!submissions || submissions.length === 0) {
+    return next(new ApiError("لا يوجد تسليمات حاليا", 404));
   }
-  res.status(200).json(submissions)
-})
+
+  // Fetch user details for each submission
+  const userIds = submissions.map(submission => submission.user_id);
+  const users = await User.find({ _id: { $in: userIds } }).select(
+    "first_name second_name third_name last_name profile_image identity_number"
+  );
+
+  // Map user details by ID for quick lookup
+  const userMap = {};
+  users.forEach(user => {
+    userMap[user._id] = {
+      first_name: user.first_name,
+      second_name: user.second_name,
+      third_name: user.third_name,
+      last_name: user.last_name,
+      profile_image: user.profile_image,
+      identity_number: user.identity_number,
+    };
+  });
+
+  // Enhance submission response with user details
+  const response = submissions.map(submission => ({
+    ...submission._doc,
+    user_details: userMap[submission.user_id] || {
+      first_name: "غير معروف",
+      second_name: "",
+      third_name: "",
+      last_name: "",
+      profile_image: null,
+      identity_number: "غير متوفر",
+    },
+  }));
+
+  res.status(200).json(response);
+});
+
 
 exports.updateSubmission = asyncHandler(async (req, res, next) => {
   const submission = await Submission.findById(req.params.submission_id)
