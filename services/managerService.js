@@ -1173,6 +1173,7 @@ exports.addActivity = asyncHandler(async (req,res,next) => {
 })
 
 
+
 exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
   const { class_id } = req.params;
 
@@ -1215,6 +1216,24 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
     submissionMap[sub._id] = sub.count;
   });
 
+  // Fetch teacher details (name and profile image)
+  const teacherIds = activities.map(activity => activity.posted_by);
+  const teachers = await User.find({ _id: { $in: teacherIds } }).select(
+    "first_name second_name third_name last_name profile_image"
+  );
+
+  // Map teacher IDs to their details
+  const teacherMap = {};
+  teachers.forEach(teacher => {
+    teacherMap[teacher._id] = {
+      first_name: teacher.first_name,
+      second_name: teacher.second_name,
+      third_name: teacher.third_name,
+      last_name: teacher.last_name,
+      profile_image: teacher.profile_image,
+    };
+  });
+
   // Calculate activity status and prepare the response
   const currentTime = new Date();
   const response = activities.map(activity => {
@@ -1233,6 +1252,13 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
       classSubject_name: subjectMap[classSubjects.find(cs => cs._id.equals(activity.classSubject_id))?.subject_id] || "غير معروف",
       submissions_count: submissionMap[activity._id] || 0,
       students_count: studentsCount, // Added class students count here
+      posted_by_details: teacherMap[activity.posted_by] || {
+        first_name: "غير معروف",
+        second_name: "",
+        third_name: "",
+        last_name: "",
+        profile_image: null,
+      },
     };
   });
 
