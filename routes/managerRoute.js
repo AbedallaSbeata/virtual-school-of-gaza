@@ -48,6 +48,7 @@ const {
   getSchoolStaff,
   addActivity,
   getActivitiesByClass,
+  getActivityById,
   updateActivity,
   deleteActivity,
   addGradeToSubmission,
