@@ -1267,6 +1267,77 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
 
 
 
+exports.getActivityById = asyncHandler(async (req, res, next) => {
+  const { activity_id } = req.params;
+
+  // Fetch the activity
+  const activity = await Activity.findById(activity_id);
+  if (!activity) {
+    return next(new ApiError("النشاط غير موجود", 404));
+  }
+
+  // Fetch the ClassSubject for this activity
+  const classSubject = await ClassSubject.findById(activity.classSubject_id);
+  if (!classSubject) {
+    return next(new ApiError("المادة الدراسية غير موجودة", 404));
+  }
+
+  // Fetch the number of students in the class from the Student collection
+  const studentsCount = await Student.countDocuments({ class_id: classSubject.class_id });
+
+  // Fetch subject name
+  const subject = await Subject.findById(classSubject.subject_id);
+  const classSubjectName = subject ? subject.subject_name : "غير معروف";
+
+  // Fetch submissions count for the activity
+  const submissionsCount = await Submission.countDocuments({ activity_id });
+
+  // Fetch teacher details (name and profile image)
+  const teacher = await User.findById(activity.posted_by).select(
+    "first_name second_name third_name last_name profile_image"
+  );
+
+  const teacherDetails = teacher
+    ? {
+        first_name: teacher.first_name,
+        second_name: teacher.second_name,
+        third_name: teacher.third_name,
+        last_name: teacher.last_name,
+        profile_image: teacher.profile_image,
+      }
+    : {
+        first_name: "غير معروف",
+        second_name: "",
+        third_name: "",
+        last_name: "",
+        profile_image: null,
+      };
+
+  // Calculate activity status
+  const currentTime = new Date();
+  let status;
+  if (currentTime < activity.available_at) {
+    status = "upcoming";
+  } else if (currentTime >= activity.available_at && currentTime <= activity.deadline) {
+    status = "active";
+  } else {
+    status = "finished";
+  }
+
+  // Construct response
+  const response = {
+    ...activity._doc,
+    activity_status: status,
+    classSubject_name: classSubjectName,
+    submissions_count: submissionsCount,
+    students_count: studentsCount,
+    posted_by_details: teacherDetails,
+  };
+
+  res.status(200).json(response);
+});
+
+
 exports.updateActivity = asyncHandler(async (req, res, next) => {
   const active = await Activity.findByIdAndUpdate(req.params.activity_id, {
     title: req.body.title,
