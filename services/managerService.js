@@ -1432,33 +1432,26 @@ exports.getSubmissionsByActivity = asyncHandler(async (req, res, next) => {
   res.status(200).json(response);
 });
 
-
 exports.updateSubmission = asyncHandler(async (req, res, next) => {
-  const submission = await Submission.findById(req.params.submission_id)
-  if(!submission) {
-    return next(new ApiError('هذا التسليم غير موجود', 404))
-  }
-  if(submission.grade) {
-    return next(new ApiError('لا يمكن تعديل التسليم الان', 404))
-  }
-  const newSubmission = await Submission.findByIdAndUpdate(submission._id, {
-    file_url: req.body.file_url,
-    content: req.body.content,
-  }, {new:true})
-  res.status(200).json(newSubmission)
-})
+  const { grade, feedback } = req.body.newSubmission; // Extract new fields
 
-exports.updateSubmissionGradeOrFeedback = asyncHandler(async (req, res, next) => {
-  const submission = await Submission.findById(req.params.submission_id)
-  if(!submission) {
-    return next(new ApiError('هذا التسليم غير موجود', 404))
+  // Find the existing submission
+  const submission = await Submission.findById(req.params.submission_id);
+  if (!submission) {
+    return next(new ApiError("هذا التسليم غير موجود", 404));
   }
-  const submittionWithGrade = await Submission.findByIdAndUpdate(submission._id, {
-    grade: req.body.grade,
-    feedback: req.body.feedback,
-  }, {new:true})
-  res.status(200).json(submittionWithGrade)
-})
+
+  // Update fields
+  submission.grade = grade ?? submission.grade; // Preserve existing values if not provided
+  submission.feedback = feedback ?? submission.feedback;
+
+  // Save changes
+  const updatedSubmission = await submission.save();
+
+  // Respond with updated submission
+  res.status(200).json(updatedSubmission);
+});
+
 
 exports.deleteSubmissions = asyncHandler(async (req, res, next) => {
   const { submissionsIds } = req.body;
