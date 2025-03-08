@@ -53,7 +53,7 @@ const {
   deleteActivity,
   addGradeToSubmission,
   addSubmissionToActivity,
-  deleteSubmission,
+  deleteSubmissions,
   getSubmissionsByActivity,
   updateSubmission, 
   updateSubmissionGradeOrFeedback,
@@ -149,7 +149,7 @@ router.route("/addGradeToSubmission/:submission_id").put(addGradeToSubmission);
 router.route('/getSubmissionsByActivity/:activity_id').get(getSubmissionsByActivity)
 router.route('/updateSubmission/:submission_id').put(updateSubmission)
 router.route('/updateSubmissionGradeOrFeedback/:submission_id').put(updateSubmissionGradeOrFeedback)
-router.route('/deleteSubmission/:submission_id').delete(deleteSubmission)
+router.route('/deleteSubmissions').delete(deleteSubmissions)
 
 
 module.exports = router;
