@@ -1460,15 +1460,28 @@ exports.updateSubmissionGradeOrFeedback = asyncHandler(async (req, res, next) =>
   res.status(200).json(submittionWithGrade)
 })
 
-exports.deleteSubmission = asyncHandler(async (req,res,next)=> {
-  const submission = await Submission.findById(req.params.submission_id)
-  if(!submission) {
-    return next(new ApiError('هذا التسليم غير موجود', 404))
+exports.deleteSubmissions = asyncHandler(async (req, res, next) => {
+  const { submissionsIds } = req.body;
+
+  if (!submissionsIds || !Array.isArray(submissionsIds) || submissionsIds.length === 0) {
+    return next(new ApiError("يجب إرسال معرفات التسليمات للحذف", 400));
   }
-  if(submission.grade) {
-    return next(new ApiError('لا يمكن حذف التسليم الان', 404))
+
+  // Fetch submissions to check if they exist and ensure none are graded
+  const submissions = await Submission.find({ _id: { $in: submissionsIds } });
+
+  if (submissions.length === 0) {
+    return next(new ApiError("لم يتم العثور على أي تسليمات للحذف", 404));
   }
-  
-  await submission.deleteOne()
-  res.status(204).json()
-})
+
+  // Check if any submission has been graded
+  const gradedSubmissions = submissions.filter(submission => submission.grade !== undefined);
+  if (gradedSubmissions.length > 0) {
+    return next(new ApiError("لا يمكن حذف بعض التسليمات لأنها تحتوي على درجات", 400));
+  }
+
+  // Proceed with deletion
+  await Submission.deleteMany({ _id: { $in: submissionsIds } });
+
+  res.status(204).json({ message: "تم حذف التسليمات بنجاح" });
+});
