@@ -56,7 +56,6 @@ const {
   deleteSubmissions,
   getSubmissionsByActivity,
   updateSubmission, 
-  updateSubmissionGradeOrFeedback,
   getSpecificClass,
   
 } = require("../services/managerService");
@@ -148,7 +147,6 @@ router.route('/addSubmissionToActivity').post(addSubmissionToActivity)
 router.route("/addGradeToSubmission/:submission_id").put(addGradeToSubmission);
 router.route('/getSubmissionsByActivity/:activity_id').get(getSubmissionsByActivity)
 router.route('/updateSubmission/:submission_id').put(updateSubmission)
-router.route('/updateSubmissionGradeOrFeedback/:submission_id').put(updateSubmissionGradeOrFeedback)
 router.route('/deleteSubmissions').delete(deleteSubmissions)
 
 
