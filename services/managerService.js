@@ -15,6 +15,21 @@ const RecordedLectureReplies = require("../models/recordedLectureReplieModel");
 const Announcement = require("../models/announcementModel");
 const Activity = require('../models/activityModel')
 const Submission = require('../models/submissionModel')
+const multer = require("multer");
+const path = require("path");
+
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/activities/"); // تخزين الملفات في هذا المجلد
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // اسم الملف العشوائي
+  },
+});
+
+const upload = multer({ storage: storage });
+
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -1155,21 +1170,49 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
 
 
 
-exports.addActivity = asyncHandler(async (req,res,next) => {
+// exports.addActivity = asyncHandler(async (req,res,next) => {
+//   const activity = await Activity.create({
+//     classSubject_id: req.body.classSubject_id,
+//     available_at: req.body.available_at,
+//     deadline: req.body.deadline,
+//     description: req.body.description,
+//     file_url: req.body.file_url,
+//     full_grade: req.body.full_grade,
+//     title: req.body.title,
+//     activity_type: req.body.activity_type,
+//     posted_by: req.user._id
+//   })
+//   res.status(201).json(activity)
+// })
+
+exports.addActivity = asyncHandler(async (req, res, next) => {
+  // التأكد من رفع الملف
+  let fileUrl = null;
+  if (req.file) {
+    fileUrl = `${req.protocol}://${req.get("host")}/uploads/activities/${req.file.filename}`;
+  }
+
+  // إنشاء النشاط وتخزين رابط الملف إذا كان موجودًا
   const activity = await Activity.create({
-    classSubject_id: req.body.classSubject_id,
+    title: req.body.title,
+    description: req.body.description,
+    class_id: req.body.class_id,
+    subject_id: req.body.subject_id,
+    typeActivity: req.body.typeActivity,
+    full_grade: req.body.full_grade,
+    file_url: fileUrl, // حفظ الرابط
     available_at: req.body.available_at,
     deadline: req.body.deadline,
-    description: req.body.description,
-    file_url: req.body.file_url,
-    full_grade: req.body.full_grade,
-    title: req.body.title,
-    activity_type: req.body.activity_type,
-    posted_by: req.user._id
-  })
-  res.status(201).json(activity)
-})
+    posted_by: req.user._id,
+  });
 
+  res.status(201).json({
+    message: "تم إنشاء النشاط بنجاح",
+    data: activity,
+  });
+});
+
+exports.uploadActivityFile = upload.single("file");
 
 
 exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
