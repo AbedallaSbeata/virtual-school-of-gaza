@@ -1478,3 +1478,99 @@ exports.deleteSubmissions = asyncHandler(async (req, res, next) => {
 
   res.status(204).json({ message: "تم حذف التسليمات بنجاح" });
 });
+
+
+// getClassGrades
+exports.getClassGrades = asyncHandler(async (req, res, next) => {
+  const { class_id } = req.params;
+
+  if (!class_id) {
+    return next(new ApiError("Class ID is required", 400));
+  }
+
+  // Fetch students in the class
+  const students = await Student.find({ class_id });
+  const studentIdentityNumbers = students.map((student) => student.user_identity_number);
+  const users = await User.find({ identity_number: { $in: studentIdentityNumbers } })
+    .select("_id identity_number first_name second_name third_name last_name");
+
+  // Fetch related class subjects
+  const classSubjects = await ClassSubject.find({ class_id }).select("_id");
+  const classSubjectIds = classSubjects.map((cs) => cs._id);
+
+  // Fetch activities related to these class subjects
+  const activities = await Activity.find({ classSubject_id: { $in: classSubjectIds } })
+    .select("_id activity_type full_grade");
+  const activityIds = activities.map((a) => a._id);
+
+  // Fetch submissions for these activities
+  const submissions = await Submission.find({ activity_id: { $in: activityIds } })
+    .select("user_id activity_id grade");
+
+  // Categorize activities
+  let assignmentFullMark = 0, examFullMark = 0;
+  const activityMap = {};
+  activities.forEach(activity => {
+    activityMap[activity._id] = activity;
+    if (activity.activity_type === "Assignment") {
+      assignmentFullMark += activity.full_grade;
+    } else if (activity.activity_type === "Exam") {
+      examFullMark += activity.full_grade;
+    }
+  });
+
+  // Prepare response data
+  const studentDataMap = {};
+  students.forEach(student => {
+    studentDataMap[student.user_identity_number] = {
+      studentData: users.find(user => user.identity_number === student.user_identity_number) || {},
+      grades_data: {
+        assignments_totalGrades: 0,
+        Exams_totalGrades: 0,
+      },
+      activity_grades: {},
+    };
+  });
+
+  // Process submissions
+  submissions.forEach(submission => {
+    const student = studentDataMap[submission.user_id];
+    if (student && activityMap[submission.activity_id]) {
+      const activityType = activityMap[submission.activity_id].activity_type;
+      if (activityType === "Assignment") {
+        student.grades_data.assignments_totalGrades += submission.grade || 0;
+      } else if (activityType === "Exam") {
+        student.grades_data.Exams_totalGrades += submission.grade || 0;
+      }
+      student.activity_grades[submission.activity_id] = true;
+    }
+  });
+
+  // Calculate graded and ungraded activities
+  let gradedActivities = 0, ungradedActivities = 0;
+  activities.forEach(activity => {
+    const hasGrades = submissions.some(sub => sub.activity_id.toString() === activity._id.toString());
+    if (hasGrades) {
+      gradedActivities++;
+    } else {
+      ungradedActivities++;
+    }
+  });
+
+  // Finalize response
+  const response = Object.values(studentDataMap).map(student => ({
+    ...student,
+    grades_data: {
+      ...student.grades_data,
+      assignments_fullMark: assignmentFullMark,
+      Exams_fullMark: examFullMark,
+    },
+    activities_stats: {
+      gradedActivities_number: gradedActivities,
+      ungradedActivities_number: ungradedActivities,
+    }
+  }));
+
+  res.status(200).json(response);
+});
+
