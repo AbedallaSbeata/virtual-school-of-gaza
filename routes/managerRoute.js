@@ -149,7 +149,7 @@ router.route("/addGradeToSubmission/:submission_id").put(addGradeToSubmission);
 router.route('/getSubmissionsByActivity/:activity_id').get(getSubmissionsByActivity);
 router.route('/updateSubmission/:submission_id').put(updateSubmission);
 router.route('/deleteSubmissions').delete(deleteSubmissions);
-router.route('/getClassGrades/:classId').get(getClassGrades);
+router.route('/getClassGrades/:class_id').get(getClassGrades);
 
 
 module.exports = router;
