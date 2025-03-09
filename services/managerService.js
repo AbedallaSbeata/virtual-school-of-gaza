@@ -1261,14 +1261,17 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
     console.log("✅ ClassSubjects المسترجعة:", classSubjects);
 
     // ✅ استخراج معرفات المواد الدراسية المرتبطة بالصف
-    const classSubjectIds = classSubjects.map(subject => subject._id);
+    const classSubjectIds = classSubjects.map(subject => subject._id.toString());
 
     console.log("📌 جاري البحث عن الأنشطة باستخدام classSubjectIds:", classSubjectIds);
 
     // ✅ جلب الأنشطة بناءً على `classSubject_id`
-    const activities = await Activity.find({ classSubject_id: { $in: classSubjectIds } });
+    const activities = await Activity.find({
+      classSubject_id: { $in: classSubjectIds.map(id => new mongoose.Types.ObjectId(id)) }
+    });
 
     if (!activities || activities.length === 0) {
+      console.log("❌ لم يتم العثور على أنشطة، تحقق من أن `classSubject_id` في `Activity` متوافق مع `ClassSubject._id`.");
       return next(new ApiError("❌ لا يوجد أنشطة لهذا الصف", 404));
     }
 
@@ -1360,6 +1363,7 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
     res.status(500).json({ status: "error", message: error.message });
   }
 });
+
 
 
 
