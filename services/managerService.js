@@ -1410,26 +1410,42 @@ exports.deleteActivity = asyncHandler(async (req,res,next) => {
 // })
 
 exports.addSubmissionToActivity = asyncHandler(async (req, res, next) => {
-  let fileUrl = null;
-  if (req.file) {
-    fileUrl = `${req.protocol}://${req.get("host")}/uploads/submissions/${req.file.filename}`;
+  try {
+    console.log("📌 بيانات الطلب:", req.body);
+    console.log("📌 الملف المرفوع:", req.file);
+
+    let fileUrl = null;
+    if (req.file) {
+      fileUrl = `${req.protocol}://${req.get("host")}/uploads/submissions/${req.file.filename}`;
+    }
+
+    if (!req.body.user_identity_number || !req.body.activity_id || !req.body.classSubject_id) {
+      return res.status(400).json({ status: "error", message: "يرجى إرسال جميع البيانات المطلوبة" });
+    }
+
+    const submission = await Submission.create({
+      user_identity_number: req.body.user_identity_number,
+      activity_id: req.body.activity_id,
+      classSubject_id: req.body.classSubject_id,
+      file_url: fileUrl, // ✅ حفظ رابط الملف
+      grade: req.body.grade || null, // تأكد من أنها قيمة صحيحة
+      feedback: req.body.feedback || "",
+      gradedBy: req.body.gradedBy || null,
+    });
+
+    res.status(201).json({
+      status: "success",
+      message: "تم تسليم النشاط بنجاح",
+      data: submission,
+    });
+
+  } catch (error) {
+    console.error("❌ خطأ في addSubmission:", error);
+    res.status(500).json({ status: "error", message: error.message });
   }
-
-  const submission = await Submission.create({
-    user_identity_number: req.body.user_identity_number,
-    activity_id: req.body.activity_id,
-    classSubject_id: req.body.classSubject_id,
-    file_url: fileUrl, // ✅ حفظ رابط الملف
-    grade: req.body.grade,
-    feedback: req.body.feedback,
-    gradedBy: req.body.gradedBy,
-  });
-
-  res.status(201).json({
-    message: "تم تسليم النشاط بنجاح",
-    data: submission,
-  });
 });
+
+
 exports.addGradeToSubmission = asyncHandler(async (req, res, next) => {
   const submission = await Submission.findById(req.params.submission_id);
 
