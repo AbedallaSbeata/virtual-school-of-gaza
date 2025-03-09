@@ -1248,55 +1248,58 @@ exports.addActivity = asyncHandler(async (req, res, next) => {
 exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
   const { class_id } = req.params;
 
+  // ✅ جلب جميع المواد الخاصة بالصف
   const classSubjects = await ClassSubject.find({ class_id });
 
   if (classSubjects.length === 0) {
-    return next(new ApiError("لا يوجد مواد دراسية لهذا الصف", 404));
+    return next(new ApiError("❌ لا يوجد مواد دراسية لهذا الصف", 404));
   }
 
+  // ✅ جلب الأنشطة بناءً على `classSubject_id`
   const classSubjectIds = classSubjects.map(subject => subject._id);
   const activities = await Activity.find({ classSubject_id: { $in: classSubjectIds } });
 
+  // ✅ التأكد من وجود أنشطة
   if (activities.length === 0) {
-    return next(new ApiError("لا يوجد أنشطة لهذا الصف", 404));
+    return next(new ApiError("❌ لا يوجد أنشطة لهذا الصف", 404));
   }
 
-  // Fetch the number of students in the class from the Student collection
+  // ✅ حساب عدد الطلاب في الصف
   const studentsCount = await Student.countDocuments({ class_id });
 
-  // Fetch related subject names
+  // ✅ جلب أسماء المواد المرتبطة بالأنشطة
   const subjectIds = classSubjects.map(cs => cs.subject_id);
   const subjects = await Subject.find({ _id: { $in: subjectIds } });
 
-  // Map subject IDs to their names
+  // 🟢 **تحسين: إنشاء خريطة لربط `subject_id` بـ `subject_name`**
   const subjectMap = {};
   subjects.forEach(subject => {
-    subjectMap[subject._id] = subject.subject_name;
+    subjectMap[subject._id.toString()] = subject.subject_name;
   });
 
-  // Fetch submissions count for each activity
+  // ✅ جلب عدد التسليمات لكل نشاط
   const activityIds = activities.map(activity => activity._id);
   const submissions = await Submission.aggregate([
     { $match: { activity_id: { $in: activityIds } } },
     { $group: { _id: "$activity_id", count: { $sum: 1 } } }
   ]);
 
-  // Map activity IDs to their submission count
+  // 🟢 **تحسين: إنشاء خريطة لربط `activity_id` بـ `submissions_count`**
   const submissionMap = {};
   submissions.forEach(sub => {
-    submissionMap[sub._id] = sub.count;
+    submissionMap[sub._id.toString()] = sub.count;
   });
 
-  // Fetch teacher details (name and profile image)
+  // ✅ جلب بيانات المعلمين الذين نشروا الأنشطة
   const teacherIds = activities.map(activity => activity.posted_by);
   const teachers = await User.find({ _id: { $in: teacherIds } }).select(
     "first_name second_name third_name last_name profile_image"
   );
 
-  // Map teacher IDs to their details
+  // 🟢 **تحسين: إنشاء خريطة لربط `teacher_id` بـ `تفاصيل المعلم`**
   const teacherMap = {};
   teachers.forEach(teacher => {
-    teacherMap[teacher._id] = {
+    teacherMap[teacher._id.toString()] = {
       first_name: teacher.first_name,
       second_name: teacher.second_name,
       third_name: teacher.third_name,
@@ -1305,7 +1308,7 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
     };
   });
 
-  // Calculate activity status and prepare the response
+  // ✅ تحديد حالة النشاط (`upcoming`, `active`, `finished`)
   const currentTime = new Date();
   const response = activities.map(activity => {
     let status;
@@ -1317,13 +1320,16 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
       status = "finished";
     }
 
+    // ✅ إيجاد `subject_id` المرتبط بالنشاط
+    const classSubject = classSubjects.find(cs => cs._id.equals(activity.classSubject_id));
+
     return {
       ...activity._doc,
       activity_status: status,
-      classSubject_name: subjectMap[classSubjects.find(cs => cs._id.equals(activity.classSubject_id))?.subject_id] || "غير معروف",
-      submissions_count: submissionMap[activity._id] || 0,
-      students_count: studentsCount, // Added class students count here
-      posted_by_details: teacherMap[activity.posted_by] || {
+      classSubject_name: subjectMap[classSubject?.subject_id.toString()] || "غير معروف",
+      submissions_count: submissionMap[activity._id.toString()] || 0,
+      students_count: studentsCount, // ✅ عدد الطلاب في الصف
+      posted_by_details: teacherMap[activity.posted_by.toString()] || {
         first_name: "غير معروف",
         second_name: "",
         third_name: "",
@@ -1335,6 +1341,7 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
 
   res.status(200).json(response);
 });
+
 
 
 
