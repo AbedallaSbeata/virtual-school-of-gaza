@@ -1246,100 +1246,119 @@ exports.addActivity = asyncHandler(async (req, res, next) => {
 
 
 exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
-  const { class_id } = req.params;
+  try {
+    const { class_id } = req.params;
 
-  // ✅ جلب جميع المواد الخاصة بالصف
-  const classSubjects = await ClassSubject.find({ class_id });
+    console.log("📌 جاري البحث عن ClassSubjects لهذا الصف:", class_id);
 
-  if (classSubjects.length === 0) {
-    return next(new ApiError("❌ لا يوجد مواد دراسية لهذا الصف", 404));
-  }
+    // ✅ جلب جميع المواد الخاصة بالصف
+    const classSubjects = await ClassSubject.find({ class_id }).populate("subject_id");
 
-  // ✅ جلب الأنشطة بناءً على `classSubject_id`
-  const classSubjectIds = classSubjects.map(subject => subject._id);
-  const activities = await Activity.find({ classSubject_id: { $in: classSubjectIds } });
-
-  // ✅ التأكد من وجود أنشطة
-  if (activities.length === 0) {
-    return next(new ApiError("❌ لا يوجد أنشطة لهذا الصف", 404));
-  }
-
-  // ✅ حساب عدد الطلاب في الصف
-  const studentsCount = await Student.countDocuments({ class_id });
-
-  // ✅ جلب أسماء المواد المرتبطة بالأنشطة
-  const subjectIds = classSubjects.map(cs => cs.subject_id);
-  const subjects = await Subject.find({ _id: { $in: subjectIds } });
-
-  // 🟢 **تحسين: إنشاء خريطة لربط `subject_id` بـ `subject_name`**
-  const subjectMap = {};
-  subjects.forEach(subject => {
-    subjectMap[subject._id.toString()] = subject.subject_name;
-  });
-
-  // ✅ جلب عدد التسليمات لكل نشاط
-  const activityIds = activities.map(activity => activity._id);
-  const submissions = await Submission.aggregate([
-    { $match: { activity_id: { $in: activityIds } } },
-    { $group: { _id: "$activity_id", count: { $sum: 1 } } }
-  ]);
-
-  // 🟢 **تحسين: إنشاء خريطة لربط `activity_id` بـ `submissions_count`**
-  const submissionMap = {};
-  submissions.forEach(sub => {
-    submissionMap[sub._id.toString()] = sub.count;
-  });
-
-  // ✅ جلب بيانات المعلمين الذين نشروا الأنشطة
-  const teacherIds = activities.map(activity => activity.posted_by);
-  const teachers = await User.find({ _id: { $in: teacherIds } }).select(
-    "first_name second_name third_name last_name profile_image"
-  );
-
-  // 🟢 **تحسين: إنشاء خريطة لربط `teacher_id` بـ `تفاصيل المعلم`**
-  const teacherMap = {};
-  teachers.forEach(teacher => {
-    teacherMap[teacher._id.toString()] = {
-      first_name: teacher.first_name,
-      second_name: teacher.second_name,
-      third_name: teacher.third_name,
-      last_name: teacher.last_name,
-      profile_image: teacher.profile_image,
-    };
-  });
-
-  // ✅ تحديد حالة النشاط (`upcoming`, `active`, `finished`)
-  const currentTime = new Date();
-  const response = activities.map(activity => {
-    let status;
-    if (currentTime < activity.available_at) {
-      status = "upcoming";
-    } else if (currentTime >= activity.available_at && currentTime <= activity.deadline) {
-      status = "active";
-    } else {
-      status = "finished";
+    if (!classSubjects || classSubjects.length === 0) {
+      return next(new ApiError("❌ لا يوجد مواد دراسية لهذا الصف", 404));
     }
 
-    // ✅ إيجاد `subject_id` المرتبط بالنشاط
-    const classSubject = classSubjects.find(cs => cs._id.equals(activity.classSubject_id));
+    console.log("✅ ClassSubjects المسترجعة:", classSubjects);
 
-    return {
-      ...activity._doc,
-      activity_status: status,
-      classSubject_name: subjectMap[classSubject?.subject_id.toString()] || "غير معروف",
-      submissions_count: submissionMap[activity._id.toString()] || 0,
-      students_count: studentsCount, // ✅ عدد الطلاب في الصف
-      posted_by_details: teacherMap[activity.posted_by.toString()] || {
-        first_name: "غير معروف",
-        second_name: "",
-        third_name: "",
-        last_name: "",
-        profile_image: null,
-      },
-    };
-  });
+    // ✅ استخراج معرفات المواد الدراسية المرتبطة بالصف
+    const classSubjectIds = classSubjects.map(subject => subject._id);
 
-  res.status(200).json(response);
+    console.log("📌 جاري البحث عن الأنشطة باستخدام classSubjectIds:", classSubjectIds);
+
+    // ✅ جلب الأنشطة بناءً على `classSubject_id`
+    const activities = await Activity.find({ classSubject_id: { $in: classSubjectIds } });
+
+    if (!activities || activities.length === 0) {
+      return next(new ApiError("❌ لا يوجد أنشطة لهذا الصف", 404));
+    }
+
+    console.log("✅ Activities المسترجعة:", activities);
+
+    // ✅ حساب عدد الطلاب في الصف
+    const studentsCount = await Student.countDocuments({ class_id });
+
+    console.log("📌 عدد الطلاب في الصف:", studentsCount);
+
+    // ✅ إنشاء خريطة لربط `subject_id` بـ `subject_name`
+    const subjectMap = {};
+    classSubjects.forEach(cs => {
+      if (cs.subject_id) {
+        subjectMap[cs._id.toString()] = cs.subject_id.subject_name;
+      }
+    });
+
+    console.log("📌 Subject Map:", subjectMap);
+
+    // ✅ جلب عدد التسليمات لكل نشاط
+    const activityIds = activities.map(activity => activity._id);
+    const submissions = await Submission.aggregate([
+      { $match: { activity_id: { $in: activityIds } } },
+      { $group: { _id: "$activity_id", count: { $sum: 1 } } }
+    ]);
+
+    // ✅ إنشاء خريطة لربط `activity_id` بـ `submissions_count`
+    const submissionMap = {};
+    submissions.forEach(sub => {
+      submissionMap[sub._id.toString()] = sub.count;
+    });
+
+    console.log("📌 Submission Map:", submissionMap);
+
+    // ✅ جلب بيانات المعلمين الذين نشروا الأنشطة
+    const teacherIds = activities.map(activity => activity.posted_by);
+    const teachers = await User.find({ _id: { $in: teacherIds } }).select(
+      "first_name second_name third_name last_name profile_image"
+    );
+
+    // ✅ إنشاء خريطة لربط `teacher_id` بـ `تفاصيل المعلم`
+    const teacherMap = {};
+    teachers.forEach(teacher => {
+      teacherMap[teacher._id.toString()] = {
+        first_name: teacher.first_name,
+        second_name: teacher.second_name,
+        third_name: teacher.third_name,
+        last_name: teacher.last_name,
+        profile_image: teacher.profile_image,
+      };
+    });
+
+    console.log("📌 Teacher Map:", teacherMap);
+
+    // ✅ تحديد حالة النشاط (`upcoming`, `active`, `finished`)
+    const currentTime = new Date();
+    const response = activities.map(activity => {
+      let status;
+      if (currentTime < activity.available_at) {
+        status = "upcoming";
+      } else if (currentTime >= activity.available_at && currentTime <= activity.deadline) {
+        status = "active";
+      } else {
+        status = "finished";
+      }
+
+      return {
+        ...activity._doc,
+        activity_status: status,
+        classSubject_name: subjectMap[activity.classSubject_id.toString()] || "غير معروف",
+        submissions_count: submissionMap[activity._id.toString()] || 0,
+        students_count: studentsCount, // ✅ عدد الطلاب في الصف
+        posted_by_details: teacherMap[activity.posted_by.toString()] || {
+          first_name: "غير معروف",
+          second_name: "",
+          third_name: "",
+          last_name: "",
+          profile_image: null,
+        },
+      };
+    });
+
+    console.log("📌 الأنشطة المسترجعة:", response);
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("❌ خطأ في getActivitiesByClass:", error);
+    res.status(500).json({ status: "error", message: error.message });
+  }
 });
 
 
