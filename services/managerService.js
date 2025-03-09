@@ -1053,7 +1053,6 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ status: "success", students: studentsData });
   } catch (error) {
-    console.error("❌ Error in getSchoolStudents:", error);
     res.status(500).json({ status: "error", message: "Internal server error!" });
   }
 });
@@ -1147,7 +1146,6 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ status: "success", staff: staffData });
   } catch (error) {
-    console.error("❌ Error in getSchoolStaff:", error);
     res
       .status(500)
       .json({ status: "error", message: "Internal server error!" });
@@ -1499,7 +1497,6 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
     const users = await User.find({ identity_number: { $in: studentIdentityNumbers } })
       .select("_id identity_number first_name second_name third_name last_name");
 
-    console.log("Students and Users fetched successfully");
 
     // Fetch related class subjects
     const classSubjects = await ClassSubject.find({ class_id }).select("_id");
@@ -1513,13 +1510,11 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
       .select("_id activity_type full_grade");
     const activityIds = activities.map((a) => a._id.toString());
 
-    console.log("Activities fetched successfully", activities.length);
 
     // Fetch submissions for these activities
     const submissions = await Submission.find({ activity_id: { $in: activityIds } })
       .select("user_id activity_id grade");
 
-    console.log("Submissions fetched successfully", submissions.length);
 
     // Categorize activities
     let assignmentFullMark = 0, examFullMark = 0;
@@ -1550,7 +1545,6 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
     submissions.forEach(submission => {
       const student = studentDataMap[submission.user_id];
       if (!student) {
-        console.warn("Student not found for submission", submission);
         return;
       }
       const activity = activityMap[submission.activity_id.toString()];
@@ -1593,7 +1587,6 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
 
     res.status(200).json(response);
   } catch (error) {
-    console.error("Error in getClassGrades:", error);
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 });
