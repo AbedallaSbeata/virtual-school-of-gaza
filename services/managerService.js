@@ -1555,7 +1555,6 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
       }
       const activity = activityMap[submission.activity_id.toString()];
       if (!activity) {
-        console.warn("Activity not found for submission", submission);
         return;
       }
 
