@@ -20,10 +20,13 @@ const path = require("path");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    let uploadPath = "uploads/activities/"; // افتراضي للنشاطات
-    if (req.originalUrl.includes("submission")) {
-      uploadPath = "uploads/submissions/"; // تغيير المسار للسبمشنز
+    let uploadPath = "uploads/activities/"; // الافتراضي لنشاطات المعلمين
+
+    // ✅ إذا كان المسار يخص `Submission`، غيّر مجلد التخزين
+    if (req.route.path.includes("addSubmission")) {
+      uploadPath = "uploads/submissions/";
     }
+
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
@@ -35,6 +38,7 @@ const upload = multer({ storage: storage });
 
 // ✅ Middleware لمعالجة الملفات
 exports.uploadFile = upload.single("file");
+
 
 
 
