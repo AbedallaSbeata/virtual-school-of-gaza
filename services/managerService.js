@@ -21,7 +21,7 @@ const path = require("path");
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     let uploadPath = "uploads/activities/"; // افتراضي للنشاطات
-    if (req.baseUrl.includes("submission")) {
+    if (req.originalUrl.includes("submission")) {
       uploadPath = "uploads/submissions/"; // تغيير المسار للسبمشنز
     }
     cb(null, uploadPath);
@@ -35,6 +35,8 @@ const upload = multer({ storage: storage });
 
 // ✅ Middleware لمعالجة الملفات
 exports.uploadFile = upload.single("file");
+
+
 
 
 
@@ -1194,29 +1196,49 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
 // })
 
 exports.addActivity = asyncHandler(async (req, res, next) => {
-  let fileUrl = null;
-  if (req.file) {
-    fileUrl = `${req.protocol}://${req.get("host")}/uploads/activities/${req.file.filename}`;
+  try {
+    console.log("📌 بيانات الطلب:", req.body);
+    console.log("📌 الملف المرفوع:", req.file);
+
+    // ✅ التحقق من وجود البيانات الأساسية
+    if (!req.body.title || !req.body.description) {
+      return res.status(400).json({
+        status: "error",
+        message: "يرجى إرسال title و description مع البيانات",
+      });
+    }
+
+    // ✅ حفظ رابط الملف إذا تم رفعه
+    let fileUrl = null;
+    if (req.file) {
+      fileUrl = `${req.protocol}://${req.get("host")}/uploads/activities/${req.file.filename}`;
+    }
+
+    const activity = await Activity.create({
+      title: req.body.title,
+      description: req.body.description,
+      class_id: req.body.class_id || null,
+      subject_id: req.body.subject_id || null,
+      typeActivity: req.body.typeActivity || "General",
+      full_grade: req.body.full_grade || 100,
+      file_url: fileUrl, // ✅ حفظ رابط الملف
+      available_at: req.body.available_at || new Date(),
+      deadline: req.body.deadline || null,
+      posted_by: req.user ? req.user._id : null,
+    });
+
+    res.status(201).json({
+      status: "success",
+      message: "تم إنشاء النشاط بنجاح",
+      data: activity,
+    });
+
+  } catch (error) {
+    console.error("❌ خطأ في addActivity:", error);
+    res.status(500).json({ status: "error", message: error.message });
   }
-
-  const activity = await Activity.create({
-    title: req.body.title,
-    description: req.body.description,
-    class_id: req.body.class_id,
-    subject_id: req.body.subject_id,
-    typeActivity: req.body.typeActivity,
-    full_grade: req.body.full_grade,
-    file_url: fileUrl, // ✅ حفظ رابط الملف
-    available_at: req.body.available_at,
-    deadline: req.body.deadline,
-    posted_by: req.user._id,
-  });
-
-  res.status(201).json({
-    message: "تم إنشاء النشاط بنجاح",
-    data: activity,
-  });
 });
+
 
 
 exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
@@ -1401,20 +1423,44 @@ exports.deleteActivity = asyncHandler(async (req,res,next) => {
   res.status(204).json()
 })
 
+exports.addSubmissionToActivity = asyncHandler(async (req, res, next) => {
+  try {
+    console.log("📌 بيانات الطلب:", req.body);
+    console.log("📌 الملف المرفوع:", req.file);
 
-exports.addSubmissionToActivity = asyncHandler(async (req,res,next) => {
-  let fileUrl = null;
-  if (req.file) {
-    fileUrl = `${req.protocol}://${req.get("host")}/uploads/submissions/${req.file.filename}`;
+    // ✅ التحقق من وجود جميع البيانات المطلوبة
+    if (!req.body.activity_id || !req.body.content) {
+      return res.status(400).json({
+        status: "error",
+        message: "يرجى إرسال activity_id و content مع الملف",
+      });
+    }
+
+    // ✅ التحقق من رفع الملف بنجاح
+    let fileUrl = null;
+    if (req.file) {
+      fileUrl = `${req.protocol}://${req.get("host")}/uploads/submissions/${req.file.filename}`;
+    } else {
+      return res.status(400).json({ status: "error", message: "يرجى رفع الملف المطلوب" });
+    }
+
+    const submission = await Submission.create({
+      activity_id: req.body.activity_id,
+      content: req.body.content,
+      file_url: fileUrl, // ✅ حفظ رابط الملف
+    });
+
+    res.status(201).json({
+      status: "success",
+      message: "تم تسليم النشاط بنجاح",
+      data: submission,
+    });
+
+  } catch (error) {
+    console.error("❌ خطأ في addSubmission:", error);
+    res.status(500).json({ status: "error", message: error.message });
   }
-  const submission = await Submission.create({
-   activity_id: req.body.activity_id,
-   content: req.body.content,
-   file_url: fileUrl,
-   user_id: req.user._id   
-  })
-  res.status(201).json(submission)
-})
+});
 
 
 
