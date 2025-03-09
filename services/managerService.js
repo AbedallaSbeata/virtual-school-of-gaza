@@ -21,14 +21,19 @@ const path = require("path");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/activities/"); // تخزين الملفات في هذا المجلد
+    let uploadPath = "uploads/activities/"; // افتراضي للنشاطات
+    if (req.baseUrl.includes("submissions")) {
+      uploadPath = "uploads/submissions/"; // إذا كان المسار للسبمشنز
+    }
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)); // اسم الملف العشوائي
+    cb(null, Date.now() + path.extname(file.originalname)); // إنشاء اسم عشوائي للملف
   },
 });
-
 const upload = multer({ storage: storage });
+exports.uploadFile = upload.single("file");
+
 
 
 exports.addUser = asyncHandler(async (req, res, next) => {
@@ -1186,13 +1191,11 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
 // })
 
 exports.addActivity = asyncHandler(async (req, res, next) => {
-  // التأكد من رفع الملف
   let fileUrl = null;
   if (req.file) {
     fileUrl = `${req.protocol}://${req.get("host")}/uploads/activities/${req.file.filename}`;
   }
 
-  // إنشاء النشاط وتخزين رابط الملف إذا كان موجودًا
   const activity = await Activity.create({
     title: req.body.title,
     description: req.body.description,
@@ -1200,7 +1203,7 @@ exports.addActivity = asyncHandler(async (req, res, next) => {
     subject_id: req.body.subject_id,
     typeActivity: req.body.typeActivity,
     full_grade: req.body.full_grade,
-    file_url: fileUrl, // حفظ الرابط
+    file_url: fileUrl, // ✅ حفظ رابط الملف
     available_at: req.body.available_at,
     deadline: req.body.deadline,
     posted_by: req.user._id,
@@ -1211,8 +1214,6 @@ exports.addActivity = asyncHandler(async (req, res, next) => {
     data: activity,
   });
 });
-
-exports.uploadActivityFile = upload.single("file");
 
 
 exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
@@ -1398,16 +1399,37 @@ exports.deleteActivity = asyncHandler(async (req,res,next) => {
 })
 
 
-exports.addSubmissionToActivity = asyncHandler(async (req,res,next) => {
-  const submission = await Submission.create({
-   activity_id: req.body.activity_id,
-   content: req.body.content,
-   file_url: req.body.file_url,
-   user_id: req.user._id   
-  })
-  res.status(201).json(submission)
-})
+// exports.addSubmissionToActivity = asyncHandler(async (req,res,next) => {
+//   const submission = await Submission.create({
+//    activity_id: req.body.activity_id,
+//    content: req.body.content,
+//    file_url: req.body.file_url,
+//    user_id: req.user._id   
+//   })
+//   res.status(201).json(submission)
+// })
 
+exports.addSubmissionToActivity = asyncHandler(async (req, res, next) => {
+  let fileUrl = null;
+  if (req.file) {
+    fileUrl = `${req.protocol}://${req.get("host")}/uploads/submissions/${req.file.filename}`;
+  }
+
+  const submission = await Submission.create({
+    user_identity_number: req.body.user_identity_number,
+    activity_id: req.body.activity_id,
+    classSubject_id: req.body.classSubject_id,
+    file_url: fileUrl, // ✅ حفظ رابط الملف
+    grade: req.body.grade,
+    feedback: req.body.feedback,
+    gradedBy: req.body.gradedBy,
+  });
+
+  res.status(201).json({
+    message: "تم تسليم النشاط بنجاح",
+    data: submission,
+  });
+});
 exports.addGradeToSubmission = asyncHandler(async (req, res, next) => {
   const submission = await Submission.findById(req.params.submission_id);
 

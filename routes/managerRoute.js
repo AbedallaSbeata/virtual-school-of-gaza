@@ -47,7 +47,6 @@ const {
   getSchoolStudents,
   getSchoolStaff,
   addActivity,
-  uploadActivityFile,
   getActivitiesByClass,
   getActivityById,
   updateActivity,
@@ -59,6 +58,7 @@ const {
   updateSubmission, 
   getSpecificClass,
   getClassGrades,
+  uploadFile
   
 } = require("../services/managerService");
 const {
@@ -140,12 +140,12 @@ router.route("/updateAnnouncement/:announcement_id").put(updateAnnouncement);
 router.route("/deleteAnnouncements").delete(deleteAnnouncements);
 router.route('/getSchoolStudents').get(getSchoolStudents)
 router.route('/getSchoolStaff').get(getSchoolStaff)
-router.route("/addActivity").post(uploadActivityFile, addActivity);
+router.route("/addActivity").post(uploadFile, addActivity);
 router.route('/getActivitiesByClass/:class_id').get(getActivitiesByClass);
 router.route('/getActivityById/:activity_id').get(getActivityById);
 router.route("/updateActivity/:activity_id").put(updateActivity);
 router.route("/deleteActivity/:activity_id").delete(deleteActivity);
-router.route('/addSubmissionToActivity').post(addSubmissionToActivity)
+router.route('/addSubmissionToActivity').post(uploadFile, addSubmissionToActivity)
 router.route("/addGradeToSubmission/:submission_id").put(addGradeToSubmission);
 router.route('/getSubmissionsByActivity/:activity_id').get(getSubmissionsByActivity);
 router.route('/updateSubmission/:submission_id').put(updateSubmission);
