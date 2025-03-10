@@ -1647,3 +1647,77 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
 });
 
 
+
+exports.getStudentGrades = asyncHandler(async (req, res, next) => {
+  try {
+    const { student_id, class_id } = req.params;
+
+    if (!student_id || !class_id) {
+      return next(new ApiError("Student ID and Class ID are required", 400));
+    }
+
+    // Fetch student user data
+    const user = await User.findById(student_id).select(
+      "_id identity_number first_name second_name third_name last_name profile_image"
+    );
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const classSubjects = await ClassSubject.find({ class_id }).populate("subject_id", "subject_name");
+    const classSubjectIds = classSubjects.map(cs => cs._id);
+
+    const activities = await Activity.find({ classSubject_id: { $in: classSubjects.map(cs => cs._id) } });
+
+    const submissions = await Submission.find({
+      user_id: student_id,
+      activity_id: { $in: activities.map(a => a._id) },
+    });
+
+    const submissionsGrouped = [];
+    for (const classSubject of classSubjects) {
+      const relatedActivities = activities.filter(activity => activity.classSubject_id.toString() === classSubject._id.toString());
+      const classSubjectSubmissions = relatedActivities.map(activity => {
+        const submission = submissions.find(sub => sub.activity_id.toString() === activity._id.toString());
+        return {
+          activity_id: activity._id,
+          classSubject_id: classSubject._id,
+          classSubject_name: (await Subject.findById(classSubject.subject_id)).subject_name,
+          activity_title: activity.title,
+          submission_file_url: submission?.file_url || "",
+          submission_content: submission?.content || "",
+          submission_createdAt: submission?.createdAt || null,
+          submission_updatedAt: submission?.updatedAt || "",
+          submission_feedback: submission?.feedback || "",
+          submission_grade: submission?.grade || null,
+          submission_createdAt: submission?.createdAt || "",
+          submission_updatedAt: submission?.updatedAt || "",
+      };
+      submissionsGrouped.push({
+        classSubject_id: classSubject._id,
+        classSubject_name: (await Subject.findById(classSubject.subject_id)).subject_name,
+        classSubject_activities: relatedActivities,
+      });
+    }
+
+    const gradedSubmissions = submissions.filter(sub => sub.grade != null);
+    const ungradedSubmissions = submissions.filter(sub => sub.grade === undefined);
+
+    const totalGrades = submissions.reduce((sum, sub) => sum + (sub.grade || 0), 0);
+
+    const totalFullMarks = activities.reduce((sum, activity) => sum + activity.full_grade, 0);
+
+    res.status(200).json({
+      user,
+      submissions: submissionsGrouped,
+      stats: {
+        total_grades: totalGrades,
+        total_fullmarks: totalFullMarks,
+        graded_submissions: submissions.filter(sub => sub.grade != null).length,
+        ungraded_submissions: submissions.filter(sub => !sub.grade).length,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+});
