@@ -1705,8 +1705,8 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
     });
 
     const submissions = await Submission.find({
-      user_id: mongoose.Types.ObjectId(student_id),
-      activity_id: { $in: activities.map(a => mongoose.Types.ObjectId(a._id)) },
+      user_id: student_id,
+      activity_id: { $in: activities.map(a => a._id) },
     }).lean();
 
     const submissionsGrouped = classSubjects.map(classSubject => {
