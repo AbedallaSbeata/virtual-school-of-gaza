@@ -1679,44 +1679,59 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
   }
 });
 
+
+
 exports.getStudentGrades = asyncHandler(async (req, res, next) => {
   try {
-    const { student_id, class_id } = req.body;
+    const { student_id } = req.body;
 
-    if (!student_id || !class_id) {
-      return next(new ApiError("Student ID and Class ID are required", 400));
+    if (!student_id) {
+      return next(new ApiError("Student ID is required", 400));
     }
 
+    // 1. Get user basic info
     const user = await User.findById(student_id).select(
       "identity_number first_name second_name third_name last_name profile_image"
     );
 
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return next(new ApiError("User not found", 404));
     }
 
-    const classSubjects = await ClassSubject.find({ class_id }).populate(
-      "subject_id",
-      "subject_name"
-    );
+    // 2. Get student's class from Student model
+    const student = await Student.findOne({ 
+      user_identity_number: user.identity_number 
+    }).populate("class_id");
 
+    if (!student || !student.class_id) {
+      return next(new ApiError("Student class not found", 404));
+    }
+
+    // 3. Get all class subjects for student's class
+    const classSubjects = await ClassSubject.find({ 
+      class_id: student.class_id._id 
+    }).populate("subject_id", "subject_name");
+
+    // 4. Get all activities for these class subjects
     const activities = await Activity.find({
       classSubject_id: { $in: classSubjects.map(cs => cs._id) },
     });
 
+    // 5. Get all submissions for these activities
     const submissions = await Submission.find({
       user_id: student_id,
       activity_id: { $in: activities.map(a => a._id) },
     }).lean();
 
+    // 6. Group submissions by class subject
     const submissionsGrouped = classSubjects.map(classSubject => {
-      const relatedActivities = activities.filter(
-        activity => activity.classSubject_id.toString() === classSubject._id.toString()
+      const relatedActivities = activities.filter(activity => 
+        activity.classSubject_id.toString() === classSubject._id.toString()
       );
 
       const classSubjectSubmissions = relatedActivities.map(activity => {
-        const submission = submissions.find(
-          sub => sub.activity_id.toString() === activity._id.toString()
+        const submission = submissions.find(sub => 
+          sub.activity_id.toString() === activity._id.toString()
         );
 
         return {
@@ -1726,12 +1741,10 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
           activity_file_url: activity.file_url,
           activity_available_at: activity.available_at,
           activity_deadline: activity.deadline,
-          activity_activity_status:
-            new Date() < activity.available_at
-              ? "upcoming"
-              : new Date() > activity.deadline
-              ? "finished"
-              : "active",
+          activity_activity_status: getActivityStatus(
+            activity.available_at,
+            activity.deadline
+          ),
           submission_id: submission?._id || null,
           submission_file_url: submission?.file_url || null,
           submission_content: submission?.content || null,
@@ -1749,18 +1762,17 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
       };
     });
 
+    // 7. Calculate statistics
     const gradedSubmissions = submissions.filter(sub => sub.grade != null);
     const ungradedSubmissions = submissions.filter(sub => sub.grade == null);
-
-    const totalGrades = gradedSubmissions.reduce((sum, sub) => sum + sub.grade, 0);
+    
+    const totalGrades = gradedSubmissions.reduce((sum, sub) => sum + (sub.grade || 0), 0);
     const totalFullMarks = activities.reduce((sum, act) => sum + act.full_grade, 0);
-
+    
     const submittedActivities = submissions.length;
-
-    const unsubmittedActivities = activities.filter(
-      act =>
-        !submissions.some(sub => sub.activity_id.toString() === act._id.toString()) &&
-        new Date() >= act.available_at
+    const unsubmittedActivities = activities.filter(act => 
+      !submissions.some(sub => sub.activity_id.toString() === act._id.toString()) &&
+      isActivityAvailable(act.available_at)
     ).length;
 
     res.status(200).json({
@@ -1775,7 +1787,20 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
         unsubmitted_activities: unsubmittedActivities,
       },
     });
+
   } catch (error) {
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    next(new ApiError(`Internal Server Error: ${error.message}`, 500));
   }
 });
+
+// Helper functions
+function getActivityStatus(availableAt, deadline) {
+  const now = new Date();
+  if (now < new Date(availableAt)) return "upcoming";
+  if (now > new Date(deadline)) return "finished";
+  return "active";
+}
+
+function isActivityAvailable(availableAt) {
+  return new Date() >= new Date(availableAt);
+}
