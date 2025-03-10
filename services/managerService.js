@@ -1549,7 +1549,6 @@ exports.deleteSubmissions = asyncHandler(async (req, res, next) => {
 
 
 // getClassGrades
-
 exports.getClassGrades = asyncHandler(async (req, res, next) => {
   try {
     const { class_id } = req.params;
@@ -1557,36 +1556,28 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
       return next(new ApiError("Class ID is required", 400));
     }
 
-    // Fetch students in the class
     const students = await Student.find({ class_id });
     if (!students.length) {
       return res.status(404).json({ message: "No students found in this class." });
     }
 
-    const studentIdentityNumbers = students.map((student) => student.user_identity_number);
+    const studentIdentityNumbers = students.map(student => student.user_identity_number);
     const users = await User.find({ identity_number: { $in: studentIdentityNumbers } })
       .select("_id identity_number first_name second_name third_name last_name");
 
-
-    // Fetch related class subjects
     const classSubjects = await ClassSubject.find({ class_id }).select("_id");
     if (!classSubjects.length) {
       return res.status(404).json({ message: "No subjects found for this class." });
     }
-    const classSubjectIds = classSubjects.map((cs) => cs._id);
+    const classSubjectIds = classSubjects.map(cs => cs._id);
 
-    // Fetch activities related to these class subjects
     const activities = await Activity.find({ classSubject_id: { $in: classSubjectIds } })
       .select("_id activity_type full_grade");
-    const activityIds = activities.map((a) => a._id.toString());
+    const activityIds = activities.map(a => a._id.toString());
 
-
-    // Fetch submissions for these activities
     const submissions = await Submission.find({ activity_id: { $in: activityIds } })
       .select("user_id activity_id grade");
 
-
-    // Categorize activities
     let assignmentFullMark = 0, examFullMark = 0;
     const activityMap = {};
     activities.forEach(activity => {
@@ -1598,65 +1589,56 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
       }
     });
 
-    // Prepare response data
     const studentDataMap = {};
     students.forEach(student => {
+      const userData = users.find(user => user.identity_number === student.user_identity_number) || {};
       studentDataMap[student.user_identity_number] = {
-        studentData: users.find(user => user.identity_number === student.user_identity_number) || {},
-        grades_data: {
-          assignments_totalGrades: 0,
-          Exams_totalGrades: 0,
-        },
-        activity_grades: {},
+        _id: userData._id,
+        identity_number: userData.identity_number,
+        first_name: userData.first_name,
+        second_name: userData.second_name,
+        third_name: userData.third_name,
+        last_name: userData.last_name,
+        assignments_totalGrades: 0,
+        Exams_totalGrades: 0,
       };
     });
 
-    // Process submissions
     submissions.forEach(submission => {
       const student = studentDataMap[submission.user_id];
-      if (!student) {
-        return;
-      }
+      if (!student) return;
+
       const activity = activityMap[submission.activity_id.toString()];
-      if (!activity) {
-        return;
-      }
+      if (!activity) return;
 
       if (activity.activity_type === "Assignment") {
-        student.grades_data.assignments_totalGrades += submission.grade || 0;
+        student.assignments_totalGrades += submission.grade || 0;
       } else if (activity.activity_type === "Exam") {
-        student.grades_data.Exams_totalGrades += submission.grade || 0;
+        student.Exams_totalGrades += submission.grade || 0;
       }
-      student.activity_grades[submission.activity_id] = true;
     });
 
-    // Calculate graded and ungraded activities
     let gradedActivities = 0, ungradedActivities = 0;
     activities.forEach(activity => {
       const hasGrades = submissions.some(sub => sub.activity_id.toString() === activity._id.toString());
-      if (hasGrades) {
-        gradedActivities++;
-      } else {
-        ungradedActivities++;
-      }
+      if (hasGrades) gradedActivities++;
+      else ungradedActivities++;
     });
 
-    // Finalize response
-    const response = Object.values(studentDataMap).map(student => ({
-      ...student,
-      grades_data: {
-        ...student.grades_data,
+    const response = {
+      classGrades_stats: {
+        gradedActivities_number: gradedActivities,
+        ungradedActivities_number: ungradedActivities,
         assignments_fullMark: assignmentFullMark,
         Exams_fullMark: examFullMark,
       },
-      activities_stats: {
-        gradedActivities_number: gradedActivities,
-        ungradedActivities_number: ungradedActivities,
-      }
-    }));
+      students_data: Object.values(studentDataMap)
+    };
 
     res.status(200).json(response);
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 });
+
+
