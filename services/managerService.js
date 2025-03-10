@@ -1682,7 +1682,7 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
 exports.getStudentGrades = asyncHandler(async (req, res, next) => {
   const { student_id, class_id } = req.params;
 
-  console.log(`class_id ${class_id}`);
+  console.log('class_id', class_id);
 
   if (!student_id || !class_id) {
     return next(new ApiError("Student ID and Class ID are required", 400));
