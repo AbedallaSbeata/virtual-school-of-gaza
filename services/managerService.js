@@ -1697,80 +1697,80 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
     }
 
     // Fetch class subjects and filter out those with missing subject_id
-    // const classSubjects = await ClassSubject.find({ class_id })
-    //   .populate("subject_id", "subject_name")
-    //   .then(cs => cs.filter(c => c.subject_id)); // Ensure subject_id exists
+    const classSubjects = await ClassSubject.find({ class_id })
+      .populate("subject_id", "subject_name")
+      .then(cs => cs.filter(c => c.subject_id)); // Ensure subject_id exists
 
-    // const activities = await Activity.find({
-    //   classSubject_id: { $in: classSubjects.map(cs => cs._id) },
-    // });
+    const activities = await Activity.find({
+      classSubject_id: { $in: classSubjects.map(cs => cs._id) },
+    });
 
-    // const submissions = await Submission.find({
-    //   user_id: student_id,
-    //   activity_id: { $in: activities.map(a => a._id) },
-    // });
+    const submissions = await Submission.find({
+      user_id: student_id,
+      activity_id: { $in: activities.map(a => a._id) },
+    });
 
-    // const submissionsGrouped = classSubjects.map(classSubject => {
-    //   const relatedActivities = activities.filter(
-    //     activity => activity.classSubject_id.toString() === classSubject._id.toString()
-    //   );
+    const submissionsGrouped = classSubjects.map(classSubject => {
+      const relatedActivities = activities.filter(
+        activity => activity.classSubject_id.toString() === classSubject._id.toString()
+      );
 
-    //   const classSubjectSubmissions = relatedActivities.map(activity => {
-    //     const submission = submissions.find(
-    //       sub => sub.activity_id.toString() === activity._id.toString()
-    //     );
+      const classSubjectSubmissions = relatedActivities.map(activity => {
+        const submission = submissions.find(
+          sub => sub.activity_id.toString() === activity._id.toString()
+        );
 
-    //     return {
-    //       activity_id: activity._id,
-    //       activity_title: activity.title,
-    //       activity_full_grade: activity.full_grade,
-    //       activity_file_url: activity.file_url,
-    //       activity_available_at: activity.available_at,
-    //       activity_deadline: activity.deadline,
-    //       activity_status:
-    //         new Date() < activity.available_at
-    //           ? "upcoming"
-    //           : new Date() > activity.deadline
-    //           ? "finished"
-    //           : "active",
-    //       submission_id: submission?._id || null,
-    //       submission_file_url: submission?.file_url || null,
-    //       submission_content: submission?.content || null,
-    //       submission_createdAt: submission?.createdAt || null,
-    //       submission_updatedAt: submission?.updatedAt || null,
-    //       submission_feedback: submission?.feedback || null,
-    //       submission_grade: submission?.grade ?? null,
-    //     };
-    //   });
+        return {
+          activity_id: activity._id,
+          activity_title: activity.title,
+          activity_full_grade: activity.full_grade,
+          activity_file_url: activity.file_url,
+          activity_available_at: activity.available_at,
+          activity_deadline: activity.deadline,
+          activity_status:
+            new Date() < activity.available_at
+              ? "upcoming"
+              : new Date() > activity.deadline
+              ? "finished"
+              : "active",
+          submission_id: submission?._id || null,
+          submission_file_url: submission?.file_url || null,
+          submission_content: submission?.content || null,
+          submission_createdAt: submission?.createdAt || null,
+          submission_updatedAt: submission?.updatedAt || null,
+          submission_feedback: submission?.feedback || null,
+          submission_grade: submission?.grade ?? null,
+        };
+      });
 
-    //   return {
-    //     classSubject_id: classSubject._id,
-    //     classSubject_name: classSubject.subject_id.subject_name,
-    //     classSubject_submissions,
-    //   };
-    // });
+      return {
+        classSubject_id: classSubject._id,
+        classSubject_name: classSubject.subject_id.subject_name,
+        classSubject_submissions,
+      };
+    });
 
-    // const gradedSubmissions = submissions.filter(sub => sub.grade != null);
-    // const ungradedSubmissions = submissions.filter(sub => sub.grade == null);
+    const gradedSubmissions = submissions.filter(sub => sub.grade != null);
+    const ungradedSubmissions = submissions.filter(sub => sub.grade == null);
 
-    // const totalGrades = gradedSubmissions.reduce((sum, sub) => sum + sub.grade, 0);
-    // const totalFullMarks = activities.reduce((sum, act) => sum + act.full_grade, 0);
+    const totalGrades = gradedSubmissions.reduce((sum, sub) => sum + sub.grade, 0);
+    const totalFullMarks = activities.reduce((sum, act) => sum + act.full_grade, 0);
 
-    // const submittedActivities = submissions.length;
-    // const unsubmittedActivities = activities.filter(
-    //   act => !submissions.some(sub => sub.activity_id.toString() === act._id.toString()) && new Date() >= act.available_at
-    // ).length;
+    const submittedActivities = submissions.length;
+    const unsubmittedActivities = activities.filter(
+      act => !submissions.some(sub => sub.activity_id.toString() === act._id.toString()) && new Date() >= act.available_at
+    ).length;
 
     res.status(200).json({
       user_data: user,
-      // submissions: submissionsGrouped,
-      // stats: {
-      //   total_grades: totalGrades,
-      //   total_fullmarks: totalFullMarks, // Corrected variable
-      //   graded_submissions: gradedSubmissions.length,
-      //   ungraded_submissions: ungradedSubmissions.length,
-      //   submitted_activities: submittedActivities,
-      //   unsubmitted_activities: unsubmittedActivities,
-      // },
+      submissions: submissionsGrouped,
+      stats: {
+        total_grades: totalGrades,
+        total_fullmarks: totalFullMarks, // Corrected variable
+        graded_submissions: gradedSubmissions.length,
+        ungraded_submissions: ungradedSubmissions.length,
+        submitted_activities: submittedActivities,
+        unsubmitted_activities: unsubmittedActivities,
+      },
     });
 });
