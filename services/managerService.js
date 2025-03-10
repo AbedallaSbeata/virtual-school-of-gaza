@@ -1682,7 +1682,6 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
 
 
 exports.getStudentGrades = asyncHandler(async (req, res, next) => {
-  try {
     const { student_id, class_id } = req.body;
 
     if (!student_id || !class_id) {
@@ -1698,18 +1697,18 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
     }
 
     // Fetch class subjects and filter out those with missing subject_id
-    const classSubjects = await ClassSubject.find({ class_id })
-      .populate("subject_id", "subject_name")
-      .then(cs => cs.filter(c => c.subject_id)); // Ensure subject_id exists
+    // const classSubjects = await ClassSubject.find({ class_id })
+    //   .populate("subject_id", "subject_name")
+    //   .then(cs => cs.filter(c => c.subject_id)); // Ensure subject_id exists
 
-    const activities = await Activity.find({
-      classSubject_id: { $in: classSubjects.map(cs => cs._id) },
-    });
+    // const activities = await Activity.find({
+    //   classSubject_id: { $in: classSubjects.map(cs => cs._id) },
+    // });
 
-    const submissions = await Submission.find({
-      user_id: student_id,
-      activity_id: { $in: activities.map(a => a._id) },
-    });
+    // const submissions = await Submission.find({
+    //   user_id: student_id,
+    //   activity_id: { $in: activities.map(a => a._id) },
+    // });
 
     // const submissionsGrouped = classSubjects.map(classSubject => {
     //   const relatedActivities = activities.filter(
@@ -1763,7 +1762,7 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
     // ).length;
 
     res.status(200).json({
-      // user_data: user,
+      user_data: user,
       // submissions: submissionsGrouped,
       // stats: {
       //   total_grades: totalGrades,
@@ -1774,7 +1773,4 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
       //   unsubmitted_activities: unsubmittedActivities,
       // },
     });
-  } catch (error) {
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
-  }
 });
