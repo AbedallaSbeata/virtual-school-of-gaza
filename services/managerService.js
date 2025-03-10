@@ -13,12 +13,11 @@ const RecordedLecture = require("../models/recordedLectureModel");
 const RecordedLectureComments = require("../models/recordedLectureCommentModel");
 const RecordedLectureReplies = require("../models/recordedLectureReplieModel");
 const Announcement = require("../models/announcementModel");
-const Activity = require('../models/activityModel')
-const Submission = require('../models/submissionModel')
+const Activity = require("../models/activityModel");
+const Submission = require("../models/submissionModel");
 const multer = require("multer");
 const path = require("path");
 const mongoose = require("mongoose");
-
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -40,12 +39,6 @@ const upload = multer({ storage: storage });
 
 // ✅ Middleware لمعالجة الملفات
 exports.uploadFile = upload.single("file");
-
-
-
-
-
-
 
 exports.addUser = asyncHandler(async (req, res, next) => {
   if (
@@ -275,9 +268,6 @@ exports.deleteClass = asyncHandler(async (req, res, next) => {
 //   });
 //   res.status(200).json({ data: student });
 // });
-
-
-
 
 exports.getMyData = asyncHandler(async (req, res, next) => {
   const myData = await User.findById(req.user._id);
@@ -795,33 +785,37 @@ exports.assignStudentsToSpecificClass = asyncHandler(async (req, res, next) => {
 });
 
 exports.getLevelStudents = asyncHandler(async (req, res, next) => {
-  const students = await Student.find({ level_number: req.params.level_number });
+  const students = await Student.find({
+    level_number: req.params.level_number,
+  });
 
   if (students.length === 0) {
     return next(new ApiError("لا يوجد طلاب في هذه المرحلة", 404));
   }
 
-  const identityNumbers = students.map(student => student.user_identity_number);
-  const users = await User.find({ identity_number: { $in: identityNumbers } }).select(
-    "_id identity_number first_name second_name third_name last_name"
+  const identityNumbers = students.map(
+    (student) => student.user_identity_number
   );
+  const users = await User.find({
+    identity_number: { $in: identityNumbers },
+  }).select("_id identity_number first_name second_name third_name last_name");
 
-  const studentsWithUserData = students.map(student => {
-    const userData = users.find(user => user.identity_number === student.user_identity_number);
+  const studentsWithUserData = students.map((student) => {
+    const userData = users.find(
+      (user) => user.identity_number === student.user_identity_number
+    );
     return {
-      class_id: student.class_id || null, 
-      _id: userData?._id || null, 
+      class_id: student.class_id || null,
+      _id: userData?._id || null,
       identity_number: student.user_identity_number,
       first_name: userData?.first_name || null,
       second_name: userData?.second_name || null,
       third_name: userData?.third_name || null,
-      last_name: userData?.last_name || null
+      last_name: userData?.last_name || null,
     };
   });
   res.status(200).json(studentsWithUserData);
 });
-
-
 
 // ✅ 1. Add Class-Wide Announcement
 exports.addClassAnnouncement = asyncHandler(async (req, res, next) => {
@@ -1052,13 +1046,12 @@ exports.deleteAnnouncements = asyncHandler(async (req, res, next) => {
   });
 });
 
-
 exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
   try {
     // ✅ 1. Fetch all students and populate class details
     const students = await Student.find()
       .populate({
-        path: "class_id", 
+        path: "class_id",
         select: "class_number level_number", // Fetch class_number and level_number
       })
       .lean();
@@ -1068,13 +1061,20 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
     }
 
     // ✅ 2. Fetch user data for students
-    const studentIdentityNumbers = students.map(student => student.user_identity_number);
-    const users = await User.find({ identity_number: { $in: studentIdentityNumbers } }).lean();
+    const studentIdentityNumbers = students.map(
+      (student) => student.user_identity_number
+    );
+    const users = await User.find({
+      identity_number: { $in: studentIdentityNumbers },
+    }).lean();
 
     // ✅ 3. Organize Data into Required Format
-    const studentsData = students.map(student => {
-      const userData = users.find(user => user.identity_number === student.user_identity_number) || {};
-      
+    const studentsData = students.map((student) => {
+      const userData =
+        users.find(
+          (user) => user.identity_number === student.user_identity_number
+        ) || {};
+
       return {
         userData,
         level_number: student.class_id?.level_number || null,
@@ -1084,11 +1084,11 @@ exports.getSchoolStudents = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ status: "success", students: studentsData });
   } catch (error) {
-    res.status(500).json({ status: "error", message: "Internal server error!" });
+    res
+      .status(500)
+      .json({ status: "error", message: "Internal server error!" });
   }
 });
-
-
 
 exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
   try {
@@ -1122,12 +1122,10 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
       .lean();
 
     if (!classSubjects.length && !subjects.length) {
-      return res
-        .status(200)
-        .json({
-          status: "success",
-          staff: users.map((user) => ({ userData: user, teachingData: {} })),
-        });
+      return res.status(200).json({
+        status: "success",
+        staff: users.map((user) => ({ userData: user, teachingData: {} })),
+      });
     }
 
     // ✅ 4. Organize Data into Required Format
@@ -1183,9 +1181,6 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
   }
 });
 
-
-
-
 // exports.addActivity = asyncHandler(async (req,res,next) => {
 //   const activity = await Activity.create({
 //     classSubject_id: req.body.classSubject_id,
@@ -1202,31 +1197,30 @@ exports.getSchoolStaff = asyncHandler(async (req, res, next) => {
 // })
 
 exports.addActivity = asyncHandler(async (req, res, next) => {
+  let fileUrl = null;
+  if (req.file) {
+    fileUrl = `${req.protocol}://${req.get("host")}/uploads/activities/${
+      req.file.filename
+    }`;
+  }
 
-    let fileUrl = null;
-    if (req.file) {
-      fileUrl = `${req.protocol}://${req.get("host")}/uploads/activities/${req.file.filename}`;
-    }
+  const activity = await Activity.create({
+    classSubject_id: req.body.classSubject_id,
+    available_at: req.body.available_at,
+    deadline: req.body.deadline,
+    description: req.body.description,
+    file_url: fileUrl,
+    full_grade: req.body.full_grade,
+    title: req.body.title,
+    activity_type: req.body.activity_type,
+    posted_by: req.user._id,
+  });
 
-    const activity = await Activity.create({
-            classSubject_id: req.body.classSubject_id,
-            available_at: req.body.available_at,
-            deadline: req.body.deadline,
-            description: req.body.description,
-            file_url: fileUrl,
-            full_grade: req.body.full_grade,
-            title: req.body.title,
-            activity_type: req.body.activity_type,
-            posted_by: req.user._id
-    });
-
-    res.status(201).json({
-      message: "تم إنشاء النشاط بنجاح",
-      data: activity,
-    });
+  res.status(201).json({
+    message: "تم إنشاء النشاط بنجاح",
+    data: activity,
+  });
 });
-
-
 
 exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
   const { class_id } = req.params;
@@ -1237,8 +1231,10 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
     return next(new ApiError("لا يوجد مواد دراسية لهذا الصف", 404));
   }
 
-  const classSubjectIds = classSubjects.map(subject => subject._id);
-  const activities = await Activity.find({ classSubject_id: { $in: classSubjectIds } });
+  const classSubjectIds = classSubjects.map((subject) => subject._id);
+  const activities = await Activity.find({
+    classSubject_id: { $in: classSubjectIds },
+  });
 
   if (activities.length === 0) {
     return next(new ApiError("لا يوجد أنشطة لهذا الصف", 404));
@@ -1248,37 +1244,37 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
   const studentsCount = await Student.countDocuments({ class_id });
 
   // Fetch related subject names
-  const subjectIds = classSubjects.map(cs => cs.subject_id);
+  const subjectIds = classSubjects.map((cs) => cs.subject_id);
   const subjects = await Subject.find({ _id: { $in: subjectIds } });
 
   // Map subject IDs to their names
   const subjectMap = {};
-  subjects.forEach(subject => {
+  subjects.forEach((subject) => {
     subjectMap[subject._id] = subject.subject_name;
   });
 
   // Fetch submissions count for each activity
-  const activityIds = activities.map(activity => activity._id);
+  const activityIds = activities.map((activity) => activity._id);
   const submissions = await Submission.aggregate([
     { $match: { activity_id: { $in: activityIds } } },
-    { $group: { _id: "$activity_id", count: { $sum: 1 } } }
+    { $group: { _id: "$activity_id", count: { $sum: 1 } } },
   ]);
 
   // Map activity IDs to their submission count
   const submissionMap = {};
-  submissions.forEach(sub => {
+  submissions.forEach((sub) => {
     submissionMap[sub._id] = sub.count;
   });
 
   // Fetch teacher details (name and profile image)
-  const teacherIds = activities.map(activity => activity.posted_by);
+  const teacherIds = activities.map((activity) => activity.posted_by);
   const teachers = await User.find({ _id: { $in: teacherIds } }).select(
     "first_name second_name third_name last_name profile_image"
   );
 
   // Map teacher IDs to their details
   const teacherMap = {};
-  teachers.forEach(teacher => {
+  teachers.forEach((teacher) => {
     teacherMap[teacher._id] = {
       first_name: teacher.first_name,
       second_name: teacher.second_name,
@@ -1290,11 +1286,14 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
 
   // Calculate activity status and prepare the response
   const currentTime = new Date();
-  const response = activities.map(activity => {
+  const response = activities.map((activity) => {
     let status;
     if (currentTime < activity.available_at) {
       status = "upcoming";
-    } else if (currentTime >= activity.available_at && currentTime <= activity.deadline) {
+    } else if (
+      currentTime >= activity.available_at &&
+      currentTime <= activity.deadline
+    ) {
       status = "active";
     } else {
       status = "finished";
@@ -1303,7 +1302,11 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
     return {
       ...activity._doc,
       activity_status: status,
-      classSubject_name: subjectMap[classSubjects.find(cs => cs._id.equals(activity.classSubject_id))?.subject_id] || "غير معروف",
+      classSubject_name:
+        subjectMap[
+          classSubjects.find((cs) => cs._id.equals(activity.classSubject_id))
+            ?.subject_id
+        ] || "غير معروف",
       submissions_count: submissionMap[activity._id] || 0,
       students_count: studentsCount, // Added class students count here
       posted_by_details: teacherMap[activity.posted_by] || {
@@ -1318,9 +1321,6 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
 
   res.status(200).json(response);
 });
-
-
-
 
 exports.getActivityById = asyncHandler(async (req, res, next) => {
   const { activity_id } = req.params;
@@ -1338,7 +1338,9 @@ exports.getActivityById = asyncHandler(async (req, res, next) => {
   }
 
   // Fetch the number of students in the class from the Student collection
-  const studentsCount = await Student.countDocuments({ class_id: classSubject.class_id });
+  const studentsCount = await Student.countDocuments({
+    class_id: classSubject.class_id,
+  });
 
   // Fetch subject name
   const subject = await Subject.findById(classSubject.subject_id);
@@ -1373,7 +1375,10 @@ exports.getActivityById = asyncHandler(async (req, res, next) => {
   let status;
   if (currentTime < activity.available_at) {
     status = "upcoming";
-  } else if (currentTime >= activity.available_at && currentTime <= activity.deadline) {
+  } else if (
+    currentTime >= activity.available_at &&
+    currentTime <= activity.deadline
+  ) {
     status = "active";
   } else {
     status = "finished";
@@ -1392,49 +1397,52 @@ exports.getActivityById = asyncHandler(async (req, res, next) => {
   res.status(200).json(response);
 });
 
-
 exports.updateActivity = asyncHandler(async (req, res, next) => {
-  const active = await Activity.findByIdAndUpdate(req.params.activity_id, {
-    title: req.body.title,
-    description: req.body.description,
-    file_url: req.body.file_url,
-    available_at: req.body.available_at,
-    deadline: req.body.deadline,
-    full_grade: req.body.full_grade,
-    activity_type: req.body.activity_type
-  }, {new: true})
+  const active = await Activity.findByIdAndUpdate(
+    req.params.activity_id,
+    {
+      title: req.body.title,
+      description: req.body.description,
+      file_url: req.body.file_url,
+      available_at: req.body.available_at,
+      deadline: req.body.deadline,
+      full_grade: req.body.full_grade,
+      activity_type: req.body.activity_type,
+    },
+    { new: true }
+  );
 
-  res.status(200).json(active)
-})
-exports.deleteActivity = asyncHandler(async (req,res,next) => {
-  await Activity.findByIdAndDelete(req.params.activity_id)
-  res.status(204).json()
-})
-
-exports.addSubmissionToActivity = asyncHandler(async (req, res, next) => {
-    let fileUrl = null;
-    if (req.file) {
-      fileUrl = `${req.protocol}://${req.get("host")}/uploads/submissions/${req.file.filename}`;
-    } else {
-      return res.status(400).json({ status: "error", message: "يرجى رفع الملف المطلوب" });
-    }
-
-    const submission = await Submission.create({
-      activity_id: req.body.activity_id,
-      content: req.body.content,
-      file_url: fileUrl,
-      user_id: req.user._id
-    });
-
-    res.status(201).json({
-      message: "تم تسليم النشاط بنجاح",
-      data: submission,
-    });
-
+  res.status(200).json(active);
+});
+exports.deleteActivity = asyncHandler(async (req, res, next) => {
+  await Activity.findByIdAndDelete(req.params.activity_id);
+  res.status(204).json();
 });
 
+exports.addSubmissionToActivity = asyncHandler(async (req, res, next) => {
+  let fileUrl = null;
+  if (req.file) {
+    fileUrl = `${req.protocol}://${req.get("host")}/uploads/submissions/${
+      req.file.filename
+    }`;
+  } else {
+    return res
+      .status(400)
+      .json({ status: "error", message: "يرجى رفع الملف المطلوب" });
+  }
 
+  const submission = await Submission.create({
+    activity_id: req.body.activity_id,
+    content: req.body.content,
+    file_url: fileUrl,
+    user_id: req.user._id,
+  });
 
+  res.status(201).json({
+    message: "تم تسليم النشاط بنجاح",
+    data: submission,
+  });
+});
 
 exports.addGradeToSubmission = asyncHandler(async (req, res, next) => {
   const submission = await Submission.findById(req.params.submission_id);
@@ -1456,7 +1464,6 @@ exports.addGradeToSubmission = asyncHandler(async (req, res, next) => {
   res.status(200).json(submissionWithGrade);
 });
 
-
 exports.getSubmissionsByActivity = asyncHandler(async (req, res, next) => {
   const { activity_id } = req.params;
 
@@ -1467,14 +1474,14 @@ exports.getSubmissionsByActivity = asyncHandler(async (req, res, next) => {
   }
 
   // Fetch user details for each submission
-  const userIds = submissions.map(submission => submission.user_id);
+  const userIds = submissions.map((submission) => submission.user_id);
   const users = await User.find({ _id: { $in: userIds } }).select(
     "first_name second_name third_name last_name profile_image identity_number"
   );
 
   // Map user details by ID for quick lookup
   const userMap = {};
-  users.forEach(user => {
+  users.forEach((user) => {
     userMap[user._id] = {
       first_name: user.first_name,
       second_name: user.second_name,
@@ -1486,7 +1493,7 @@ exports.getSubmissionsByActivity = asyncHandler(async (req, res, next) => {
   });
 
   // Enhance submission response with user details
-  const response = submissions.map(submission => ({
+  const response = submissions.map((submission) => ({
     ...submission._doc,
     user_details: userMap[submission.user_id] || {
       first_name: "غير معروف",
@@ -1521,11 +1528,14 @@ exports.updateSubmission = asyncHandler(async (req, res, next) => {
   res.status(200).json(updatedSubmission);
 });
 
-
 exports.deleteSubmissions = asyncHandler(async (req, res, next) => {
   const { submissionsIds } = req.body;
 
-  if (!submissionsIds || !Array.isArray(submissionsIds) || submissionsIds.length === 0) {
+  if (
+    !submissionsIds ||
+    !Array.isArray(submissionsIds) ||
+    submissionsIds.length === 0
+  ) {
     return next(new ApiError("يجب إرسال معرفات التسليمات للحذف", 400));
   }
 
@@ -1537,9 +1547,13 @@ exports.deleteSubmissions = asyncHandler(async (req, res, next) => {
   }
 
   // Check if any submission has been graded
-  const gradedSubmissions = submissions.filter(submission => submission.grade !== undefined);
+  const gradedSubmissions = submissions.filter(
+    (submission) => submission.grade !== undefined
+  );
   if (gradedSubmissions.length > 0) {
-    return next(new ApiError("لا يمكن حذف بعض التسليمات لأنها تحتوي على درجات", 400));
+    return next(
+      new ApiError("لا يمكن حذف بعض التسليمات لأنها تحتوي على درجات", 400)
+    );
   }
 
   // Proceed with deletion
@@ -1547,7 +1561,6 @@ exports.deleteSubmissions = asyncHandler(async (req, res, next) => {
 
   res.status(204).json({ message: "تم حذف التسليمات بنجاح" });
 });
-
 
 // getClassGrades
 exports.getClassGrades = asyncHandler(async (req, res, next) => {
@@ -1559,29 +1572,41 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
 
     const students = await Student.find({ class_id });
     if (!students.length) {
-      return res.status(404).json({ message: "No students found in this class." });
+      return res
+        .status(404)
+        .json({ message: "No students found in this class." });
     }
 
-    const studentIdentityNumbers = students.map(student => student.user_identity_number);
-    const users = await User.find({ identity_number: { $in: studentIdentityNumbers } })
-      .select("_id identity_number first_name second_name third_name last_name");
+    const studentIdentityNumbers = students.map(
+      (student) => student.user_identity_number
+    );
+    const users = await User.find({
+      identity_number: { $in: studentIdentityNumbers },
+    }).select(
+      "_id identity_number first_name second_name third_name last_name"
+    );
 
-      const classSubjects = await ClassSubject.find({ class_id }).select("_id");
+    const classSubjects = await ClassSubject.find({ class_id }).select("_id");
     if (!classSubjects.length) {
-      return res.status(404).json({ message: "No subjects found for this class." });
+      return res
+        .status(404)
+        .json({ message: "No subjects found for this class." });
     }
-    const classSubjectIds = classSubjects.map(cs => cs._id);
+    const classSubjectIds = classSubjects.map((cs) => cs._id);
 
-    const activities = await Activity.find({ classSubject_id: { $in: classSubjectIds } })
-      .select("_id activity_type full_grade");
-    const activityIds = activities.map(a => a._id.toString());
+    const activities = await Activity.find({
+      classSubject_id: { $in: classSubjectIds },
+    }).select("_id activity_type full_grade");
+    const activityIds = activities.map((a) => a._id.toString());
 
-    const submissions = await Submission.find({ activity_id: { $in: activityIds } })
-      .select("user_id activity_id grade");
+    const submissions = await Submission.find({
+      activity_id: { $in: activityIds },
+    }).select("user_id activity_id grade");
 
-    let assignmentFullMark = 0, examFullMark = 0;
+    let assignmentFullMark = 0,
+      examFullMark = 0;
     const activityMap = {};
-    activities.forEach(activity => {
+    activities.forEach((activity) => {
       activityMap[activity._id.toString()] = activity;
       if (activity.activity_type === "Assignment") {
         assignmentFullMark += activity.full_grade;
@@ -1591,9 +1616,11 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
     });
 
     const studentDataMap = {};
-     // Build the student data map based on user _id (the correct reference)
-    students.forEach(student => {
-      const userData = users.find(user => user.identity_number === student.user_identity_number);
+    // Build the student data map based on user _id (the correct reference)
+    students.forEach((student) => {
+      const userData = users.find(
+        (user) => user.identity_number === student.user_identity_number
+      );
       if (userData) {
         studentDataMap[userData._id.toString()] = {
           _id: userData._id,
@@ -1609,13 +1636,13 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
     });
 
     // Sum grades from submissions
-    submissions.forEach(submission => {
+    submissions.forEach((submission) => {
       const student = studentDataMap[submission.user_id.toString()];
       if (!student) return;
-    
+
       const activity = activityMap[submission.activity_id.toString()];
       if (!activity) return;
-    
+
       if (activity.activity_type === "Assignment") {
         student.assignments_totalGrades += submission.grade || 0;
       } else if (activity.activity_type === "Exam") {
@@ -1623,9 +1650,13 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
       }
     });
 
-    let gradedActivities = 0, ungradedActivities = 0;
-    activities.forEach(activity => {
-      const hasGrades = submissions.some(sub => sub.activity_id.toString() === activity._id.toString() && sub.grade);
+    let gradedActivities = 0,
+      ungradedActivities = 0;
+    activities.forEach((activity) => {
+      const hasGrades = submissions.some(
+        (sub) =>
+          sub.activity_id.toString() === activity._id.toString() && sub.grade
+      );
       if (hasGrades) gradedActivities++;
       else ungradedActivities++;
     });
@@ -1637,121 +1668,138 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
         assignments_fullMark: assignmentFullMark,
         Exams_fullMark: examFullMark,
       },
-      students_data: Object.values(studentDataMap)
+      students_data: Object.values(studentDataMap),
     };
 
     res.status(200).json(response);
   } catch (error) {
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 });
 
-
-
 exports.getStudentGrades = asyncHandler(async (req, res, next) => {
-  try {
-    const { student_id, class_id } = req.params;
-    console.log(student_id);
-    console.log(class_id);
+  const { student_id, class_id } = req.params;
 
-    if (!student_id || !class_id) {
-      return next(new ApiError("Student ID and Class ID are required", 400));
-    }
+  console.log(`class_id ${class_id}`);
 
-    const user = await User.findById(student_id).select(
-      "_id identity_number first_name second_name third_name last_name profile_image"
+  if (!student_id || !class_id) {
+    return next(new ApiError("Student ID and Class ID are required", 400));
+  }
+
+  const user = await User.findById(student_id).select(
+    "_id identity_number first_name second_name third_name last_name profile_image"
+  );
+  console.log(`user ${user}`);
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found." });
+  }
+
+  const classSubjects = await ClassSubject.find({ class_id }).populate(
+    "subject_id",
+    "subject_name"
+  );
+  console.log(`classSubjects ${classSubjects}`);
+
+  const activities = await Activity.find({
+    classSubject_id: { $in: classSubjects.map((cs) => cs._id) },
+  });
+  console.log(`activities ${activities}`);
+
+  const submissions = await Submission.find({
+    user_id: student_id,
+    activity_id: { $in: activities.map((a) => a._id) },
+  });
+  console.log(`submissions ${submissions}`);
+
+  const submissionsGrouped = [];
+
+  for (const classSubject of classSubjects) {
+    const relatedActivities = activities.filter(
+      (activity) =>
+        activity.classSubject_id.toString() === classSubject._id.toString()
     );
+    console.log(`relatedActivities ${relatedActivities}`);
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
+    const classSubjectSubmissions = [];
 
-    const classSubjects = await ClassSubject.find({ class_id }).populate("subject_id", "subject_name");
-
-    const activities = await Activity.find({
-      classSubject_id: { $in: classSubjects.map((cs) => cs._id) },
-    });
-
-    const submissions = await Submission.find({
-      user_id: student_id,
-      activity_id: { $in: activities.map((a) => a._id) },
-    });
-
-    const submissionsGrouped = [];
-
-    for (const classSubject of classSubjects) {
-      const relatedActivities = activities.filter(
-        (activity) => activity.classSubject_id.toString() === classSubject._id.toString()
+    for (const activity of relatedActivities) {
+      const submission = submissions.find(
+        (sub) => sub.activity_id.toString() === activity._id.toString()
       );
+      console.log(`submission ${submission}`);
 
-      const classSubjectSubmissions = [];
-
-      for (const activity of relatedActivities) {
-        const submission = submissions.find(
-          (sub) => sub.activity_id.toString() === activity._id.toString()
-        );
-        classSubjectSubmissions.push({
-          activity_id: activity._id,
-          activity_title: activity.title,
-          activity_full_grade: activity.full_grade,
-          activity_file_url: activity.file_url,
-          activity_available_at: activity.available_at,
-          activity_deadline: activity.deadline,
-          activity_activity_status:
-            new Date() < activity.available_at
-              ? "upcoming"
-              : new Date() > activity.deadline
-              ? "finished"
-              : "active",
-          submission_id: submission?._id || null,
-          submission_file_url: submission?.file_url || null,
-          submission_content: submission?.content || null,
-          submission_createdAt: submission?.createdAt || null,
-          submission_updatedAt: submission?.updatedAt || null,
-          submission_feedback: submission?.feedback || null,
-          submission_grade: submission?.grade || null,
-        });
-      }
-
-      submissionsGrouped.push({
-        classSubject_id: classSubject._id,
-        classSubject_name: classSubject.subject_id.subject_name,
-        classSubject_submissions: classSubjectSubmissions,
+      classSubjectSubmissions.push({
+        activity_id: activity._id,
+        activity_title: activity.title,
+        activity_full_grade: activity.full_grade,
+        activity_file_url: activity.file_url,
+        activity_available_at: activity.available_at,
+        activity_deadline: activity.deadline,
+        activity_activity_status:
+          new Date() < activity.available_at
+            ? "upcoming"
+            : new Date() > activity.deadline
+            ? "finished"
+            : "active",
+        submission_id: submission?._id || null,
+        submission_file_url: submission?.file_url || null,
+        submission_content: submission?.content || null,
+        submission_createdAt: submission?.createdAt || null,
+        submission_updatedAt: submission?.updatedAt || null,
+        submission_feedback: submission?.feedback || null,
+        submission_grade: submission?.grade || null,
       });
     }
+    console.log(`classSubjectSubmissions ${classSubjectSubmissions}`);
 
-    const gradedSubmissions = submissions.filter((sub) => sub.grade != null);
-    const ungradedSubmissions = submissions.filter((sub) => sub.grade == null);
-
-    const totalGrades = gradedSubmissions.reduce(
-      (sum, sub) => sum + sub.grade,
-      0
-    );
-
-    const totalFullMarks = activities
-      .filter((activity) => new Date(activity.available_at) <= new Date())
-      .reduce((sum, activity) => sum + activity.full_grade, 0);
-
-    const response = {
-      user_data: user,
-      submissions: submissionsGrouped,
-      stats: {
-        total_grades: totalGrades,
-        total_fullmarks: totalFullMarks,
-        graded_submissions: gradedSubmissions.length,
-        ungraded_submissions: ungradedSubmissions.length,
-        submitted_activities: submissions.length,
-        unsubmitted_activities: activities.filter(
-          (activity) =>
-            !submissions.some(
-              (sub) => sub.activity_id.toString() === activity._id.toString()
-            ) && new Date(activity.available_at) <= new Date()
-        ).length,
-      },
-    };
-
-    res.status(200).json(response);
-  } catch (error) {
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    submissionsGrouped.push({
+      classSubject_id: classSubject._id,
+      classSubject_name: classSubject.subject_id.subject_name,
+      classSubject_submissions: classSubjectSubmissions,
+    });
+    console.log(`submissionsGrouped ${submissionsGrouped}`);
   }
+
+  const gradedSubmissions = submissions.filter((sub) => sub.grade != null);
+  const ungradedSubmissions = submissions.filter((sub) => sub.grade == null);
+
+  console.log(`gradedSubmissions ${gradedSubmissions}`);
+  console.log(`ungradedSubmissions ${ungradedSubmissions}`);
+
+  const totalGrades = gradedSubmissions.reduce(
+    (sum, sub) => sum + sub.grade,
+    0
+  );
+
+  console.log(`totalGrades ${totalGrades}`);
+
+  const totalFullMarks = activities
+    .filter((activity) => new Date(activity.available_at) <= new Date())
+    .reduce((sum, activity) => sum + activity.full_grade, 0);
+
+  console.log(`totalFullMarks ${totalFullMarks}`);
+
+  const response = {
+    user_data: user,
+    submissions: submissionsGrouped,
+    stats: {
+      total_grades: totalGrades,
+      total_fullmarks: totalFullMarks,
+      graded_submissions: gradedSubmissions.length,
+      ungraded_submissions: ungradedSubmissions.length,
+      submitted_activities: submissions.length,
+      unsubmitted_activities: activities.filter(
+        (activity) =>
+          !submissions.some(
+            (sub) => sub.activity_id.toString() === activity._id.toString()
+          ) && new Date(activity.available_at) <= new Date()
+      ).length,
+    },
+  };
+  console.log(`response ${response}`);
+
+  res.status(200).json(response);
 });
