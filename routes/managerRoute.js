@@ -58,7 +58,8 @@ const {
   updateSubmission, 
   getSpecificClass,
   getClassGrades,
-  uploadFile
+  uploadFile,
+  getStudentGrades
   
 } = require("../services/managerService");
 const {
@@ -151,6 +152,6 @@ router.route('/getSubmissionsByActivity/:activity_id').get(getSubmissionsByActiv
 router.route('/updateSubmission/:submission_id').put(updateSubmission);
 router.route('/deleteSubmissions').delete(deleteSubmissions);
 router.route('/getClassGrades/:class_id').get(getClassGrades);
-
+router.route('/getStudentGrades/:student_id/:class_id').get(getStudentGrades);
 
 module.exports = router;
