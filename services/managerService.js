@@ -1746,7 +1746,7 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
       return {
         classSubject_id: classSubject._id,
         classSubject_name: classSubject.subject_id.subject_name,
-        classSubject_submissions,
+        classSubject_submissions: classSubjectSubmissions,
       };
     });
 
