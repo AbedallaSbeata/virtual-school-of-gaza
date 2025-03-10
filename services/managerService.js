@@ -1566,7 +1566,7 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
     const users = await User.find({ identity_number: { $in: studentIdentityNumbers } })
       .select("_id identity_number first_name second_name third_name last_name");
 
-    const classSubjects = await ClassSubject.find({ class_id }).select("_id");
+      const classSubjects = await ClassSubject.find({ class_id }).select("_id");
     if (!classSubjects.length) {
       return res.status(404).json({ message: "No subjects found for this class." });
     }
@@ -1591,27 +1591,31 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
     });
 
     const studentDataMap = {};
+     // Build the student data map based on user _id (the correct reference)
     students.forEach(student => {
-      const userData = users.find(user => user.identity_number === student.user_identity_number) || {};
-      studentDataMap[student.user_identity_number] = {
-        _id: userData._id,
-        identity_number: userData.identity_number,
-        first_name: userData.first_name,
-        second_name: userData.second_name,
-        third_name: userData.third_name,
-        last_name: userData.last_name,
-        assignments_totalGrades: 0,
-        Exams_totalGrades: 0,
-      };
+      const userData = users.find(user => user.identity_number === student.user_identity_number);
+      if (userData) {
+        studentDataMap[userData._id.toString()] = {
+          _id: userData._id,
+          identity_number: userData.identity_number,
+          first_name: userData.first_name,
+          second_name: userData.second_name,
+          third_name: userData.third_name,
+          last_name: userData.last_name,
+          assignments_totalGrades: 0,
+          Exams_totalGrades: 0,
+        };
+      }
     });
 
+    // Sum grades from submissions
     submissions.forEach(submission => {
-      const student = studentDataMap[submission.user_id];
+      const student = studentDataMap[submission.user_id.toString()];
       if (!student) return;
-
+    
       const activity = activityMap[submission.activity_id.toString()];
       if (!activity) return;
-
+    
       if (activity.activity_type === "Assignment") {
         student.assignments_totalGrades += submission.grade || 0;
       } else if (activity.activity_type === "Exam") {
@@ -1621,7 +1625,7 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
 
     let gradedActivities = 0, ungradedActivities = 0;
     activities.forEach(activity => {
-      const hasGrades = submissions.some(sub => sub.activity_id.toString() === activity._id.toString());
+      const hasGrades = submissions.some(sub => sub.activity_id.toString() === activity._id.toString() && sub.grade);
       if (hasGrades) gradedActivities++;
       else ungradedActivities++;
     });
