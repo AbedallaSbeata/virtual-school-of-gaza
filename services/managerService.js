@@ -1680,8 +1680,8 @@ exports.getClassGrades = asyncHandler(async (req, res, next) => {
 });
 
 
-
-exports.getStudentGrades = asyncHandler(async (req, res, next) => {
+  exports.getStudentGrades = asyncHandler(async (req, res, next) => {
+  try {
     const { student_id, class_id } = req.body;
 
     if (!student_id || !class_id) {
@@ -1696,10 +1696,10 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    // Fetch class subjects and filter out those with missing subject_id
-    const classSubjects = await ClassSubject.find({ class_id })
-      .populate("subject_id", "subject_name")
-      .then(cs => cs.filter(c => c.subject_id)); // Ensure subject_id exists
+    const classSubjects = await ClassSubject.find({ class_id }).populate(
+      "subject_id",
+      "subject_name"
+    );
 
     const activities = await Activity.find({
       classSubject_id: { $in: classSubjects.map(cs => cs._id) },
@@ -1727,7 +1727,7 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
           activity_file_url: activity.file_url,
           activity_available_at: activity.available_at,
           activity_deadline: activity.deadline,
-          activity_status:
+          activity_activity_status:
             new Date() < activity.available_at
               ? "upcoming"
               : new Date() > activity.deadline
@@ -1756,6 +1756,7 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
     const totalGrades = gradedSubmissions.reduce((sum, sub) => sum + sub.grade, 0);
     const totalFullMarks = activities.reduce((sum, act) => sum + act.full_grade, 0);
 
+    const submittedActivityIds = submissions.map(sub => sub.activity_id.toString());
     const submittedActivities = submissions.length;
     const unsubmittedActivities = activities.filter(
       act => !submissions.some(sub => sub.activity_id.toString() === act._id.toString()) && new Date() >= act.available_at
@@ -1766,11 +1767,14 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
       submissions: submissionsGrouped,
       stats: {
         total_grades: totalGrades,
-        total_fullmarks: totalFullMarks, // Corrected variable
+        total_fullmarks: totalGrades,
         graded_submissions: gradedSubmissions.length,
         ungraded_submissions: ungradedSubmissions.length,
         submitted_activities: submittedActivities,
         unsubmitted_activities: unsubmittedActivities,
       },
     });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
 });
