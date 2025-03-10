@@ -1697,10 +1697,10 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    const classSubjects = await ClassSubject.find({ class_id }).populate(
-      "subject_id",
-      "subject_name"
-    );
+    // Fetch class subjects and filter out those with missing subject_id
+    const classSubjects = await ClassSubject.find({ class_id })
+      .populate("subject_id", "subject_name")
+      .then(cs => cs.filter(c => c.subject_id)); // Ensure subject_id exists
 
     const activities = await Activity.find({
       classSubject_id: { $in: classSubjects.map(cs => cs._id) },
@@ -1746,7 +1746,7 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
 
       return {
         classSubject_id: classSubject._id,
-        classSubject_name: classSubject.subject_id.subject_name,
+        classSubject_name: classSubject.subject_id.subject_name, // Now safe due to filtering
         classSubject_submissions,
       };
     });
@@ -1757,7 +1757,6 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
     const totalGrades = gradedSubmissions.reduce((sum, sub) => sum + sub.grade, 0);
     const totalFullMarks = activities.reduce((sum, act) => sum + act.full_grade, 0);
 
-    const submittedActivityIds = submissions.map(sub => sub.activity_id.toString());
     const submittedActivities = submissions.length;
     const unsubmittedActivities = activities.filter(
       act => !submissions.some(sub => sub.activity_id.toString() === act._id.toString()) && new Date() >= act.available_at
@@ -1768,7 +1767,7 @@ exports.getStudentGrades = asyncHandler(async (req, res, next) => {
       submissions: submissionsGrouped,
       stats: {
         total_grades: totalGrades,
-        total_fullmarks: totalGrades,
+        total_fullmarks: totalFullMarks, // Corrected variable
         graded_submissions: gradedSubmissions.length,
         ungraded_submissions: ungradedSubmissions.length,
         submitted_activities: submittedActivities,
