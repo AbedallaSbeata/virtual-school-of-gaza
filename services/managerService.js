@@ -1422,7 +1422,8 @@ exports.addSubmissionToActivity = asyncHandler(async (req, res, next) => {
     const submission = await Submission.create({
       activity_id: req.body.activity_id,
       content: req.body.content,
-      file_url: fileUrl, // ✅ حفظ رابط الملف
+      file_url: fileUrl,
+      user_id: req.user._id
     });
 
     res.status(201).json({
