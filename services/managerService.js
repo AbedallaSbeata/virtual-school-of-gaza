@@ -1856,8 +1856,6 @@ exports.createLiveLecture = asyncHandler(async (req, res, next) => {
 
   // بيانات Twilio
   const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
-  const twilioApiKeySid = process.env.TWILIO_API_KEY_SID;
-  const twilioApiKeySecret = process.env.TWILIO_API_KEY_SECRET;
   const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
 
   // تعريف عميل Twilio
@@ -1867,49 +1865,31 @@ exports.createLiveLecture = asyncHandler(async (req, res, next) => {
   const roomName = `class-${classSubject_id}-${Date.now()}`;
 
   try {
-    // ✅ 1. **تحقق مما إذا كانت الغرفة موجودة بالفعل**
-    const existingRoom = await twilioClient.video.v1.rooms(roomName).fetch().catch(() => null);
-    if (existingRoom) {
-      return next(new ApiError("تم إنشاء هذه الغرفة بالفعل", 400));
-    }
-
-    // ✅ 2. **إنشاء الغرفة في Twilio**
+    // ✅ **إنشاء الغرفة في Twilio مع عرض جميع البيانات**
     const room = await twilioClient.video.v1.rooms.create({
       uniqueName: roomName,
-      type: "group", // استخدام "group" لعدة مشاركين أو "go" للحسابات المجانية
-      recordParticipantsOnConnect: false, // ❌ التسجيل مدفوع
+      type: "go", // ✅ جرب "go" إذا كنت تستخدم الحساب المجاني
+      recordParticipantsOnConnect: false,
     });
 
-    if (!room) {
+    console.log("✅ الغرفة تم إنشاؤها بنجاح في Twilio:", room);
+
+    if (!room || !room.sid) {
       throw new Error("فشل إنشاء الغرفة في Twilio");
     }
 
-    // ✅ 3. **إنشاء التوكن الخاص بالغرفة**
-    const AccessToken = twilio.jwt.AccessToken;
-    const VideoGrant = AccessToken.VideoGrant;
-
-    const videoGrant = new VideoGrant({ room: roomName });
-    const token = new AccessToken(
-      twilioAccountSid,
-      twilioApiKeySid,
-      twilioApiKeySecret,
-      { identity: `manager_${req.user._id}` }
-    );
-
-    token.addGrant(videoGrant);
-
-    // ✅ 4. **إرجاع البيانات في الاستجابة**
+    // ✅ **إرجاع بيانات الغرفة**
     res.status(201).json({
       message: "تم إنشاء المحاضرة المباشرة بنجاح",
       data: {
+        roomSID: room.sid,
         roomName: room.uniqueName,
-        roomStatus: room.status, // ✅ عرض حالة الغرفة
-        token: token.toJwt(),
+        roomStatus: room.status,
       },
     });
 
   } catch (error) {
-    console.error("❌ خطأ أثناء إنشاء الغرفة:", error);
-    return next(new ApiError("حدث خطأ أثناء إنشاء المحاضرة في Twilio: " + error.message, 500));
+    console.error("❌ خطأ أثناء إنشاء الغرفة في Twilio:", error);
+    return next(new ApiError("فشل إنشاء المحاضرة في Twilio: " + error.message, 500));
   }
 });
