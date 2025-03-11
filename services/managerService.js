@@ -1854,44 +1854,47 @@ exports.createLiveLecture = asyncHandler(async (req, res, next) => {
     return next(new ApiError("يرجى تقديم معرف المادة واسم المحاضرة", 400));
   }
 
-  // بيانات Twilio
+  // ✅ تحميل بيانات Twilio من .env
   const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
   const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-  const roomType = process.env.TWILIO_ROOM_TYPE || "group"; // استخدم "go" للحساب المجاني أو "group" للمدفوع
+  const roomType = process.env.TWILIO_ROOM_TYPE || "go"; // ✅ جرب "go" للحساب المجاني أو "group" للحساب المدفوع
 
-  // تعريف عميل Twilio
+  // ✅ طباعة بيانات المصادقة في الـ Console للتأكد من تحميلها
+  console.log("🔵 TWILIO_ACCOUNT_SID:", twilioAccountSid);
+  console.log("🔵 TWILIO_AUTH_TOKEN:", twilioAuthToken ? "✅ موجود" : "❌ غير موجود");
+  console.log("🔵 نوع الغرفة:", roomType);
+
   const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
 
-  // إنشاء اسم غرفة فريدة
+  // ✅ إنشاء اسم غرفة فريدة
   const roomName = `class-${classSubject_id}-${Date.now()}`;
 
   try {
-    // ✅ إنشاء الغرفة
+    // ✅ **إنشاء الغرفة باستخدام النوع المدعوم**
     const room = await twilioClient.video.v1.rooms.create({
       uniqueName: roomName,
-      type: roomType, 
+      type: roomType, // ✅ استخدم "go" أو "group" فقط
       recordParticipantsOnConnect: false,
     });
 
-    // ✅ **تحقق من حالة الغرفة قبل عرض النجاح**
-    if (room && room.sid) {
-      console.log("✅ الغرفة تم إنشاؤها بنجاح:", room);
+    console.log("✅ الغرفة تم إنشاؤها بنجاح:", room);
 
-      res.status(201).json({
-        message: "تم إنشاء المحاضرة المباشرة بنجاح",
-        data: {
-          roomSID: room.sid,
-          roomName: room.uniqueName,
-          roomStatus: room.status,
-        },
-      });
-    } else {
-      throw new Error("فشل إنشاء الغرفة في Twilio، لكن لم يظهر أي خطأ!");
+    if (!room || !room.sid) {
+      throw new Error("فشل إنشاء الغرفة في Twilio");
     }
+
+    res.status(201).json({
+      message: "تم إنشاء المحاضرة المباشرة بنجاح",
+      data: {
+        roomSID: room.sid,
+        roomName: room.uniqueName,
+        roomStatus: room.status,
+      },
+    });
+
   } catch (error) {
     console.error("❌ خطأ أثناء إنشاء الغرفة في Twilio:", error.message);
     
-    // ✅ عرض الخطأ فقط إذا لم يتم إنشاء الغرفة
     return next(new ApiError("فشل إنشاء المحاضرة في Twilio: " + error.message, 500));
   }
 });
