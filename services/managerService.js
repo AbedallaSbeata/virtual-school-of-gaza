@@ -1811,7 +1811,8 @@ function isActivityAvailable(availableAt) {
 
 exports.createLiveLecture = asyncHandler(async (req, res, next) => {
   const { classSubject_id, lecture_title } = req.body;
-
+  console.log(classSubject_id);
+  
   if (!classSubject_id || !lecture_title) {
     return next(new ApiError("يرجى تقديم معرف المادة واسم المحاضرة", 400));
   }
