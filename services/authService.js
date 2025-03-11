@@ -194,8 +194,6 @@ exports.refreshToken = async (req, res) => {
       return res.status(401).json({ message: "No token provided" });
   }
 
-  try {
-
       // Decode Token Without Verification (to check expiration)
       const decodedWithoutVerification = jwt.decode(token);
 
@@ -229,11 +227,6 @@ exports.refreshToken = async (req, res) => {
           identity_number, 
           role 
       });
-
-  } catch (error) {
-      console.error("❌ JWT Verification Error:", error.message);
-      return res.status(403).json({ message: "Invalid or expired token" });
-  }
 };
 
 

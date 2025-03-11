@@ -59,7 +59,8 @@ const {
   getSpecificClass,
   getClassGrades,
   uploadFile,
-  getStudentGrades
+  getStudentGrades,
+  createLiveLecture
   
 } = require("../services/managerService");
 const {
@@ -153,5 +154,7 @@ router.route('/updateSubmission/:submission_id').put(updateSubmission);
 router.route('/deleteSubmissions').delete(deleteSubmissions);
 router.route('/getClassGrades/:class_id').get(getClassGrades);
 router.route('/getStudentGrades/:student_id').get(getStudentGrades);
+router.route('/createLiveLecture').post(createLiveLecture)
+
 
 module.exports = router;

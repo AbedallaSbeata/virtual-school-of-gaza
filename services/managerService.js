@@ -17,7 +17,8 @@ const Activity = require("../models/activityModel");
 const Submission = require("../models/submissionModel");
 const multer = require("multer");
 const path = require("path");
-const mongoose = require("mongoose");
+const twilio = require('twilio');
+
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -1804,3 +1805,45 @@ function getActivityStatus(availableAt, deadline) {
 function isActivityAvailable(availableAt) {
   return new Date() >= new Date(availableAt);
 }
+
+
+exports.createLiveLecture = asyncHandler(async (req, res, next) => {
+  const { classSubject_id, lecture_title } = req.body;
+
+  if (!classSubject_id || !lecture_title) {
+    return next(new ApiError("يرجى تقديم معرف المادة واسم المحاضرة", 400));
+  }
+
+  const AccessToken = require('twilio').jwt.AccessToken;
+  const VideoGrant = AccessToken.VideoGrant;
+
+  // استخدام بيانات Twilio من متغيرات البيئة
+  const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
+  const twilioApiKey = process.env.TWILIO_API_KEY_SID;
+  const twilioApiSecret = process.env.TWILIO_API_KEY_SECRET;
+
+  const identity = `manager_${req.user._id}`;
+
+  // انشاء اسم غرفة فريدة
+  const roomName = `class-${req.body.classSubject_id}-${Date.now()}`;
+
+  // إنشاء Token
+  const videoGrant = new VideoGrant({ room: roomName });
+  const token = new AccessToken(
+    twilioAccountSid,
+    twilioApiKey,
+    twilioApiSecret,
+    { identity: req.user.identity_number }
+  );
+
+  token.addGrant(videoGrant);
+
+  res.status(201).json({
+    message: "تم إنشاء المحاضرة المباشرة بنجاح",
+    data: {
+      roomName,
+      token: token.toJwt(),
+    },
+  });
+});
+
