@@ -1857,6 +1857,7 @@ exports.createLiveLecture = asyncHandler(async (req, res, next) => {
   // بيانات Twilio
   const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
   const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+  const roomType = process.env.TWILIO_ROOM_TYPE || "group"; // استخدم "go" للحساب المجاني أو "group" للمدفوع
 
   // تعريف عميل Twilio
   const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
@@ -1865,32 +1866,32 @@ exports.createLiveLecture = asyncHandler(async (req, res, next) => {
   const roomName = `class-${classSubject_id}-${Date.now()}`;
 
   try {
-    // ✅ استخدم النوع الصحيح للغرفة حسب نوع حسابك
-    const roomType = process.env.TWILIO_ROOM_TYPE || "go"; // استخدم "go" للحسابات المجانية أو "group" للمدفوعة
-
+    // ✅ إنشاء الغرفة
     const room = await twilioClient.video.v1.rooms.create({
       uniqueName: roomName,
-      type: roomType, // ✅ استخدم نوع مدعوم مثل "go" أو "group"
+      type: roomType, 
       recordParticipantsOnConnect: false,
     });
 
-    console.log("✅ الغرفة تم إنشاؤها بنجاح في Twilio:", room);
+    // ✅ **تحقق من حالة الغرفة قبل عرض النجاح**
+    if (room && room.sid) {
+      console.log("✅ الغرفة تم إنشاؤها بنجاح:", room);
 
-    if (!room || !room.sid) {
-      throw new Error("فشل إنشاء الغرفة في Twilio");
+      res.status(201).json({
+        message: "تم إنشاء المحاضرة المباشرة بنجاح",
+        data: {
+          roomSID: room.sid,
+          roomName: room.uniqueName,
+          roomStatus: room.status,
+        },
+      });
+    } else {
+      throw new Error("فشل إنشاء الغرفة في Twilio، لكن لم يظهر أي خطأ!");
     }
-
-    res.status(201).json({
-      message: "تم إنشاء المحاضرة المباشرة بنجاح",
-      data: {
-        roomSID: room.sid,
-        roomName: room.uniqueName,
-        roomStatus: room.status,
-      },
-    });
-
   } catch (error) {
-    console.error("❌ خطأ أثناء إنشاء الغرفة في Twilio:", error);
+    console.error("❌ خطأ أثناء إنشاء الغرفة في Twilio:", error.message);
+    
+    // ✅ عرض الخطأ فقط إذا لم يتم إنشاء الغرفة
     return next(new ApiError("فشل إنشاء المحاضرة في Twilio: " + error.message, 500));
   }
 });
