@@ -1865,10 +1865,12 @@ exports.createLiveLecture = asyncHandler(async (req, res, next) => {
   const roomName = `class-${classSubject_id}-${Date.now()}`;
 
   try {
-    // ✅ **إنشاء الغرفة في Twilio مع عرض جميع البيانات**
+    // ✅ استخدم النوع الصحيح للغرفة حسب نوع حسابك
+    const roomType = process.env.TWILIO_ROOM_TYPE || "go"; // استخدم "go" للحسابات المجانية أو "group" للمدفوعة
+
     const room = await twilioClient.video.v1.rooms.create({
       uniqueName: roomName,
-      type: "go", // ✅ جرب "go" إذا كنت تستخدم الحساب المجاني
+      type: roomType, // ✅ استخدم نوع مدعوم مثل "go" أو "group"
       recordParticipantsOnConnect: false,
     });
 
@@ -1878,7 +1880,6 @@ exports.createLiveLecture = asyncHandler(async (req, res, next) => {
       throw new Error("فشل إنشاء الغرفة في Twilio");
     }
 
-    // ✅ **إرجاع بيانات الغرفة**
     res.status(201).json({
       message: "تم إنشاء المحاضرة المباشرة بنجاح",
       data: {
