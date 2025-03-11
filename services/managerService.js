@@ -1807,45 +1807,7 @@ function isActivityAvailable(availableAt) {
 }
 
 
-// exports.createLiveLecture = asyncHandler(async (req, res, next) => {
-//   const { classSubject_id, lecture_title } = req.body;
 
-//   if (!classSubject_id || !lecture_title) {
-//     return next(new ApiError("يرجى تقديم معرف المادة واسم المحاضرة", 400));
-//   }
-
-//   const AccessToken = require('twilio').jwt.AccessToken;
-//   const VideoGrant = AccessToken.VideoGrant;
-
-//   // استخدام بيانات Twilio من متغيرات البيئة
-//   const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
-//   const twilioApiKey = process.env.TWILIO_API_KEY_SID;
-//   const twilioApiSecret = process.env.TWILIO_API_KEY_SECRET;
-
-//   const identity = `manager_${req.user._id}`;
-
-//   // انشاء اسم غرفة فريدة
-//   const roomName = `class-${req.body.classSubject_id}-${Date.now()}`;
-
-//   // إنشاء Token
-//   const videoGrant = new VideoGrant({ room: roomName });
-//   const token = new AccessToken(
-//     twilioAccountSid,
-//     twilioApiKey,
-//     twilioApiSecret,
-//     { identity: req.user.identity_number }
-//   );
-
-//   token.addGrant(videoGrant);
-
-//   res.status(201).json({
-//     message: "تم إنشاء المحاضرة المباشرة بنجاح",
-//     data: {
-//       roomName,
-//       token: token.toJwt(),
-//     },
-//   });
-// });
 
 exports.createLiveLecture = asyncHandler(async (req, res, next) => {
   const { classSubject_id, lecture_title } = req.body;
@@ -1857,22 +1819,19 @@ exports.createLiveLecture = asyncHandler(async (req, res, next) => {
   const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
   const twilioApiKeySid = process.env.TWILIO_API_KEY_SID;
   const twilioApiKeySecret = process.env.TWILIO_API_KEY_SECRET;
-  const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN; // ✅ تأكد من وجوده في .env
+  const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN; 
 
   const twilioClient = twilio(twilioAccountSid, twilioAuthToken);
 
-  // إنشاء اسم غرفة فريدة
   const roomName = `class-${classSubject_id}-${Date.now()}`;
 
-  try {
-    // ✅ 1. إنشاء الغرفة فعليًا في Twilio
     await twilioClient.video.v1.rooms.create({
       uniqueName: roomName,
-      type: "group", // ✅ يمكنك استخدام "go" إذا كنت تستخدم Twilio Free Plan
-      recordParticipantsOnConnect: false, // ❌ التسجيل مدفوع، قم بتمكينه إذا كنت تريد تسجيل المحاضرات
+      type: "group", 
+      recordParticipantsOnConnect: false,
     });
 
-    // ✅ 2. إنشاء توكن الانضمام للغرفة
+
     const AccessToken = twilio.jwt.AccessToken;
     const VideoGrant = AccessToken.VideoGrant;
 
@@ -1889,12 +1848,8 @@ exports.createLiveLecture = asyncHandler(async (req, res, next) => {
     res.status(201).json({
       message: "تم إنشاء المحاضرة المباشرة بنجاح",
       data: {
-        roomName,
+        room_name: roomName,
         token: token.toJwt(),
       },
     });
-  } catch (error) {
-    console.error("Twilio Room Creation Error:", error);
-    return next(new ApiError("حدث خطأ أثناء إنشاء المحاضرة", 500));
-  }
 });
