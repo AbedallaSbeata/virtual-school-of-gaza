@@ -155,7 +155,7 @@ router.route('/deleteSubmissions').delete(deleteSubmissions);
 router.route('/getClassGrades/:class_id').get(getClassGrades);
 router.route('/getStudentGrades/:student_id').get(getStudentGrades);
 router.route('/createLiveLecture').post(createLiveLecture);
-router.route('/getSchoolTeachers').post(getSchoolTeachers);
+router.route('/getSchoolTeachers').get(getSchoolTeachers);
 
 
 module.exports = router;
