@@ -1854,3 +1854,10 @@ exports.createLiveLecture = asyncHandler(async (req, res, next) => {
       },
     });
 });
+
+
+
+exports.getSchoolTeachers = asyncHandler(async (req, res, next) => {
+  const teachers = await User.find({ role: 'teacher' });
+  res.status(200).json({ data: teachers });
+});
