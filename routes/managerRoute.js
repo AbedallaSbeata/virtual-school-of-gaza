@@ -60,8 +60,8 @@ const {
   getClassGrades,
   uploadFile,
   getStudentGrades,
-  createLiveLecture
-  
+  createLiveLecture,
+  getSchoolTeachers
 } = require("../services/managerService");
 const {
   deleteClassValidator,
@@ -154,7 +154,8 @@ router.route('/updateSubmission/:submission_id').put(updateSubmission);
 router.route('/deleteSubmissions').delete(deleteSubmissions);
 router.route('/getClassGrades/:class_id').get(getClassGrades);
 router.route('/getStudentGrades/:student_id').get(getStudentGrades);
-router.route('/createLiveLecture').post(createLiveLecture)
+router.route('/createLiveLecture').post(createLiveLecture);
+router.route('/getSchoolTeachers').post(getSchoolTeachers);
 
 
 module.exports = router;
