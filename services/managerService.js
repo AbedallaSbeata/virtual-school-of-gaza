@@ -295,7 +295,6 @@ exports.deleteLevel = asyncHandler(async (req, res, next) => {
 });
 
 exports.getSpecificClass = asyncHandler(async (req, res, next) => {
-  // البحث عن الصف
   const classExists = await Class.findOne({
     level_number: req.params.level_number,
     class_number: req.params.class_number,
@@ -305,44 +304,47 @@ exports.getSpecificClass = asyncHandler(async (req, res, next) => {
     return next(new ApiError("هذا الصف غير موجود", 404));
   }
 
-  // البحث عن المواد المرتبطة بالصف
   const classSubjectExists = await ClassSubject.find({
     class_id: classExists._id,
   });
   let classSubjectData = [];
 
   if (classSubjectExists.length !== 0) {
-    // جلب بيانات المواد والمعلمين باستخدام Promise.all
     classSubjectData = await Promise.all(
       classSubjectExists.map(async (classSubject) => {
         const subject = await Subject.findById(classSubject.subject_id);
-        // البحث عن المعلم بناءً على identity_number
         const teacher = await User.findById(classSubject.teacher_id);
         const user = teacher
           ? await User.findOne({
               identity_number: teacher.identity_number,
             })
-          : null; // جلب معلومات المستخدم
+          : null; 
 
         return {
           classSubject_id: classSubject._id,
           classSubject_name: subject ? subject.subject_name : "",
           subject_id: subject ? subject._id : "",
-          classSubject_teacher: user, // إرجاع كائن المستخدم بالكامل
+          classSubject_teacher: user, 
         };
       })
     );
   }
 
-  // جلب المواد المتاحة لهذا المستوى
+  
   const availableSubjects = await Subject.find({
     levels: classExists.level_number,
   }).select("_id subject_name");
+
+  const students = await Student.find({class_id: classExists._id})
+  const numOfStudents = students.length
 
   res.status(200).json({
     data: classExists,
     classSubjectData,
     available_subjects: availableSubjects,
+    stats: {
+      numOfStudents
+    }
   });
 });
 
