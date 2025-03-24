@@ -1238,9 +1238,9 @@ exports.getActivitiesByClass = asyncHandler(async (req, res, next) => {
     classSubject_id: { $in: classSubjectIds },
   });
 
-  if (activities.length === 0) {
-    return next(new ApiError("لا يوجد أنشطة لهذا الصف", 404));
-  }
+  // if (activities.length === 0) {
+  //   return next(new ApiError("لا يوجد أنشطة لهذا الصف", 404));
+  // }
 
   // Fetch the number of students in the class from the Student collection
   const studentsCount = await Student.countDocuments({ class_id });
