@@ -1471,9 +1471,9 @@ exports.getSubmissionsByActivity = asyncHandler(async (req, res, next) => {
 
   // Fetch submissions
   const submissions = await Submission.find({ activity_id });
-  if (!submissions || submissions.length === 0) {
-    return next(new ApiError("لا يوجد تسليمات حاليا", 404));
-  }
+  // if (!submissions || submissions.length === 0) {
+  //   return next(new ApiError("لا يوجد تسليمات حاليا", 404));
+  // }
 
   // Fetch user details for each submission
   const userIds = submissions.map((submission) => submission.user_id);
