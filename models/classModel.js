@@ -9,16 +9,6 @@ const classSchema = new mongoose.Schema(
       type: Number,
       ref: "Level",
     },
-    numberOfStudents: {
-      type: Number,
-      default: 0,
-    },
-    numberOfTeachers: {
-      type: Number,
-      default: 0,
-    },
-    teachersIDs: [String],
-    studentsIDs: [String],
   },
   { timestamps: true }
 );
