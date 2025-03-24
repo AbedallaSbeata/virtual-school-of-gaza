@@ -1,43 +1,25 @@
 const mongoose = require("mongoose");
-const Subject = require("../models/subjectModel");
-const ClassSubject = require("../models/classSubject");
+const Class = require("./classModel");
+const Student = require("./studentModel"); // تأكد من استيراد موديل Student
 
-const classSchema = new mongoose.Schema(
-  {
-    class_number: Number,
-    level_number: {
-      type: Number,
-      ref: "Level",
-    },
+const classSchema = new mongoose.Schema({
+  class_number: Number,
+  level_number: {
+    type: Number,
+    ref: "Level",
   },
-  { timestamps: true }
-);
+}, { timestamps: true });
 
-// ✅ بعد الحفظ: إنشاء ClassSubject فقط إذا لم يكن موجودًا مسبقًا
-classSchema.post("save", async function () {
-  const subjects = await Subject.find({ levels: this.level_number });
-
-  for (const subject of subjects) {
-    const exists = await ClassSubject.findOne({
-      class_id: this._id,
-      subject_id: subject._id,
-    });
-
-    if (!exists) {
-      await ClassSubject.create({
-        class_id: this._id,
-        subject_id: subject._id,
-      });
-    }
-  }
-});
-
-// ✅ قبل حذف الصف: حذف جميع ClassSubject المرتبطة به
+// ✅ قبل حذف الصف: تحديث جميع الطلاب المرتبطين بهذا الصف إلى NULL
 classSchema.pre("findOneAndDelete", async function (next) {
   const classId = this.getQuery()._id;
 
   if (classId) {
-    await ClassSubject.deleteMany({ class_id: classId });
+    // تحديث جميع الطلاب المرتبطين بهذا الصف إلى NULL
+    await Student.updateMany(
+      { class_id: classId },
+      { $set: { class_id: null } }
+    );
   }
 
   next();
