@@ -276,7 +276,6 @@ exports.getMyData = asyncHandler(async (req, res, next) => {
 });
 
 exports.deleteLevel = asyncHandler(async (req, res, next) => {
-  // 1️⃣ التحقق مما إذا كان الليفل موجودًا
   const levelExists = await Level.findOne({
     level_number: req.body.level_number,
   });
