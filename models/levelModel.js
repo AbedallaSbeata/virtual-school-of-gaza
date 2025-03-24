@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
-const Level = require("./levelModel");
-const Student = require("./studentModel"); // تأكد من استيراد موديل Student
+const Subject = require("./subjectModel");
+const Class = require("./classModel");
 
 const levelSchema = new mongoose.Schema(
   {
@@ -27,19 +27,25 @@ const levelSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ قبل حذف المستوى: تحديث جميع الطلاب المرتبطين بهذا المستوى إلى NULL
-levelSchema.pre("findOneAndDelete", async function (next) {
-  const levelNumber = this.getQuery().level_number;
+// ✅ قبل الحفظ: تحديد المواد المتاحة لهذا المستوى
+levelSchema.pre("save", async function (next) {
+  const subjects = await Subject.find();
+  this.available_subjects = subjects
+    .filter((subject) => subject.levels.includes(this.level_number))
+    .map((subject) => subject.subject_name);
 
-  if (levelNumber) {
-    // تحديث جميع الطلاب المرتبطين بهذا المستوى إلى NULL
-    await Student.updateMany(
-      { level_number: levelNumber },
-      { $set: { level_number: null } }
-    );
-  }
-
+  this.numberOfClasses = this.classes.length;
   next();
+});
+
+// ✅ بعد الحفظ: إنشاء الصفوف فقط، وعدم إنشاء ClassSubject هنا
+levelSchema.post("save", async function () {
+  for (let i = 0; i < this.classes.length; i++) {
+    await Class.create({
+      class_number: this.classes[i],
+      level_number: this.level_number,
+    });
+  }
 });
 
 const levelModel = mongoose.model("Level", levelSchema);
